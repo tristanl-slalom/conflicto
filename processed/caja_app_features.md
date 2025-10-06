@@ -1,22 +1,56 @@
 # Caja App - High-Level Features
 
+## User Journey Overview
+
+The Caja platform follows a structured flow that supports three main personas through a complete session lifecycle:
+
+### High-Level Session Flow
+1. **Admin Setup Phase** (Red boxes in diagram)
+   - Admin defines session and configures activities in desired order
+   - Session remains in draft state until ready to launch
+
+2. **Session Launch Phase** 
+   - Admin opens the session, transitioning it to active state
+   - Viewer displays QR code and session join information
+   - Participants scan QR code to connect and enter nicknames
+
+3. **Activity Execution Phase** (Purple boxes in diagram)
+   - Session progresses through configured activities in sequence
+   - Each activity follows the pattern: display → participate → results
+   - Activities can include: Pointing Poker, Polls, Word Clouds, etc.
+   - Small persistent QR code remains visible for late participants to join
+   - Real-time synchronization across all participant devices and viewer
+
+4. **Session Completion Phase** (Blue box in diagram)
+   - After final activity, system generates comprehensive summary
+   - Summary includes participation metrics, activity results, and analytics
+   - Session transitions to completed state
+
+This flow ensures a seamless experience from setup through completion, with clear role separation and consistent state management throughout the session lifecycle.
+
+---
+
 ## Core Platform Features
 
 ### 1. Session Management
-**Description:** Core functionality for creating, managing, and running event sessions.
+**Description:** Core functionality for creating, managing, and running event sessions with ordered activity sequences.
 
 **Key Components:**
-- Session lifecycle management (draft → published → active → completed)
-- Session contains 1 to many activities in sequence
-- Variable session duration (from minutes to hours/days)
+- Session lifecycle management (draft → active → completed)
+- Ordered activity sequence configuration and execution
+- QR code generation for participant joining
+- Participant nickname registration and management
 - Session state persistence and recovery
-- Unique session identifiers and join codes
+- Automatic progression through activity sequence
+- Session summary generation upon completion
 
 **User Stories Foundation:**
-- As an admin, I can create and configure a session
-- As an admin, I can add multiple activities to a session
-- As a participant, I can join a session using a simple code/QR code
-- As a viewer, I can display the session on a shared screen
+- As an admin, I can create a session and define the order of activities
+- As an admin, I can open a session to make it available for participants
+- As a participant, I can scan a QR code to join an active session
+- As a participant, I can enter a nickname when joining a session
+- As a viewer, I can display session information and QR codes on a shared screen
+- As a system, I can automatically progress through activities and generate summaries
 
 ### 2. Activity Framework
 **Description:** Extensible system for different types of interactive activities within sessions.
@@ -39,14 +73,16 @@
 
 **Key Components:**
 - **Admin Interface:** Session and activity configuration, content management
-- **Viewer/Runner Interface:** Large screen display, session control, live results
+- **Viewer/Runner Interface:** Large screen display with persistent QR code, session control, live results
 - **Participant Interface:** Mobile-first interaction, activity-specific controls
 - Dynamic interface updates based on activity type and state
+- Persistent join access through always-visible QR code
 
 **User Stories Foundation:**
 - As an admin, I can set up content without interfering with live sessions
-- As a viewer/runner, I can control session flow and see aggregated results
+- As a viewer/runner, I can display session content with a persistent QR code for joining
 - As a participant, I can easily interact on my mobile device
+- As a late arrival, I can join the session by scanning the always-visible QR code
 - As a user, I can switch between roles as needed
 
 ### 4. Real-Time Communication Engine
@@ -65,9 +101,31 @@
 - As a system, I can maintain sync even with network interruptions
 - As a user, I can see live countdowns and time remaining
 
+### 5. QR Code and Participant Onboarding
+**Description:** Seamless participant joining process through persistent QR code display and nickname registration.
+
+**Key Components:**
+- Dynamic QR code generation for active sessions
+- Persistent small QR code display throughout all session activities
+- Mobile-optimized joining interface
+- Nickname validation and uniqueness checking
+- Participant connection status tracking
+- Graceful handling of late joiners mid-session
+- Connection recovery for dropped participants
+- Activity state synchronization for new joiners
+
+**User Stories Foundation:**
+- As a viewer, I can display a persistent QR code that allows joining at any time
+- As a participant, I can scan a QR code to join even after activities have started
+- As a participant, I can choose a unique nickname for the session
+- As a late joiner, I can see the current activity state when I connect
+- As a system, I can validate nicknames and handle duplicates gracefully
+- As an admin, I can see who has joined the session in real-time
+- As a participant, I can rejoin if my connection is lost
+
 ## Activity Type Features
 
-### 5. Live Polling System
+### 6. Live Polling System
 **Description:** Real-time polling with multiple question types and live result display.
 
 **Key Components:**
@@ -82,7 +140,7 @@
 - As a viewer, I can see live poll results as votes come in
 - As a system, I can validate and moderate participant responses
 
-### 6. Planning Poker System
+### 7. Planning Poker System
 **Description:** Story point estimation with team consensus features.
 
 **Key Components:**
@@ -97,7 +155,7 @@
 - As a team, I can discuss estimates and re-vote if needed
 - As a system, I can track consensus and suggest next steps
 
-### 7. Interactive Quiz/Trivia System
+### 8. Interactive Quiz/Trivia System
 **Description:** Knowledge Bowl style questions with buzzer mechanics and scoring.
 
 **Key Components:**
@@ -112,7 +170,7 @@
 - As an admin, I can create question banks and set up quiz rounds
 - As a system, I can track scores and determine winners
 
-### 8. Word Cloud Generator
+### 9. Word Cloud Generator
 **Description:** Real-time word cloud creation from participant text input.
 
 **Key Components:**
@@ -129,7 +187,7 @@
 
 ## Advanced Features
 
-### 9. Content Moderation System
+### 10. Content Moderation System
 **Description:** Automated and manual content filtering for user-generated content.
 
 **Key Components:**
@@ -144,7 +202,7 @@
 - As a participant, my content is filtered before public display
 - As a viewer, I can trust that displayed content is appropriate
 
-### 10. Session Analytics and Reporting
+### 11. Session Analytics and Reporting
 **Description:** Engagement metrics, participation tracking, and session summaries.
 
 **Key Components:**
@@ -160,7 +218,7 @@
 - As an organization, I can measure event engagement over time
 - As a system, I can provide actionable insights on session effectiveness
 
-### 11. Live Reaction System
+### 12. Live Reaction System
 **Description:** Continuous emoji-based feedback throughout sessions.
 
 **Key Components:**
@@ -175,7 +233,7 @@
 - As a presenter, I can gauge audience engagement in real-time
 - As an admin, I can analyze emotional responses to different content
 
-### 12. Photo Sharing Activity
+### 13. Photo Sharing Activity
 **Description:** Live photo board for visual engagement and icebreaking.
 
 **Key Components:**
@@ -192,7 +250,7 @@
 
 ## Technical Infrastructure Features
 
-### 13. Anonymous User Management
+### 14. Anonymous User Management
 **Description:** Seamless participation without account creation or authentication.
 
 **Key Components:**
@@ -207,7 +265,7 @@
 - As an admin, I can manage session access without user management overhead
 - As a participant, I can optionally provide display names
 
-### 14. Cross-Device Synchronization
+### 15. Cross-Device Synchronization
 **Description:** Consistent experience across mobile, tablet, and desktop devices.
 
 **Key Components:**
@@ -222,7 +280,7 @@
 - As an admin, I can manage sessions from desktop or mobile
 - As a system, I can optimize experiences for different devices
 
-### 15. Extensible Activity Plugin System
+### 16. Extensible Activity Plugin System
 **Description:** Framework for adding new activity types without core system changes.
 
 **Key Components:**
@@ -246,6 +304,7 @@
 - Activity Framework  
 - Multi-Persona Interface System
 - Real-Time Communication Engine
+- QR Code and Participant Onboarding
 - Live Polling System
 - Anonymous User Management
 

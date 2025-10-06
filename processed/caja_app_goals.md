@@ -75,7 +75,7 @@
 
 - **Frontend:** React (default/common, but flexible)
 - **Backend:** Python (preferred for backend)
-- **Real-Time:** Dynamic frontend (Ajax, etc.), webhooks
+- **Real-Time:** Dynamic frontend
 - **Integration:** Slack integration considered
 - **Microservices:** Option to split into microservices for each game/type
 
