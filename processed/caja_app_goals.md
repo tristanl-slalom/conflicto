@@ -87,6 +87,10 @@
 
 ---
 
+## Related Documentation
+
+- **[Detailed Features Specification](./caja_app_features.md)** - Comprehensive breakdown of all platform features with user story foundations
+
 ## Summary
 
 Caja is a modular, extensible platform for live event engagement, supporting real-time polling, trivia, voting, and other interactive activities. It emphasizes ease-of-use, rapid participation, and provides a base for engineering leaders to add new engagement mechanisms. The goal is to raise engagement in work/training events, with flexibility for future expansion.
