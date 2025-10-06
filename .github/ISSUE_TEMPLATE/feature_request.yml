@@ -1,0 +1,140 @@
+name: Feature Request
+description: Suggest a new feature or enhancement for the Caja platform
+title: "[Feature] "
+labels: ["enhancement", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new feature! Please provide detailed information to help us understand and evaluate your request.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which part of the Caja platform would this feature affect?
+      options:
+        - Backend API (FastAPI)
+        - Frontend (React)
+        - Infrastructure (AWS/Terraform)
+        - Database (PostgreSQL/Redis)
+        - Polling System
+        - Session Management
+        - Activity Framework
+        - New Activity Type
+        - Mobile Experience
+        - Viewer Experience
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature?
+      options:
+        - Critical - MVP blocker
+        - High - Important for MVP
+        - Medium - Nice to have for MVP
+        - Low - Future enhancement
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve? What user need does it address?
+      placeholder: Describe the problem or need this feature would address...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe your proposed solution in detail.
+      placeholder: Describe your proposed solution...
+    validations:
+      required: true
+
+  - type: textarea
+    id: user_story
+    attributes:
+      label: User Story
+      description: Write a user story for this feature.
+      placeholder: |
+        As a [type of user],
+        I want [some goal]
+        So that [some reason/benefit]
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Define the acceptance criteria for this feature.
+      placeholder: |
+        - [ ] Criterion 1
+        - [ ] Criterion 2
+        - [ ] Criterion 3
+    validations:
+      required: false
+
+  - type: dropdown
+    id: user_type
+    attributes:
+      label: Target User
+      description: Which user type would primarily benefit from this feature?
+      options:
+        - Event Host (creates and manages sessions)
+        - Participant (joins sessions on mobile)
+        - Viewer (watches results on shared screen)
+        - Platform Administrator
+        - All Users
+    validations:
+      required: true
+
+  - type: textarea
+    id: technical_considerations
+    attributes:
+      label: Technical Considerations
+      description: Any technical aspects, constraints, or implementation ideas?
+      placeholder: |
+        - Database changes needed
+        - API endpoints required
+        - Frontend components affected
+        - Infrastructure considerations
+        - Third-party integrations
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Solutions
+      description: What alternative solutions have you considered?
+      placeholder: Describe any alternative approaches you've considered...
+    validations:
+      required: false
+
+  - type: textarea
+    id: mockups
+    attributes:
+      label: Mockups/Examples
+      description: Include any mockups, wireframes, or examples if applicable.
+      placeholder: Attach or describe any visual examples...
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context, links, or information about the feature request.
+      placeholder: Any additional information...
+    validations:
+      required: false

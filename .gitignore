@@ -13,6 +13,11 @@ build/
 ## Environment
 .env
 .env.*
+!.env.example
+
+## MCP
+.mcp/logs/
+.mcp/cache/
 
 ## macOS
 .DS_Store
