@@ -4,27 +4,33 @@
 
 The Caja platform follows a structured flow that supports three main personas through a complete session lifecycle:
 
-### High-Level Session Flow
-1. **Admin Setup Phase** (Red boxes in diagram)
+### High-Level Session Flow (Based on Miro Diagram)
+1. **Admin Setup Phase** (Red flow)
    - Admin defines session and configures activities in desired order
    - Session remains in draft state until ready to launch
+   - Activities are pre-configured with specific settings and content
 
 2. **Session Launch Phase** 
-   - Admin opens the session, transitioning it to active state
-   - Viewer displays QR code and session join information
-   - Participants scan QR code to connect and enter nicknames
+   - Admin opens/starts the session, transitioning it to active state
+   - Viewer displays session start screen with prominent QR code
+   - System generates unique session join URL and QR code
 
-3. **Activity Execution Phase** (Purple boxes in diagram)
-   - Session progresses through configured activities in sequence
+3. **Participant Onboarding Phase** (Purple flow)
+   - Participants scan QR code to connect to session
+   - Participants enter nickname for session identification
+   - System validates nickname uniqueness within session
+
+4. **Activity Execution Phase** (Purple flow continuation)
+   - Participants proceed through configured activities in sequence
    - Each activity follows the pattern: display → participate → results
-   - Activities can include: Pointing Poker, Polls, Word Clouds, etc.
+   - Activities include: Pointing Poker, Polls, Word Clouds, Trivia
    - Small persistent QR code remains visible for late participants to join
-   - Real-time synchronization across all participant devices and viewer
+   - Polling-based updates provide near real-time synchronization
 
-4. **Session Completion Phase** (Blue box in diagram)
-   - After final activity, system generates comprehensive summary
+5. **Session Completion Phase** (Blue flow)
+   - After final activity, system proceeds to summary view
    - Summary includes participation metrics, activity results, and analytics
-   - Session transitions to completed state
+   - Session transitions to completed state with historical data preserved
 
 This flow ensures a seamless experience from setup through completion, with clear role separation and consistent state management throughout the session lifecycle.
 
@@ -85,21 +91,23 @@ This flow ensures a seamless experience from setup through completion, with clea
 - As a late arrival, I can join the session by scanning the always-visible QR code
 - As a user, I can switch between roles as needed
 
-### 4. Real-Time Communication Engine
-**Description:** Live synchronization of activity states, participant actions, and results.
+### 4. Polling-Based Synchronization Engine
+**Description:** Near real-time synchronization of activity states, participant actions, and results using efficient polling.
 
 **Key Components:**
-- Real-time updates for all connected clients
+- Client-side polling for state updates (every 2-3 seconds)
+- Optimized API endpoints for incremental state changes
 - Live result aggregation and display
-- Participant action broadcasting
-- Connection state management and recovery
-- Live countdown timers and progress indicators
+- Connection state monitoring and graceful degradation
+- Progressive update mechanisms for large participant groups
+- Efficient caching to minimize server load
 
 **User Stories Foundation:**
-- As a participant, I can see live updates without refreshing
-- As a viewer, I can see results update in real-time as participants respond
-- As a system, I can maintain sync even with network interruptions
-- As a user, I can see live countdowns and time remaining
+- As a participant, I can see updates within seconds without manual refresh
+- As a viewer, I can see results update as participants respond (with slight delay)
+- As a system, I can handle network interruptions gracefully with retry logic
+- As a user, I can see progress indicators and time remaining
+- As an admin, I can monitor system load and participant connection status
 
 ### 5. QR Code and Participant Onboarding
 **Description:** Seamless participant joining process through persistent QR code display and nickname registration.
@@ -328,6 +336,57 @@ This flow ensures a seamless experience from setup through completion, with clea
 
 ---
 
+## Development and Deployment Features
+
+### 17. GitHub Copilot Rules Integration
+**Description:** Comprehensive AI-assisted development with project-specific rules and context.
+
+**Key Components:**
+- Project-specific Copilot instruction files (.copilot/instructions.md)
+- Architecture guidelines and patterns
+- Persona-specific UI development rules
+- Activity framework implementation standards
+- Tech stack and AWS deployment patterns
+
+**User Stories Foundation:**
+- As a developer, I can leverage AI assistance that understands our architecture
+- As a team, we can maintain consistent code patterns across all features
+- As a contributor, I can onboard quickly with AI-guided development
+- As a project, we can ensure architectural decisions are consistently applied
+
+### 18. Model Context Protocol (MCP) Integration
+**Description:** Enhanced development workflow with GitHub integration for issue and story management.
+
+**Key Components:**
+- GitHub MCP server configuration
+- Issue creation and management from development environment
+- Story tracking and requirements traceability
+- Automated workflow integration with VS Code
+
+**User Stories Foundation:**
+- As a developer, I can create and manage GitHub issues from my development environment
+- As a team, we can maintain traceability from requirements to implementation
+- As a project manager, I can track progress through integrated tooling
+- As a contributor, I can follow standardized workflows for feature development
+
+### 19. Infrastructure as Code (Terraform)
+**Description:** Complete AWS infrastructure management through declarative configuration.
+
+**Key Components:**
+- Terraform modules for VPC, ECS, RDS, S3, CloudFront
+- Environment-specific configurations (dev/staging/prod)
+- Remote state management with S3 backend
+- Automated deployment pipeline integration
+- Resource naming conventions and tagging standards
+
+**User Stories Foundation:**
+- As a platform engineer, I can manage all infrastructure through code
+- As a team, we can version control our infrastructure changes
+- As a deployment system, I can ensure consistent environments across stages
+- As a project, we can automate infrastructure provisioning and updates
+
 ## Integration Points
 
 Each feature is designed to integrate with the core session and activity framework, ensuring consistent user experience and data flow throughout the platform. The modular design allows for independent development and deployment of features while maintaining system cohesion.
+
+The development workflow features ensure that team collaboration, AI assistance, and infrastructure management are seamlessly integrated into the development process, supporting rapid iteration and reliable deployment to AWS infrastructure.

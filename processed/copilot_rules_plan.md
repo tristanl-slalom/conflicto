@@ -37,20 +37,45 @@ You are working on Caja, a modular platform for live event engagement at workpla
 **Tech Stack Rules:**
 ```markdown
 ## Technology Stack
-- **Backend:** Python with FastAPI framework
-- **Frontend:** React with TypeScript for type safety
+
+### Backend
+- **Framework:** Python with FastAPI 
+- **Testing:** Pytest for comprehensive test coverage
+- **Deployment:** Amazon ECS (Elastic Container Service)
 - **Real-time:** WebSocket connections for live updates
-- **Database:** PostgreSQL for session data, Redis for real-time state
+
+### Frontend  
+- **Framework:** React with TypeScript for type safety
+- **Hosting:** Amazon S3 with CloudFront CDN
 - **Styling:** Tailwind CSS for responsive design
-- **Testing:** Pytest for backend, Jest/RTL for frontend
+- **Testing:** Jest/RTL for component testing
+
+### Data Persistence
+- **Primary Database:** Amazon RDS (PostgreSQL) for session data
+- **Cache/Real-time State:** Redis for WebSocket state management
+- **File Storage:** Amazon S3 for media assets
+
+### Infrastructure
+- **Infrastructure as Code:** Terraform for all AWS resources
+- **Container Registry:** Amazon ECR for Docker images
+- **Load Balancing:** Application Load Balancer for ECS services
+- **Monitoring:** CloudWatch for logging and metrics
+
+### AWS Architecture
+- **Networking:** VPC with public/private subnets
+- **Security:** IAM roles, Security Groups, and NACLs
+- **Secrets:** AWS Secrets Manager for database credentials
+- **DNS:** Route 53 for domain management
 
 ## Code Standards
 - Use TypeScript interfaces for all data structures
 - Implement proper error handling with try-catch blocks
-- Add comprehensive logging for debugging
+- Add comprehensive logging for debugging and CloudWatch
 - Write unit tests for all business logic
 - Use dependency injection for better testability
 - Follow REST API conventions for HTTP endpoints
+- Container-ready code with proper health checks
+- Environment-specific configuration via environment variables
 ```
 
 ### Phase 2: Architecture Rules (.copilot/architecture.md)
@@ -179,7 +204,9 @@ All activities follow the same state machine:
 - Implement request/response models with Pydantic
 - Add OpenAPI documentation for all endpoints
 - Use async/await for database operations
-- Implement proper CORS for frontend integration
+- Implement proper CORS for CloudFront integration
+- Add health check endpoints for ECS service discovery
+- Use structured logging for CloudWatch integration
 
 ### Frontend Development  
 - Use React Context for session state management
@@ -187,19 +214,40 @@ All activities follow the same state machine:
 - Use React Query for API state management
 - Implement proper error boundaries
 - Use Suspense for loading states
+- Optimize for CloudFront caching with proper headers
+- Implement responsive design for mobile-first approach
 
 ### Real-time Communication
 - WebSocket connection per participant
 - Broadcast updates to all session participants
 - Handle connection drops with automatic reconnection
 - Queue messages during disconnection periods
+- Use Redis for WebSocket session state persistence
+
+### AWS Deployment Patterns
+- **ECS Services:** Auto-scaling based on CPU/memory metrics
+- **RDS Configuration:** Multi-AZ for high availability
+- **CloudFront:** Optimized caching rules for static assets
+- **ALB Health Checks:** Custom health endpoints for service monitoring
+- **Container Logging:** JSON structured logs to CloudWatch
+- **Environment Management:** Separate environments (dev/staging/prod)
 
 ### Testing Strategy
-- Unit tests for all business logic
-- Integration tests for API endpoints
-- Component tests for React components
+- Unit tests for all business logic (Pytest for backend)
+- Integration tests for API endpoints with test database
+- Component tests for React components (Jest/RTL)
 - End-to-end tests for critical user flows
 - Load testing for real-time capabilities
+- Infrastructure testing with Terraform validation
+- Container testing in CI/CD pipeline before ECS deployment
+
+### Security Standards
+- **Database:** Encrypted RDS instances with rotation
+- **Network:** Private subnets for backend services
+- **Secrets:** AWS Secrets Manager for sensitive data
+- **HTTPS:** SSL/TLS termination at CloudFront and ALB
+- **Container Security:** Non-root user in Docker images
+- **IAM:** Least-privilege access for all services
 ```
 
 ## Deployment Strategy
@@ -218,31 +266,59 @@ All activities follow the same state machine:
 - Run full test suite before merging
 - Check mobile responsiveness for frontend changes
 - Verify WebSocket functionality for real-time features
+- Validate Terraform plans for infrastructure changes
 
 ### Environment Setup
 - Use Docker for consistent development environments
 - Environment variables for configuration
 - Separate configs for development/staging/production
 - Database migrations using Alembic
+- Local development with Docker Compose
+
+### Infrastructure as Code (Terraform)
+- **Environment Separation:** Separate Terraform workspaces for dev/staging/prod
+- **State Management:** Remote state in S3 with DynamoDB locking
+- **Module Structure:** Reusable modules for VPC, ECS, RDS, CloudFront
+- **Resource Naming:** Consistent naming conventions with environment prefixes
+- **Security:** Terraform state encryption and access controls
+- **CI/CD Integration:** Automated terraform plan/apply in deployment pipeline
+
+### AWS Deployment Pipeline
+- **Build Phase:** Docker image creation and ECR push
+- **Test Phase:** Run tests against containerized application
+- **Infrastructure Phase:** Terraform plan/apply for environment changes
+- **Deploy Phase:** ECS service update with blue-green deployment
+- **Validation Phase:** Health checks and smoke tests
+- **Frontend Phase:** S3 sync and CloudFront invalidation
 ```
 
 ## Implementation Priorities
 
-### Phase 1 - MVP Core (Weeks 1-4)
+### Sprint 0 - Project Scaffolding (Week 1)
 Focus Copilot rules on:
-- Session CRUD operations
-- Basic WebSocket implementation
+- Terraform AWS infrastructure setup (ECS, RDS, S3, CloudFront)
+- FastAPI application structure with health checks
+- React application setup with TanStack
+- GitHub Actions CI/CD pipeline
+- MCP integration for GitHub workflow
+- Database schema and migrations
+
+### Phase 1 - MVP Core (Weeks 2-5)
+Focus Copilot rules on:
+- Session CRUD operations with RDS persistence
+- Polling-based synchronization implementation
 - Simple poll activity type
 - Three-persona UI framework
+- QR code generation and participant onboarding
 
-### Phase 2 - Enhanced Activities (Weeks 5-8)  
+### Phase 2 - Enhanced Activities (Weeks 6-9)  
 Expand Copilot rules for:
 - Planning poker implementation
 - Quiz/trivia system
 - Word cloud generation
-- Advanced real-time features
+- Advanced polling features and result visualization
 
-### Phase 3 - Advanced Features (Weeks 9-12)
+### Phase 3 - Advanced Features (Weeks 10-12)
 Add Copilot rules for:
 - Content moderation system
 - Analytics and reporting
@@ -277,3 +353,28 @@ Add Copilot rules for:
 8. **Iterate based on results and team feedback**
 
 This plan ensures GitHub Copilot understands the full context of the Caja platform and can generate code that aligns with the project's architectural decisions, user experience requirements, and technical standards.
+
+## Team Integration and MCP Workflow
+
+### Development Team Structure
+- **Platform Engineering (Dom):** AWS infrastructure, Terraform, ECS deployment
+- **Backend Development (Mauricio):** FastAPI application, database design, API endpoints  
+- **Frontend Development (Joe):** React application, participant/viewer interfaces
+- **Development Tooling (Dom):** GitHub MCP integration, VS Code configuration
+
+### Model Context Protocol Integration
+The GitHub MCP integration enables:
+- Direct issue creation and management from VS Code
+- Requirements traceability from features to implementation
+- Automated story generation from refined requirements
+- Consistent workflow patterns across team members
+
+### Parallel Development Strategy
+While Copilot rules are being implemented, team members can work independently on:
+- Infrastructure setup (Terraform configurations)
+- Application scaffolding (FastAPI and React boilerplate)
+- Development environment configuration
+- CI/CD pipeline establishment
+
+This parallel approach ensures rapid progress while maintaining consistency through established rules and patterns.
+```
