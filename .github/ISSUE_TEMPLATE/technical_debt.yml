@@ -1,0 +1,132 @@
+name: Technical Debt
+description: Report technical debt or refactoring needs
+title: "[Tech Debt] "
+labels: ["technical-debt", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template to report technical debt, code quality issues, or refactoring needs.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which part of the codebase needs attention?
+      options:
+        - Backend API (FastAPI)
+        - Frontend (React)
+        - Infrastructure (AWS/Terraform)
+        - Database Schema
+        - Testing Infrastructure
+        - CI/CD Pipeline
+        - Documentation
+        - Dependencies
+        - Performance
+        - Security
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Impact Level
+      description: What's the impact of this technical debt?
+      options:
+        - High - Blocking development or causing bugs
+        - Medium - Slowing development or maintenance
+        - Low - Minor improvement opportunity
+    validations:
+      required: true
+
+  - type: textarea
+    id: current_state
+    attributes:
+      label: Current State
+      description: Describe the current problematic implementation or situation.
+      placeholder: Describe what exists now that needs improvement...
+    validations:
+      required: true
+
+  - type: textarea
+    id: problems
+    attributes:
+      label: Problems/Issues
+      description: What problems does the current state cause?
+      placeholder: |
+        - Makes testing difficult
+        - Slows down development
+        - Creates maintenance burden
+        - Causes performance issues
+        - etc.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed_solution
+    attributes:
+      label: Proposed Solution
+      description: Describe how you think this should be improved.
+      placeholder: Describe the ideal solution or refactoring approach...
+    validations:
+      required: true
+
+  - type: textarea
+    id: benefits
+    attributes:
+      label: Expected Benefits
+      description: What benefits would addressing this technical debt provide?
+      placeholder: |
+        - Improved maintainability
+        - Better performance
+        - Easier testing
+        - Reduced complexity
+        - etc.
+    validations:
+      required: true
+
+  - type: textarea
+    id: effort
+    attributes:
+      label: Estimated Effort
+      description: Rough estimate of the effort required (time, complexity, risk).
+      placeholder: |
+        - Time estimate: [hours/days/weeks]
+        - Complexity: [low/medium/high]
+        - Risk level: [low/medium/high]
+        - Breaking changes: [yes/no]
+    validations:
+      required: false
+
+  - type: textarea
+    id: files_affected
+    attributes:
+      label: Files/Areas Affected
+      description: Which files or areas of the codebase would be affected?
+      placeholder: |
+        - src/api/sessions.py
+        - frontend/src/components/SessionManager.tsx
+        - infrastructure/terraform/rds.tf
+        - etc.
+    validations:
+      required: false
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Any dependencies or prerequisites for this work?
+      placeholder: What needs to be done first or in conjunction with this work?
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other relevant information, links, or context.
+      placeholder: Links to related issues, documentation, etc.
+    validations:
+      required: false
