@@ -71,13 +71,27 @@
 
 ---
 
-## Tech Stack Preferences
+## Tech Stack Decisions
 
-- **Frontend:** React (default/common, but flexible)
-- **Backend:** Python (preferred for backend)
-- **Real-Time:** Dynamic frontend
-- **Integration:** Slack integration considered
-- **Microservices:** Option to split into microservices for each game/type
+### Core Technologies
+- **Frontend:** React with TanStack (includes shadcn/ui components)
+- **Backend:** Python with FastAPI framework
+- **Testing:** Pytest for backend, Jest for frontend testing
+- **Real-Time Communication:** Polling-based updates (simpler than WebSockets for MVP)
+
+### AWS Infrastructure  
+- **Application Hosting:** Amazon ECS (containerized FastAPI application)
+- **Frontend Hosting:** Amazon S3 with CloudFront CDN
+- **Database:** Amazon RDS (PostgreSQL) for persistent data
+- **Infrastructure as Code:** Terraform for all AWS resource management
+- **CI/CD:** GitHub Actions for deployment pipeline
+- **Container Registry:** Amazon ECR for Docker images
+
+### Development Approach
+- **Architecture:** Monolithic FastAPI application (not microservices initially)
+- **Database Strategy:** Centralized RDS instance with shared data model
+- **Deployment:** Public IP ECS service with Application Load Balancer
+- **Environment Management:** Separate environments for dev/staging/production
 
 ---
 
@@ -91,6 +105,27 @@
 
 - **[Detailed Features Specification](./caja_app_features.md)** - Comprehensive breakdown of all platform features with user story foundations
 
+## Team Structure and Responsibilities
+
+### Sprint 0 (Scaffolding) Assignments
+- **Platform Engineering (Joe):** AWS infrastructure setup with Terraform, ECS deployment, RDS configuration
+- **Backend Development (Mauricio):** Python FastAPI application, database models, API endpoints
+- **Frontend Development (Tristan):** React application with TanStack, participant and viewer interfaces  
+- **Development Tooling (Tristan):** GitHub MCP integration, VS Code configuration, development workflow setup
+
+### Development Workflow
+- **Branching Strategy:** Feature branches with descriptive names (e.g., `feature/session-management`)
+- **Code Review:** All PRs require team member review before merging
+- **Testing:** Comprehensive test coverage required for all business logic
+- **Infrastructure Changes:** Terraform plan validation required for AWS changes
+
+### Integration Points
+- **Model Context Protocol (MCP):** GitHub integration for issue/story management
+- **GitHub Actions:** Automated testing and deployment pipeline
+- **VS Code Extensions:** Copilot rules integration for consistent development patterns
+
 ## Summary
 
 Caja is a modular, extensible platform for live event engagement, supporting real-time polling, trivia, voting, and other interactive activities. It emphasizes ease-of-use, rapid participation, and provides a base for engineering leaders to add new engagement mechanisms. The goal is to raise engagement in work/training events, with flexibility for future expansion.
+
+The platform will be built using modern cloud-native technologies on AWS, with a focus on simplicity, maintainability, and team collaboration through well-defined roles and automated tooling.
