@@ -34,7 +34,7 @@ cd conflicto/backend
 ### **Daily Development:**
 
 ```bash
-# From backend/ directory
+# From backend/ directory (scripts must be run from backend directory)
 cd backend
 ./start-dev.sh    # Start development
 ./run-tests.sh    # Run tests
