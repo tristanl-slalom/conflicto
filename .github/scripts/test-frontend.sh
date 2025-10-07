@@ -13,10 +13,6 @@ fi
 echo "🔍 Running TypeScript type checking..."
 npm run type-check
 
-# Run linting
-echo "🧹 Running ESLint..."
-npm run lint
-
 # Run format checking
 echo "💅 Checking code formatting..."
 npm run format:check

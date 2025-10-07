@@ -5,7 +5,10 @@
  * Caja Live Event Engagement Platform Backend API
  * OpenAPI spec version: 0.1.0
  */
-import { useMutation, useQuery } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -18,16 +21,28 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult,
+  UseQueryResult
 } from '@tanstack/react-query';
 
 import * as axios from 'axios';
-import type { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
+import type {
+  AxiosError,
+  AxiosRequestConfig,
+  AxiosResponse
+} from 'axios';
 
-import { faker } from '@faker-js/faker';
+import {
+  faker
+} from '@faker-js/faker';
 
-import { HttpResponse, delay, http } from 'msw';
-import type { RequestHandlerOptions } from 'msw';
+import {
+  HttpResponse,
+  delay,
+  http
+} from 'msw';
+import type {
+  RequestHandlerOptions
+} from 'msw';
 
 export type ActivityResponseDescription = string | null;
 
@@ -59,7 +74,8 @@ export interface ActivityResponse {
 /**
  * Activity type enumeration.
  */
-export type ActivityType = (typeof ActivityType)[keyof typeof ActivityType];
+export type ActivityType = typeof ActivityType[keyof typeof ActivityType];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const ActivityType = {
@@ -109,8 +125,8 @@ export interface ParticipantResponse {
 /**
  * Participant role enumeration.
  */
-export type ParticipantRole =
-  (typeof ParticipantRole)[keyof typeof ParticipantRole];
+export type ParticipantRole = typeof ParticipantRole[keyof typeof ParticipantRole];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const ParticipantRole = {
@@ -211,7 +227,8 @@ export interface SessionResponse {
 /**
  * Session status enumeration.
  */
-export type SessionStatus = (typeof SessionStatus)[keyof typeof SessionStatus];
+export type SessionStatus = typeof SessionStatus[keyof typeof SessionStatus];
+
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const SessionStatus = {
@@ -247,12 +264,12 @@ export interface ValidationError {
 }
 
 export type ListSessionsApiV1SessionsGetParams = {
-  offset?: number;
-  limit?: number;
+offset?: number;
+limit?: number;
 };
 
 export type GetSessionByCodeApiV1SessionsCodeCodeGetParams = {
-  code_type?: string;
+code_type?: string;
 };
 
 /**
@@ -262,152 +279,91 @@ Returns service health status and checks database connectivity.
  * @summary Health Check
  */
 export const healthCheckApiV1HealthGet = (
-  options?: AxiosRequestConfig
-): Promise<AxiosResponse<HealthResponse>> => {
-  return axios.default.get(`/api/v1/health/`, options);
-};
+     options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<HealthResponse>> => {
+    
+    
+    return axios.default.get(
+      `/api/v1/health/`,options
+    );
+  }
+
+
+
 
 export const getHealthCheckApiV1HealthGetQueryKey = () => {
-  return [`/api/v1/health/`] as const;
-};
+    return [
+    `/api/v1/health/`
+    ] as const;
+    }
 
-export const getHealthCheckApiV1HealthGetQueryOptions = <
-  TData = Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>,
-  TError = AxiosError<ErrorResponse>,
->(options?: {
-  query?: Partial<
-    UseQueryOptions<
-      Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>,
-      TError,
-      TData
-    >
-  >;
-  axios?: AxiosRequestConfig;
-}) => {
-  const { query: queryOptions, axios: axiosOptions } = options ?? {};
+    
+export const getHealthCheckApiV1HealthGetQueryOptions = <TData = Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>, TError = AxiosError<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+) => {
 
-  const queryKey =
-    queryOptions?.queryKey ?? getHealthCheckApiV1HealthGetQueryKey();
+const {query: queryOptions, axios: axiosOptions} = options ?? {};
 
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>
-  > = ({ signal }) => healthCheckApiV1HealthGet({ signal, ...axiosOptions });
+  const queryKey =  queryOptions?.queryKey ?? getHealthCheckApiV1HealthGetQueryKey();
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  
 
-export type HealthCheckApiV1HealthGetQueryResult = NonNullable<
-  Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>
->;
-export type HealthCheckApiV1HealthGetQueryError = AxiosError<ErrorResponse>;
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>> = ({ signal }) => healthCheckApiV1HealthGet({ signal, ...axiosOptions });
 
-export function useHealthCheckApiV1HealthGet<
-  TData = Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>,
-  TError = AxiosError<ErrorResponse>,
->(
-  options: {
-    query: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type HealthCheckApiV1HealthGetQueryResult = NonNullable<Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>>
+export type HealthCheckApiV1HealthGetQueryError = AxiosError<ErrorResponse>
+
+
+export function useHealthCheckApiV1HealthGet<TData = Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>, TError = AxiosError<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>,
           TError,
           Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>
-        >,
-        'initialData'
-      >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useHealthCheckApiV1HealthGet<
-  TData = Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>,
-  TError = AxiosError<ErrorResponse>,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useHealthCheckApiV1HealthGet<TData = Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>, TError = AxiosError<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>,
           TError,
           Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>
-        >,
-        'initialData'
-      >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useHealthCheckApiV1HealthGet<
-  TData = Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>,
-  TError = AxiosError<ErrorResponse>,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>,
-        TError,
-        TData
-      >
-    >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useHealthCheckApiV1HealthGet<TData = Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>, TError = AxiosError<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Health Check
  */
 
-export function useHealthCheckApiV1HealthGet<
-  TData = Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>,
-  TError = AxiosError<ErrorResponse>,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>,
-        TError,
-        TData
-      >
-    >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getHealthCheckApiV1HealthGetQueryOptions(options);
+export function useHealthCheckApiV1HealthGet<TData = Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>, TError = AxiosError<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getHealthCheckApiV1HealthGetQueryOptions(options)
 
-  query.queryKey = queryOptions.queryKey;
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
 
   return query;
 }
+
+
+
 
 /**
  * Readiness check endpoint.
@@ -416,154 +372,91 @@ Returns whether the service is ready to accept requests.
  * @summary Readiness Check
  */
 export const readinessCheckApiV1HealthReadyGet = (
-  options?: AxiosRequestConfig
-): Promise<AxiosResponse<HealthResponse>> => {
-  return axios.default.get(`/api/v1/health/ready`, options);
-};
+     options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<HealthResponse>> => {
+    
+    
+    return axios.default.get(
+      `/api/v1/health/ready`,options
+    );
+  }
+
+
+
 
 export const getReadinessCheckApiV1HealthReadyGetQueryKey = () => {
-  return [`/api/v1/health/ready`] as const;
-};
+    return [
+    `/api/v1/health/ready`
+    ] as const;
+    }
 
-export const getReadinessCheckApiV1HealthReadyGetQueryOptions = <
-  TData = Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>,
-  TError = AxiosError<unknown>,
->(options?: {
-  query?: Partial<
-    UseQueryOptions<
-      Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>,
-      TError,
-      TData
-    >
-  >;
-  axios?: AxiosRequestConfig;
-}) => {
-  const { query: queryOptions, axios: axiosOptions } = options ?? {};
+    
+export const getReadinessCheckApiV1HealthReadyGetQueryOptions = <TData = Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>, TError = AxiosError<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+) => {
 
-  const queryKey =
-    queryOptions?.queryKey ?? getReadinessCheckApiV1HealthReadyGetQueryKey();
+const {query: queryOptions, axios: axiosOptions} = options ?? {};
 
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>
-  > = ({ signal }) =>
-    readinessCheckApiV1HealthReadyGet({ signal, ...axiosOptions });
+  const queryKey =  queryOptions?.queryKey ?? getReadinessCheckApiV1HealthReadyGetQueryKey();
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  
 
-export type ReadinessCheckApiV1HealthReadyGetQueryResult = NonNullable<
-  Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>
->;
-export type ReadinessCheckApiV1HealthReadyGetQueryError = AxiosError<unknown>;
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>> = ({ signal }) => readinessCheckApiV1HealthReadyGet({ signal, ...axiosOptions });
 
-export function useReadinessCheckApiV1HealthReadyGet<
-  TData = Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>,
-  TError = AxiosError<unknown>,
->(
-  options: {
-    query: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ReadinessCheckApiV1HealthReadyGetQueryResult = NonNullable<Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>>
+export type ReadinessCheckApiV1HealthReadyGetQueryError = AxiosError<unknown>
+
+
+export function useReadinessCheckApiV1HealthReadyGet<TData = Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>, TError = AxiosError<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>,
           TError,
           Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>
-        >,
-        'initialData'
-      >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useReadinessCheckApiV1HealthReadyGet<
-  TData = Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>,
-  TError = AxiosError<unknown>,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useReadinessCheckApiV1HealthReadyGet<TData = Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>,
           TError,
           Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>
-        >,
-        'initialData'
-      >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useReadinessCheckApiV1HealthReadyGet<
-  TData = Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>,
-  TError = AxiosError<unknown>,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>,
-        TError,
-        TData
-      >
-    >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useReadinessCheckApiV1HealthReadyGet<TData = Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Readiness Check
  */
 
-export function useReadinessCheckApiV1HealthReadyGet<
-  TData = Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>,
-  TError = AxiosError<unknown>,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>,
-        TError,
-        TData
-      >
-    >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions =
-    getReadinessCheckApiV1HealthReadyGetQueryOptions(options);
+export function useReadinessCheckApiV1HealthReadyGet<TData = Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getReadinessCheckApiV1HealthReadyGetQueryOptions(options)
 
-  query.queryKey = queryOptions.queryKey;
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
 
   return query;
 }
+
+
+
 
 /**
  * Liveness check endpoint.
@@ -572,153 +465,91 @@ Returns whether the service is alive and running.
  * @summary Liveness Check
  */
 export const livenessCheckApiV1HealthLiveGet = (
-  options?: AxiosRequestConfig
-): Promise<AxiosResponse<HealthResponse>> => {
-  return axios.default.get(`/api/v1/health/live`, options);
-};
+     options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<HealthResponse>> => {
+    
+    
+    return axios.default.get(
+      `/api/v1/health/live`,options
+    );
+  }
+
+
+
 
 export const getLivenessCheckApiV1HealthLiveGetQueryKey = () => {
-  return [`/api/v1/health/live`] as const;
-};
+    return [
+    `/api/v1/health/live`
+    ] as const;
+    }
 
-export const getLivenessCheckApiV1HealthLiveGetQueryOptions = <
-  TData = Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>,
-  TError = AxiosError<unknown>,
->(options?: {
-  query?: Partial<
-    UseQueryOptions<
-      Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>,
-      TError,
-      TData
-    >
-  >;
-  axios?: AxiosRequestConfig;
-}) => {
-  const { query: queryOptions, axios: axiosOptions } = options ?? {};
+    
+export const getLivenessCheckApiV1HealthLiveGetQueryOptions = <TData = Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>, TError = AxiosError<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+) => {
 
-  const queryKey =
-    queryOptions?.queryKey ?? getLivenessCheckApiV1HealthLiveGetQueryKey();
+const {query: queryOptions, axios: axiosOptions} = options ?? {};
 
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>
-  > = ({ signal }) =>
-    livenessCheckApiV1HealthLiveGet({ signal, ...axiosOptions });
+  const queryKey =  queryOptions?.queryKey ?? getLivenessCheckApiV1HealthLiveGetQueryKey();
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  
 
-export type LivenessCheckApiV1HealthLiveGetQueryResult = NonNullable<
-  Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>
->;
-export type LivenessCheckApiV1HealthLiveGetQueryError = AxiosError<unknown>;
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>> = ({ signal }) => livenessCheckApiV1HealthLiveGet({ signal, ...axiosOptions });
 
-export function useLivenessCheckApiV1HealthLiveGet<
-  TData = Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>,
-  TError = AxiosError<unknown>,
->(
-  options: {
-    query: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type LivenessCheckApiV1HealthLiveGetQueryResult = NonNullable<Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>>
+export type LivenessCheckApiV1HealthLiveGetQueryError = AxiosError<unknown>
+
+
+export function useLivenessCheckApiV1HealthLiveGet<TData = Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>, TError = AxiosError<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>,
           TError,
           Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>
-        >,
-        'initialData'
-      >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useLivenessCheckApiV1HealthLiveGet<
-  TData = Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>,
-  TError = AxiosError<unknown>,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useLivenessCheckApiV1HealthLiveGet<TData = Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>,
           TError,
           Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>
-        >,
-        'initialData'
-      >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useLivenessCheckApiV1HealthLiveGet<
-  TData = Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>,
-  TError = AxiosError<unknown>,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>,
-        TError,
-        TData
-      >
-    >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useLivenessCheckApiV1HealthLiveGet<TData = Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Liveness Check
  */
 
-export function useLivenessCheckApiV1HealthLiveGet<
-  TData = Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>,
-  TError = AxiosError<unknown>,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>,
-        TError,
-        TData
-      >
-    >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getLivenessCheckApiV1HealthLiveGetQueryOptions(options);
+export function useLivenessCheckApiV1HealthLiveGet<TData = Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getLivenessCheckApiV1HealthLiveGetQueryOptions(options)
 
-  query.queryKey = queryOptions.queryKey;
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
 
   return query;
 }
+
+
+
 
 /**
  * Create a new session.
@@ -728,87 +559,64 @@ The session starts in DRAFT status.
  * @summary Create Session
  */
 export const createSessionApiV1SessionsPost = (
-  sessionCreate: SessionCreate,
-  options?: AxiosRequestConfig
-): Promise<AxiosResponse<SessionResponse>> => {
-  return axios.default.post(`/api/v1/sessions/`, sessionCreate, options);
-};
+    sessionCreate: SessionCreate, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<SessionResponse>> => {
+    
+    
+    return axios.default.post(
+      `/api/v1/sessions/`,
+      sessionCreate,options
+    );
+  }
 
-export const getCreateSessionApiV1SessionsPostMutationOptions = <
-  TError = AxiosError<ErrorResponse | HTTPValidationError>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createSessionApiV1SessionsPost>>,
-    TError,
-    { data: SessionCreate },
-    TContext
-  >;
-  axios?: AxiosRequestConfig;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof createSessionApiV1SessionsPost>>,
-  TError,
-  { data: SessionCreate },
-  TContext
-> => {
-  const mutationKey = ['createSessionApiV1SessionsPost'];
-  const { mutation: mutationOptions, axios: axiosOptions } = options
-    ? options.mutation &&
-      'mutationKey' in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, axios: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof createSessionApiV1SessionsPost>>,
-    { data: SessionCreate }
-  > = props => {
-    const { data } = props ?? {};
 
-    return createSessionApiV1SessionsPost(data, axiosOptions);
-  };
+export const getCreateSessionApiV1SessionsPostMutationOptions = <TError = AxiosError<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSessionApiV1SessionsPost>>, TError,{data: SessionCreate}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof createSessionApiV1SessionsPost>>, TError,{data: SessionCreate}, TContext> => {
 
-  return { mutationFn, ...mutationOptions };
-};
+const mutationKey = ['createSessionApiV1SessionsPost'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
 
-export type CreateSessionApiV1SessionsPostMutationResult = NonNullable<
-  Awaited<ReturnType<typeof createSessionApiV1SessionsPost>>
->;
-export type CreateSessionApiV1SessionsPostMutationBody = SessionCreate;
-export type CreateSessionApiV1SessionsPostMutationError = AxiosError<
-  ErrorResponse | HTTPValidationError
->;
+      
 
-/**
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSessionApiV1SessionsPost>>, {data: SessionCreate}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createSessionApiV1SessionsPost(data,axiosOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateSessionApiV1SessionsPostMutationResult = NonNullable<Awaited<ReturnType<typeof createSessionApiV1SessionsPost>>>
+    export type CreateSessionApiV1SessionsPostMutationBody = SessionCreate
+    export type CreateSessionApiV1SessionsPostMutationError = AxiosError<ErrorResponse | HTTPValidationError>
+
+    /**
  * @summary Create Session
  */
-export const useCreateSessionApiV1SessionsPost = <
-  TError = AxiosError<ErrorResponse | HTTPValidationError>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof createSessionApiV1SessionsPost>>,
-      TError,
-      { data: SessionCreate },
-      TContext
-    >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof createSessionApiV1SessionsPost>>,
-  TError,
-  { data: SessionCreate },
-  TContext
-> => {
-  const mutationOptions =
-    getCreateSessionApiV1SessionsPostMutationOptions(options);
+export const useCreateSessionApiV1SessionsPost = <TError = AxiosError<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSessionApiV1SessionsPost>>, TError,{data: SessionCreate}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createSessionApiV1SessionsPost>>,
+        TError,
+        {data: SessionCreate},
+        TContext
+      > => {
 
-  return useMutation(mutationOptions, queryClient);
-};
+      const mutationOptions = getCreateSessionApiV1SessionsPostMutationOptions(options);
 
+      return useMutation(mutationOptions, queryClient);
+    }
+    
 /**
  * List all sessions with pagination.
 
@@ -816,171 +624,93 @@ Returns a paginated list of all sessions, ordered by creation date (newest first
  * @summary List Sessions
  */
 export const listSessionsApiV1SessionsGet = (
-  params?: ListSessionsApiV1SessionsGetParams,
-  options?: AxiosRequestConfig
-): Promise<AxiosResponse<SessionList>> => {
-  return axios.default.get(`/api/v1/sessions/`, {
+    params?: ListSessionsApiV1SessionsGetParams, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<SessionList>> => {
+    
+    
+    return axios.default.get(
+      `/api/v1/sessions/`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
-
-export const getListSessionsApiV1SessionsGetQueryKey = (
-  params?: ListSessionsApiV1SessionsGetParams
-) => {
-  return [`/api/v1/sessions/`, ...(params ? [params] : [])] as const;
-};
-
-export const getListSessionsApiV1SessionsGetQueryOptions = <
-  TData = Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>,
-  TError = AxiosError<ErrorResponse | HTTPValidationError>,
->(
-  params?: ListSessionsApiV1SessionsGetParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>,
-        TError,
-        TData
-      >
-    >;
-    axios?: AxiosRequestConfig;
+        params: {...params, ...options?.params},}
+    );
   }
+
+
+
+
+export const getListSessionsApiV1SessionsGetQueryKey = (params?: ListSessionsApiV1SessionsGetParams,) => {
+    return [
+    `/api/v1/sessions/`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getListSessionsApiV1SessionsGetQueryOptions = <TData = Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(params?: ListSessionsApiV1SessionsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>, TError, TData>>, axios?: AxiosRequestConfig}
 ) => {
-  const { query: queryOptions, axios: axiosOptions } = options ?? {};
 
-  const queryKey =
-    queryOptions?.queryKey ?? getListSessionsApiV1SessionsGetQueryKey(params);
+const {query: queryOptions, axios: axiosOptions} = options ?? {};
 
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>
-  > = ({ signal }) =>
-    listSessionsApiV1SessionsGet(params, { signal, ...axiosOptions });
+  const queryKey =  queryOptions?.queryKey ?? getListSessionsApiV1SessionsGetQueryKey(params);
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  
 
-export type ListSessionsApiV1SessionsGetQueryResult = NonNullable<
-  Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>
->;
-export type ListSessionsApiV1SessionsGetQueryError = AxiosError<
-  ErrorResponse | HTTPValidationError
->;
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>> = ({ signal }) => listSessionsApiV1SessionsGet(params, { signal, ...axiosOptions });
 
-export function useListSessionsApiV1SessionsGet<
-  TData = Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>,
-  TError = AxiosError<ErrorResponse | HTTPValidationError>,
->(
-  params: undefined | ListSessionsApiV1SessionsGetParams,
-  options: {
-    query: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListSessionsApiV1SessionsGetQueryResult = NonNullable<Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>>
+export type ListSessionsApiV1SessionsGetQueryError = AxiosError<ErrorResponse | HTTPValidationError>
+
+
+export function useListSessionsApiV1SessionsGet<TData = Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(
+ params: undefined |  ListSessionsApiV1SessionsGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>,
           TError,
           Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>
-        >,
-        'initialData'
-      >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useListSessionsApiV1SessionsGet<
-  TData = Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>,
-  TError = AxiosError<ErrorResponse | HTTPValidationError>,
->(
-  params?: ListSessionsApiV1SessionsGetParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListSessionsApiV1SessionsGet<TData = Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(
+ params?: ListSessionsApiV1SessionsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>,
           TError,
           Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>
-        >,
-        'initialData'
-      >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useListSessionsApiV1SessionsGet<
-  TData = Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>,
-  TError = AxiosError<ErrorResponse | HTTPValidationError>,
->(
-  params?: ListSessionsApiV1SessionsGetParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>,
-        TError,
-        TData
-      >
-    >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListSessionsApiV1SessionsGet<TData = Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(
+ params?: ListSessionsApiV1SessionsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List Sessions
  */
 
-export function useListSessionsApiV1SessionsGet<
-  TData = Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>,
-  TError = AxiosError<ErrorResponse | HTTPValidationError>,
->(
-  params?: ListSessionsApiV1SessionsGetParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>,
-        TError,
-        TData
-      >
-    >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getListSessionsApiV1SessionsGetQueryOptions(
-    params,
-    options
-  );
+export function useListSessionsApiV1SessionsGet<TData = Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(
+ params?: ListSessionsApiV1SessionsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getListSessionsApiV1SessionsGetQueryOptions(params,options)
 
-  query.queryKey = queryOptions.queryKey;
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
 
   return query;
 }
+
+
+
 
 /**
  * Get detailed session information.
@@ -989,174 +719,91 @@ Returns complete session details including activities and participants.
  * @summary Get Session
  */
 export const getSessionApiV1SessionsSessionIdGet = (
-  sessionId: number,
-  options?: AxiosRequestConfig
-): Promise<AxiosResponse<SessionDetail>> => {
-  return axios.default.get(`/api/v1/sessions/${sessionId}`, options);
-};
-
-export const getGetSessionApiV1SessionsSessionIdGetQueryKey = (
-  sessionId?: number
-) => {
-  return [`/api/v1/sessions/${sessionId}`] as const;
-};
-
-export const getGetSessionApiV1SessionsSessionIdGetQueryOptions = <
-  TData = Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>,
-  TError = AxiosError<ErrorResponse | HTTPValidationError>,
->(
-  sessionId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>,
-        TError,
-        TData
-      >
-    >;
-    axios?: AxiosRequestConfig;
+    sessionId: number, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<SessionDetail>> => {
+    
+    
+    return axios.default.get(
+      `/api/v1/sessions/${sessionId}`,options
+    );
   }
+
+
+
+
+export const getGetSessionApiV1SessionsSessionIdGetQueryKey = (sessionId?: number,) => {
+    return [
+    `/api/v1/sessions/${sessionId}`
+    ] as const;
+    }
+
+    
+export const getGetSessionApiV1SessionsSessionIdGetQueryOptions = <TData = Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(sessionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>, TError, TData>>, axios?: AxiosRequestConfig}
 ) => {
-  const { query: queryOptions, axios: axiosOptions } = options ?? {};
 
-  const queryKey =
-    queryOptions?.queryKey ??
-    getGetSessionApiV1SessionsSessionIdGetQueryKey(sessionId);
+const {query: queryOptions, axios: axiosOptions} = options ?? {};
 
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>
-  > = ({ signal }) =>
-    getSessionApiV1SessionsSessionIdGet(sessionId, { signal, ...axiosOptions });
+  const queryKey =  queryOptions?.queryKey ?? getGetSessionApiV1SessionsSessionIdGetQueryKey(sessionId);
 
-  return {
-    queryKey,
-    queryFn,
-    enabled: !!sessionId,
-    ...queryOptions,
-  } as UseQueryOptions<
-    Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  
 
-export type GetSessionApiV1SessionsSessionIdGetQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>
->;
-export type GetSessionApiV1SessionsSessionIdGetQueryError = AxiosError<
-  ErrorResponse | HTTPValidationError
->;
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>> = ({ signal }) => getSessionApiV1SessionsSessionIdGet(sessionId, { signal, ...axiosOptions });
 
-export function useGetSessionApiV1SessionsSessionIdGet<
-  TData = Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>,
-  TError = AxiosError<ErrorResponse | HTTPValidationError>,
->(
-  sessionId: number,
-  options: {
-    query: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(sessionId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSessionApiV1SessionsSessionIdGetQueryResult = NonNullable<Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>>
+export type GetSessionApiV1SessionsSessionIdGetQueryError = AxiosError<ErrorResponse | HTTPValidationError>
+
+
+export function useGetSessionApiV1SessionsSessionIdGet<TData = Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(
+ sessionId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>,
           TError,
           Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>
-        >,
-        'initialData'
-      >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetSessionApiV1SessionsSessionIdGet<
-  TData = Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>,
-  TError = AxiosError<ErrorResponse | HTTPValidationError>,
->(
-  sessionId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSessionApiV1SessionsSessionIdGet<TData = Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(
+ sessionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>,
           TError,
           Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>
-        >,
-        'initialData'
-      >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetSessionApiV1SessionsSessionIdGet<
-  TData = Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>,
-  TError = AxiosError<ErrorResponse | HTTPValidationError>,
->(
-  sessionId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>,
-        TError,
-        TData
-      >
-    >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSessionApiV1SessionsSessionIdGet<TData = Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(
+ sessionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Get Session
  */
 
-export function useGetSessionApiV1SessionsSessionIdGet<
-  TData = Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>,
-  TError = AxiosError<ErrorResponse | HTTPValidationError>,
->(
-  sessionId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>,
-        TError,
-        TData
-      >
-    >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getGetSessionApiV1SessionsSessionIdGetQueryOptions(
-    sessionId,
-    options
-  );
+export function useGetSessionApiV1SessionsSessionIdGet<TData = Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(
+ sessionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getGetSessionApiV1SessionsSessionIdGetQueryOptions(sessionId,options)
 
-  query.queryKey = queryOptions.queryKey;
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
 
   return query;
 }
+
+
+
 
 /**
  * Update an existing session.
@@ -1165,96 +812,65 @@ Updates session details. Status transitions are tracked with timestamps.
  * @summary Update Session
  */
 export const updateSessionApiV1SessionsSessionIdPut = (
-  sessionId: number,
-  sessionUpdate: SessionUpdate,
-  options?: AxiosRequestConfig
-): Promise<AxiosResponse<SessionResponse>> => {
-  return axios.default.put(
-    `/api/v1/sessions/${sessionId}`,
-    sessionUpdate,
-    options
-  );
-};
-
-export const getUpdateSessionApiV1SessionsSessionIdPutMutationOptions = <
-  TError = AxiosError<ErrorResponse | HTTPValidationError>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof updateSessionApiV1SessionsSessionIdPut>>,
-    TError,
-    { sessionId: number; data: SessionUpdate },
-    TContext
-  >;
-  axios?: AxiosRequestConfig;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof updateSessionApiV1SessionsSessionIdPut>>,
-  TError,
-  { sessionId: number; data: SessionUpdate },
-  TContext
-> => {
-  const mutationKey = ['updateSessionApiV1SessionsSessionIdPut'];
-  const { mutation: mutationOptions, axios: axiosOptions } = options
-    ? options.mutation &&
-      'mutationKey' in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, axios: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof updateSessionApiV1SessionsSessionIdPut>>,
-    { sessionId: number; data: SessionUpdate }
-  > = props => {
-    const { sessionId, data } = props ?? {};
-
-    return updateSessionApiV1SessionsSessionIdPut(
-      sessionId,
-      data,
-      axiosOptions
+    sessionId: number,
+    sessionUpdate: SessionUpdate, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<SessionResponse>> => {
+    
+    
+    return axios.default.put(
+      `/api/v1/sessions/${sessionId}`,
+      sessionUpdate,options
     );
-  };
+  }
 
-  return { mutationFn, ...mutationOptions };
-};
 
-export type UpdateSessionApiV1SessionsSessionIdPutMutationResult = NonNullable<
-  Awaited<ReturnType<typeof updateSessionApiV1SessionsSessionIdPut>>
->;
-export type UpdateSessionApiV1SessionsSessionIdPutMutationBody = SessionUpdate;
-export type UpdateSessionApiV1SessionsSessionIdPutMutationError = AxiosError<
-  ErrorResponse | HTTPValidationError
->;
 
-/**
+export const getUpdateSessionApiV1SessionsSessionIdPutMutationOptions = <TError = AxiosError<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSessionApiV1SessionsSessionIdPut>>, TError,{sessionId: number;data: SessionUpdate}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof updateSessionApiV1SessionsSessionIdPut>>, TError,{sessionId: number;data: SessionUpdate}, TContext> => {
+
+const mutationKey = ['updateSessionApiV1SessionsSessionIdPut'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSessionApiV1SessionsSessionIdPut>>, {sessionId: number;data: SessionUpdate}> = (props) => {
+          const {sessionId,data} = props ?? {};
+
+          return  updateSessionApiV1SessionsSessionIdPut(sessionId,data,axiosOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateSessionApiV1SessionsSessionIdPutMutationResult = NonNullable<Awaited<ReturnType<typeof updateSessionApiV1SessionsSessionIdPut>>>
+    export type UpdateSessionApiV1SessionsSessionIdPutMutationBody = SessionUpdate
+    export type UpdateSessionApiV1SessionsSessionIdPutMutationError = AxiosError<ErrorResponse | HTTPValidationError>
+
+    /**
  * @summary Update Session
  */
-export const useUpdateSessionApiV1SessionsSessionIdPut = <
-  TError = AxiosError<ErrorResponse | HTTPValidationError>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof updateSessionApiV1SessionsSessionIdPut>>,
-      TError,
-      { sessionId: number; data: SessionUpdate },
-      TContext
-    >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof updateSessionApiV1SessionsSessionIdPut>>,
-  TError,
-  { sessionId: number; data: SessionUpdate },
-  TContext
-> => {
-  const mutationOptions =
-    getUpdateSessionApiV1SessionsSessionIdPutMutationOptions(options);
+export const useUpdateSessionApiV1SessionsSessionIdPut = <TError = AxiosError<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSessionApiV1SessionsSessionIdPut>>, TError,{sessionId: number;data: SessionUpdate}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateSessionApiV1SessionsSessionIdPut>>,
+        TError,
+        {sessionId: number;data: SessionUpdate},
+        TContext
+      > => {
 
-  return useMutation(mutationOptions, queryClient);
-};
+      const mutationOptions = getUpdateSessionApiV1SessionsSessionIdPutMutationOptions(options);
 
+      return useMutation(mutationOptions, queryClient);
+    }
+    
 /**
  * Delete a session.
 
@@ -1262,88 +878,63 @@ Permanently deletes a session and all associated data (activities, participants,
  * @summary Delete Session
  */
 export const deleteSessionApiV1SessionsSessionIdDelete = (
-  sessionId: number,
-  options?: AxiosRequestConfig
-): Promise<AxiosResponse<void>> => {
-  return axios.default.delete(`/api/v1/sessions/${sessionId}`, options);
-};
+    sessionId: number, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<void>> => {
+    
+    
+    return axios.default.delete(
+      `/api/v1/sessions/${sessionId}`,options
+    );
+  }
 
-export const getDeleteSessionApiV1SessionsSessionIdDeleteMutationOptions = <
-  TError = AxiosError<ErrorResponse | HTTPValidationError>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteSessionApiV1SessionsSessionIdDelete>>,
-    TError,
-    { sessionId: number },
-    TContext
-  >;
-  axios?: AxiosRequestConfig;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof deleteSessionApiV1SessionsSessionIdDelete>>,
-  TError,
-  { sessionId: number },
-  TContext
-> => {
-  const mutationKey = ['deleteSessionApiV1SessionsSessionIdDelete'];
-  const { mutation: mutationOptions, axios: axiosOptions } = options
-    ? options.mutation &&
-      'mutationKey' in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, axios: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof deleteSessionApiV1SessionsSessionIdDelete>>,
-    { sessionId: number }
-  > = props => {
-    const { sessionId } = props ?? {};
 
-    return deleteSessionApiV1SessionsSessionIdDelete(sessionId, axiosOptions);
-  };
+export const getDeleteSessionApiV1SessionsSessionIdDeleteMutationOptions = <TError = AxiosError<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSessionApiV1SessionsSessionIdDelete>>, TError,{sessionId: number}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteSessionApiV1SessionsSessionIdDelete>>, TError,{sessionId: number}, TContext> => {
 
-  return { mutationFn, ...mutationOptions };
-};
+const mutationKey = ['deleteSessionApiV1SessionsSessionIdDelete'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
 
-export type DeleteSessionApiV1SessionsSessionIdDeleteMutationResult =
-  NonNullable<
-    Awaited<ReturnType<typeof deleteSessionApiV1SessionsSessionIdDelete>>
-  >;
+      
 
-export type DeleteSessionApiV1SessionsSessionIdDeleteMutationError = AxiosError<
-  ErrorResponse | HTTPValidationError
->;
 
-/**
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteSessionApiV1SessionsSessionIdDelete>>, {sessionId: number}> = (props) => {
+          const {sessionId} = props ?? {};
+
+          return  deleteSessionApiV1SessionsSessionIdDelete(sessionId,axiosOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteSessionApiV1SessionsSessionIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteSessionApiV1SessionsSessionIdDelete>>>
+    
+    export type DeleteSessionApiV1SessionsSessionIdDeleteMutationError = AxiosError<ErrorResponse | HTTPValidationError>
+
+    /**
  * @summary Delete Session
  */
-export const useDeleteSessionApiV1SessionsSessionIdDelete = <
-  TError = AxiosError<ErrorResponse | HTTPValidationError>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof deleteSessionApiV1SessionsSessionIdDelete>>,
-      TError,
-      { sessionId: number },
-      TContext
-    >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof deleteSessionApiV1SessionsSessionIdDelete>>,
-  TError,
-  { sessionId: number },
-  TContext
-> => {
-  const mutationOptions =
-    getDeleteSessionApiV1SessionsSessionIdDeleteMutationOptions(options);
+export const useDeleteSessionApiV1SessionsSessionIdDelete = <TError = AxiosError<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSessionApiV1SessionsSessionIdDelete>>, TError,{sessionId: number}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteSessionApiV1SessionsSessionIdDelete>>,
+        TError,
+        {sessionId: number},
+        TContext
+      > => {
 
-  return useMutation(mutationOptions, queryClient);
-};
+      const mutationOptions = getDeleteSessionApiV1SessionsSessionIdDeleteMutationOptions(options);
 
+      return useMutation(mutationOptions, queryClient);
+    }
+    
 /**
  * Get session by QR code or admin code.
 
@@ -1351,900 +942,322 @@ Allows participants to join via QR code or admins to access via admin code.
  * @summary Get Session By Code
  */
 export const getSessionByCodeApiV1SessionsCodeCodeGet = (
-  code: string,
-  params?: GetSessionByCodeApiV1SessionsCodeCodeGetParams,
-  options?: AxiosRequestConfig
-): Promise<AxiosResponse<SessionResponse>> => {
-  return axios.default.get(`/api/v1/sessions/code/${code}`, {
+    code: string,
+    params?: GetSessionByCodeApiV1SessionsCodeCodeGetParams, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<SessionResponse>> => {
+    
+    
+    return axios.default.get(
+      `/api/v1/sessions/code/${code}`,{
     ...options,
-    params: { ...params, ...options?.params },
-  });
-};
-
-export const getGetSessionByCodeApiV1SessionsCodeCodeGetQueryKey = (
-  code?: string,
-  params?: GetSessionByCodeApiV1SessionsCodeCodeGetParams
-) => {
-  return [
-    `/api/v1/sessions/code/${code}`,
-    ...(params ? [params] : []),
-  ] as const;
-};
-
-export const getGetSessionByCodeApiV1SessionsCodeCodeGetQueryOptions = <
-  TData = Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>,
-  TError = AxiosError<ErrorResponse | HTTPValidationError>,
->(
-  code: string,
-  params?: GetSessionByCodeApiV1SessionsCodeCodeGetParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>,
-        TError,
-        TData
-      >
-    >;
-    axios?: AxiosRequestConfig;
+        params: {...params, ...options?.params},}
+    );
   }
+
+
+
+
+export const getGetSessionByCodeApiV1SessionsCodeCodeGetQueryKey = (code?: string,
+    params?: GetSessionByCodeApiV1SessionsCodeCodeGetParams,) => {
+    return [
+    `/api/v1/sessions/code/${code}`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getGetSessionByCodeApiV1SessionsCodeCodeGetQueryOptions = <TData = Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(code: string,
+    params?: GetSessionByCodeApiV1SessionsCodeCodeGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>, TError, TData>>, axios?: AxiosRequestConfig}
 ) => {
-  const { query: queryOptions, axios: axiosOptions } = options ?? {};
 
-  const queryKey =
-    queryOptions?.queryKey ??
-    getGetSessionByCodeApiV1SessionsCodeCodeGetQueryKey(code, params);
+const {query: queryOptions, axios: axiosOptions} = options ?? {};
 
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>
-  > = ({ signal }) =>
-    getSessionByCodeApiV1SessionsCodeCodeGet(code, params, {
-      signal,
-      ...axiosOptions,
-    });
+  const queryKey =  queryOptions?.queryKey ?? getGetSessionByCodeApiV1SessionsCodeCodeGetQueryKey(code,params);
 
-  return {
-    queryKey,
-    queryFn,
-    enabled: !!code,
-    ...queryOptions,
-  } as UseQueryOptions<
-    Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  
 
-export type GetSessionByCodeApiV1SessionsCodeCodeGetQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>
->;
-export type GetSessionByCodeApiV1SessionsCodeCodeGetQueryError = AxiosError<
-  ErrorResponse | HTTPValidationError
->;
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>> = ({ signal }) => getSessionByCodeApiV1SessionsCodeCodeGet(code,params, { signal, ...axiosOptions });
 
-export function useGetSessionByCodeApiV1SessionsCodeCodeGet<
-  TData = Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>,
-  TError = AxiosError<ErrorResponse | HTTPValidationError>,
->(
-  code: string,
-  params: undefined | GetSessionByCodeApiV1SessionsCodeCodeGetParams,
-  options: {
-    query: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(code), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSessionByCodeApiV1SessionsCodeCodeGetQueryResult = NonNullable<Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>>
+export type GetSessionByCodeApiV1SessionsCodeCodeGetQueryError = AxiosError<ErrorResponse | HTTPValidationError>
+
+
+export function useGetSessionByCodeApiV1SessionsCodeCodeGet<TData = Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(
+ code: string,
+    params: undefined |  GetSessionByCodeApiV1SessionsCodeCodeGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>,
           TError,
           Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>
-        >,
-        'initialData'
-      >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetSessionByCodeApiV1SessionsCodeCodeGet<
-  TData = Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>,
-  TError = AxiosError<ErrorResponse | HTTPValidationError>,
->(
-  code: string,
-  params?: GetSessionByCodeApiV1SessionsCodeCodeGetParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSessionByCodeApiV1SessionsCodeCodeGet<TData = Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(
+ code: string,
+    params?: GetSessionByCodeApiV1SessionsCodeCodeGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>,
           TError,
           Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>
-        >,
-        'initialData'
-      >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetSessionByCodeApiV1SessionsCodeCodeGet<
-  TData = Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>,
-  TError = AxiosError<ErrorResponse | HTTPValidationError>,
->(
-  code: string,
-  params?: GetSessionByCodeApiV1SessionsCodeCodeGetParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>,
-        TError,
-        TData
-      >
-    >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSessionByCodeApiV1SessionsCodeCodeGet<TData = Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(
+ code: string,
+    params?: GetSessionByCodeApiV1SessionsCodeCodeGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Get Session By Code
  */
 
-export function useGetSessionByCodeApiV1SessionsCodeCodeGet<
-  TData = Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>,
-  TError = AxiosError<ErrorResponse | HTTPValidationError>,
->(
-  code: string,
-  params?: GetSessionByCodeApiV1SessionsCodeCodeGetParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>,
-        TError,
-        TData
-      >
-    >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getGetSessionByCodeApiV1SessionsCodeCodeGetQueryOptions(
-    code,
-    params,
-    options
-  );
+export function useGetSessionByCodeApiV1SessionsCodeCodeGet<TData = Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(
+ code: string,
+    params?: GetSessionByCodeApiV1SessionsCodeCodeGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getGetSessionByCodeApiV1SessionsCodeCodeGetQueryOptions(code,params,options)
 
-  query.queryKey = queryOptions.queryKey;
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
 
   return query;
 }
+
+
+
 
 /**
  * Root endpoint.
  * @summary Root
  */
 export const rootGet = (
-  options?: AxiosRequestConfig
-): Promise<AxiosResponse<unknown>> => {
-  return axios.default.get(`/`, options);
-};
+     options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<unknown>> => {
+    
+    
+    return axios.default.get(
+      `/`,options
+    );
+  }
+
+
+
 
 export const getRootGetQueryKey = () => {
-  return [`/`] as const;
-};
+    return [
+    `/`
+    ] as const;
+    }
 
-export const getRootGetQueryOptions = <
-  TData = Awaited<ReturnType<typeof rootGet>>,
-  TError = AxiosError<unknown>,
->(options?: {
-  query?: Partial<
-    UseQueryOptions<Awaited<ReturnType<typeof rootGet>>, TError, TData>
-  >;
-  axios?: AxiosRequestConfig;
-}) => {
-  const { query: queryOptions, axios: axiosOptions } = options ?? {};
+    
+export const getRootGetQueryOptions = <TData = Awaited<ReturnType<typeof rootGet>>, TError = AxiosError<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rootGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+) => {
 
-  const queryKey = queryOptions?.queryKey ?? getRootGetQueryKey();
+const {query: queryOptions, axios: axiosOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof rootGet>>> = ({
-    signal,
-  }) => rootGet({ signal, ...axiosOptions });
+  const queryKey =  queryOptions?.queryKey ?? getRootGetQueryKey();
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof rootGet>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  
 
-export type RootGetQueryResult = NonNullable<
-  Awaited<ReturnType<typeof rootGet>>
->;
-export type RootGetQueryError = AxiosError<unknown>;
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof rootGet>>> = ({ signal }) => rootGet({ signal, ...axiosOptions });
 
-export function useRootGet<
-  TData = Awaited<ReturnType<typeof rootGet>>,
-  TError = AxiosError<unknown>,
->(
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof rootGet>>, TError, TData>
-    > &
-      Pick<
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof rootGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type RootGetQueryResult = NonNullable<Awaited<ReturnType<typeof rootGet>>>
+export type RootGetQueryError = AxiosError<unknown>
+
+
+export function useRootGet<TData = Awaited<ReturnType<typeof rootGet>>, TError = AxiosError<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof rootGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof rootGet>>,
           TError,
           Awaited<ReturnType<typeof rootGet>>
-        >,
-        'initialData'
-      >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useRootGet<
-  TData = Awaited<ReturnType<typeof rootGet>>,
-  TError = AxiosError<unknown>,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof rootGet>>, TError, TData>
-    > &
-      Pick<
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useRootGet<TData = Awaited<ReturnType<typeof rootGet>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rootGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof rootGet>>,
           TError,
           Awaited<ReturnType<typeof rootGet>>
-        >,
-        'initialData'
-      >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useRootGet<
-  TData = Awaited<ReturnType<typeof rootGet>>,
-  TError = AxiosError<unknown>,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof rootGet>>, TError, TData>
-    >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useRootGet<TData = Awaited<ReturnType<typeof rootGet>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rootGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Root
  */
 
-export function useRootGet<
-  TData = Awaited<ReturnType<typeof rootGet>>,
-  TError = AxiosError<unknown>,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof rootGet>>, TError, TData>
-    >;
-    axios?: AxiosRequestConfig;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getRootGetQueryOptions(options);
+export function useRootGet<TData = Awaited<ReturnType<typeof rootGet>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rootGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getRootGetQueryOptions(options)
 
-  query.queryKey = queryOptions.queryKey;
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
 
   return query;
 }
 
-export const getHealthCheckApiV1HealthGetResponseMock = (
-  overrideResponse: Partial<HealthResponse> = {}
-): HealthResponse => ({
-  status: faker.helpers.arrayElement([
-    faker.string.alpha({ length: { min: 10, max: 20 } }),
-    undefined,
-  ]),
-  timestamp: faker.helpers.arrayElement([
-    `${faker.date.past().toISOString().split('.')[0]}Z`,
-    undefined,
-  ]),
-  version: faker.helpers.arrayElement([
-    faker.string.alpha({ length: { min: 10, max: 20 } }),
-    undefined,
-  ]),
-  ...overrideResponse,
-});
 
-export const getReadinessCheckApiV1HealthReadyGetResponseMock = (
-  overrideResponse: Partial<HealthResponse> = {}
-): HealthResponse => ({
-  status: faker.helpers.arrayElement([
-    faker.string.alpha({ length: { min: 10, max: 20 } }),
-    undefined,
-  ]),
-  timestamp: faker.helpers.arrayElement([
-    `${faker.date.past().toISOString().split('.')[0]}Z`,
-    undefined,
-  ]),
-  version: faker.helpers.arrayElement([
-    faker.string.alpha({ length: { min: 10, max: 20 } }),
-    undefined,
-  ]),
-  ...overrideResponse,
-});
+export const getHealthCheckApiV1HealthGetResponseMock = (overrideResponse: Partial< HealthResponse > = {}): HealthResponse => ({status: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), timestamp: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), version: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), ...overrideResponse})
 
-export const getLivenessCheckApiV1HealthLiveGetResponseMock = (
-  overrideResponse: Partial<HealthResponse> = {}
-): HealthResponse => ({
-  status: faker.helpers.arrayElement([
-    faker.string.alpha({ length: { min: 10, max: 20 } }),
-    undefined,
-  ]),
-  timestamp: faker.helpers.arrayElement([
-    `${faker.date.past().toISOString().split('.')[0]}Z`,
-    undefined,
-  ]),
-  version: faker.helpers.arrayElement([
-    faker.string.alpha({ length: { min: 10, max: 20 } }),
-    undefined,
-  ]),
-  ...overrideResponse,
-});
+export const getReadinessCheckApiV1HealthReadyGetResponseMock = (overrideResponse: Partial< HealthResponse > = {}): HealthResponse => ({status: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), timestamp: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), version: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), ...overrideResponse})
 
-export const getCreateSessionApiV1SessionsPostResponseMock = (
-  overrideResponse: Partial<SessionResponse> = {}
-): SessionResponse => ({
-  id: faker.number.int({ min: undefined, max: undefined }),
-  created_at: `${faker.date.past().toISOString().split('.')[0]}Z`,
-  updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`,
-  title: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  description: faker.helpers.arrayElement([
-    faker.string.alpha({ length: { min: 10, max: 20 } }),
-    null,
-  ]),
-  status: faker.helpers.arrayElement(Object.values(SessionStatus)),
-  qr_code: faker.helpers.arrayElement([
-    faker.string.alpha({ length: { min: 10, max: 20 } }),
-    null,
-  ]),
-  admin_code: faker.helpers.arrayElement([
-    faker.string.alpha({ length: { min: 10, max: 20 } }),
-    null,
-  ]),
-  max_participants: faker.number.int({ min: undefined, max: undefined }),
-  started_at: faker.helpers.arrayElement([
-    `${faker.date.past().toISOString().split('.')[0]}Z`,
-    null,
-  ]),
-  completed_at: faker.helpers.arrayElement([
-    `${faker.date.past().toISOString().split('.')[0]}Z`,
-    null,
-  ]),
-  participant_count: faker.helpers.arrayElement([
-    faker.number.int({ min: undefined, max: undefined }),
-    undefined,
-  ]),
-  activity_count: faker.helpers.arrayElement([
-    faker.number.int({ min: undefined, max: undefined }),
-    undefined,
-  ]),
-  ...overrideResponse,
-});
+export const getLivenessCheckApiV1HealthLiveGetResponseMock = (overrideResponse: Partial< HealthResponse > = {}): HealthResponse => ({status: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), timestamp: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), version: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), ...overrideResponse})
 
-export const getListSessionsApiV1SessionsGetResponseMock = (
-  overrideResponse: Partial<SessionList> = {}
-): SessionList => ({
-  sessions: Array.from(
-    { length: faker.number.int({ min: 1, max: 10 }) },
-    (_, i) => i + 1
-  ).map(() => ({
-    id: faker.number.int({ min: undefined, max: undefined }),
-    created_at: `${faker.date.past().toISOString().split('.')[0]}Z`,
-    updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`,
-    title: faker.string.alpha({ length: { min: 10, max: 20 } }),
-    description: faker.helpers.arrayElement([
-      faker.string.alpha({ length: { min: 10, max: 20 } }),
-      null,
-    ]),
-    status: faker.helpers.arrayElement(Object.values(SessionStatus)),
-    qr_code: faker.helpers.arrayElement([
-      faker.string.alpha({ length: { min: 10, max: 20 } }),
-      null,
-    ]),
-    admin_code: faker.helpers.arrayElement([
-      faker.string.alpha({ length: { min: 10, max: 20 } }),
-      null,
-    ]),
-    max_participants: faker.number.int({ min: undefined, max: undefined }),
-    started_at: faker.helpers.arrayElement([
-      `${faker.date.past().toISOString().split('.')[0]}Z`,
-      null,
-    ]),
-    completed_at: faker.helpers.arrayElement([
-      `${faker.date.past().toISOString().split('.')[0]}Z`,
-      null,
-    ]),
-    participant_count: faker.helpers.arrayElement([
-      faker.number.int({ min: undefined, max: undefined }),
-      undefined,
-    ]),
-    activity_count: faker.helpers.arrayElement([
-      faker.number.int({ min: undefined, max: undefined }),
-      undefined,
-    ]),
-  })),
-  total: faker.number.int({ min: undefined, max: undefined }),
-  offset: faker.number.int({ min: undefined, max: undefined }),
-  limit: faker.number.int({ min: undefined, max: undefined }),
-  ...overrideResponse,
-});
+export const getCreateSessionApiV1SessionsPostResponseMock = (overrideResponse: Partial< SessionResponse > = {}): SessionResponse => ({id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, title: faker.string.alpha({length: {min: 10, max: 20}}), description: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), status: faker.helpers.arrayElement(Object.values(SessionStatus)), qr_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), admin_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), max_participants: faker.number.int({min: undefined, max: undefined}), started_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), completed_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), participant_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), activity_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), ...overrideResponse})
 
-export const getGetSessionApiV1SessionsSessionIdGetResponseMock = (
-  overrideResponse: Partial<SessionDetail> = {}
-): SessionDetail => ({
-  id: faker.number.int({ min: undefined, max: undefined }),
-  created_at: `${faker.date.past().toISOString().split('.')[0]}Z`,
-  updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`,
-  title: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  description: faker.helpers.arrayElement([
-    faker.string.alpha({ length: { min: 10, max: 20 } }),
-    null,
-  ]),
-  status: faker.helpers.arrayElement(Object.values(SessionStatus)),
-  qr_code: faker.helpers.arrayElement([
-    faker.string.alpha({ length: { min: 10, max: 20 } }),
-    null,
-  ]),
-  admin_code: faker.helpers.arrayElement([
-    faker.string.alpha({ length: { min: 10, max: 20 } }),
-    null,
-  ]),
-  max_participants: faker.number.int({ min: undefined, max: undefined }),
-  started_at: faker.helpers.arrayElement([
-    `${faker.date.past().toISOString().split('.')[0]}Z`,
-    null,
-  ]),
-  completed_at: faker.helpers.arrayElement([
-    `${faker.date.past().toISOString().split('.')[0]}Z`,
-    null,
-  ]),
-  participant_count: faker.helpers.arrayElement([
-    faker.number.int({ min: undefined, max: undefined }),
-    undefined,
-  ]),
-  activity_count: faker.helpers.arrayElement([
-    faker.number.int({ min: undefined, max: undefined }),
-    undefined,
-  ]),
-  activities: faker.helpers.arrayElement([
-    Array.from(
-      { length: faker.number.int({ min: 1, max: 10 }) },
-      (_, i) => i + 1
-    ).map(() => ({
-      id: faker.number.int({ min: undefined, max: undefined }),
-      created_at: `${faker.date.past().toISOString().split('.')[0]}Z`,
-      updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`,
-      session_id: faker.number.int({ min: undefined, max: undefined }),
-      title: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      description: faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      activity_type: faker.helpers.arrayElement(Object.values(ActivityType)),
-      configuration: {},
-      is_active: faker.datatype.boolean(),
-      order_index: faker.number.int({ min: undefined, max: undefined }),
-      started_at: faker.helpers.arrayElement([
-        `${faker.date.past().toISOString().split('.')[0]}Z`,
-        null,
-      ]),
-      completed_at: faker.helpers.arrayElement([
-        `${faker.date.past().toISOString().split('.')[0]}Z`,
-        null,
-      ]),
-      response_count: faker.helpers.arrayElement([
-        faker.number.int({ min: undefined, max: undefined }),
-        undefined,
-      ]),
-    })),
-    undefined,
-  ]),
-  participants: faker.helpers.arrayElement([
-    Array.from(
-      { length: faker.number.int({ min: 1, max: 10 }) },
-      (_, i) => i + 1
-    ).map(() => ({
-      id: faker.number.int({ min: undefined, max: undefined }),
-      created_at: `${faker.date.past().toISOString().split('.')[0]}Z`,
-      updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`,
-      session_id: faker.number.int({ min: undefined, max: undefined }),
-      display_name: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      role: faker.helpers.arrayElement(Object.values(ParticipantRole)),
-      is_active: faker.datatype.boolean(),
-      joined_at: `${faker.date.past().toISOString().split('.')[0]}Z`,
-      last_seen_at: `${faker.date.past().toISOString().split('.')[0]}Z`,
-    })),
-    undefined,
-  ]),
-  ...overrideResponse,
-});
+export const getListSessionsApiV1SessionsGetResponseMock = (overrideResponse: Partial< SessionList > = {}): SessionList => ({sessions: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, title: faker.string.alpha({length: {min: 10, max: 20}}), description: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), status: faker.helpers.arrayElement(Object.values(SessionStatus)), qr_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), admin_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), max_participants: faker.number.int({min: undefined, max: undefined}), started_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), completed_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), participant_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), activity_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined])})), total: faker.number.int({min: undefined, max: undefined}), offset: faker.number.int({min: undefined, max: undefined}), limit: faker.number.int({min: undefined, max: undefined}), ...overrideResponse})
 
-export const getUpdateSessionApiV1SessionsSessionIdPutResponseMock = (
-  overrideResponse: Partial<SessionResponse> = {}
-): SessionResponse => ({
-  id: faker.number.int({ min: undefined, max: undefined }),
-  created_at: `${faker.date.past().toISOString().split('.')[0]}Z`,
-  updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`,
-  title: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  description: faker.helpers.arrayElement([
-    faker.string.alpha({ length: { min: 10, max: 20 } }),
-    null,
-  ]),
-  status: faker.helpers.arrayElement(Object.values(SessionStatus)),
-  qr_code: faker.helpers.arrayElement([
-    faker.string.alpha({ length: { min: 10, max: 20 } }),
-    null,
-  ]),
-  admin_code: faker.helpers.arrayElement([
-    faker.string.alpha({ length: { min: 10, max: 20 } }),
-    null,
-  ]),
-  max_participants: faker.number.int({ min: undefined, max: undefined }),
-  started_at: faker.helpers.arrayElement([
-    `${faker.date.past().toISOString().split('.')[0]}Z`,
-    null,
-  ]),
-  completed_at: faker.helpers.arrayElement([
-    `${faker.date.past().toISOString().split('.')[0]}Z`,
-    null,
-  ]),
-  participant_count: faker.helpers.arrayElement([
-    faker.number.int({ min: undefined, max: undefined }),
-    undefined,
-  ]),
-  activity_count: faker.helpers.arrayElement([
-    faker.number.int({ min: undefined, max: undefined }),
-    undefined,
-  ]),
-  ...overrideResponse,
-});
+export const getGetSessionApiV1SessionsSessionIdGetResponseMock = (overrideResponse: Partial< SessionDetail > = {}): SessionDetail => ({id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, title: faker.string.alpha({length: {min: 10, max: 20}}), description: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), status: faker.helpers.arrayElement(Object.values(SessionStatus)), qr_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), admin_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), max_participants: faker.number.int({min: undefined, max: undefined}), started_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), completed_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), participant_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), activity_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), activities: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, session_id: faker.number.int({min: undefined, max: undefined}), title: faker.string.alpha({length: {min: 10, max: 20}}), description: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), activity_type: faker.helpers.arrayElement(Object.values(ActivityType)), configuration: {}, is_active: faker.datatype.boolean(), order_index: faker.number.int({min: undefined, max: undefined}), started_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), completed_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), response_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined])})), undefined]), participants: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, session_id: faker.number.int({min: undefined, max: undefined}), display_name: faker.string.alpha({length: {min: 10, max: 20}}), role: faker.helpers.arrayElement(Object.values(ParticipantRole)), is_active: faker.datatype.boolean(), joined_at: `${faker.date.past().toISOString().split('.')[0]}Z`, last_seen_at: `${faker.date.past().toISOString().split('.')[0]}Z`})), undefined]), ...overrideResponse})
 
-export const getGetSessionByCodeApiV1SessionsCodeCodeGetResponseMock = (
-  overrideResponse: Partial<SessionResponse> = {}
-): SessionResponse => ({
-  id: faker.number.int({ min: undefined, max: undefined }),
-  created_at: `${faker.date.past().toISOString().split('.')[0]}Z`,
-  updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`,
-  title: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  description: faker.helpers.arrayElement([
-    faker.string.alpha({ length: { min: 10, max: 20 } }),
-    null,
-  ]),
-  status: faker.helpers.arrayElement(Object.values(SessionStatus)),
-  qr_code: faker.helpers.arrayElement([
-    faker.string.alpha({ length: { min: 10, max: 20 } }),
-    null,
-  ]),
-  admin_code: faker.helpers.arrayElement([
-    faker.string.alpha({ length: { min: 10, max: 20 } }),
-    null,
-  ]),
-  max_participants: faker.number.int({ min: undefined, max: undefined }),
-  started_at: faker.helpers.arrayElement([
-    `${faker.date.past().toISOString().split('.')[0]}Z`,
-    null,
-  ]),
-  completed_at: faker.helpers.arrayElement([
-    `${faker.date.past().toISOString().split('.')[0]}Z`,
-    null,
-  ]),
-  participant_count: faker.helpers.arrayElement([
-    faker.number.int({ min: undefined, max: undefined }),
-    undefined,
-  ]),
-  activity_count: faker.helpers.arrayElement([
-    faker.number.int({ min: undefined, max: undefined }),
-    undefined,
-  ]),
-  ...overrideResponse,
-});
+export const getUpdateSessionApiV1SessionsSessionIdPutResponseMock = (overrideResponse: Partial< SessionResponse > = {}): SessionResponse => ({id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, title: faker.string.alpha({length: {min: 10, max: 20}}), description: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), status: faker.helpers.arrayElement(Object.values(SessionStatus)), qr_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), admin_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), max_participants: faker.number.int({min: undefined, max: undefined}), started_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), completed_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), participant_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), activity_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), ...overrideResponse})
 
-export const getHealthCheckApiV1HealthGetMockHandler = (
-  overrideResponse?:
-    | HealthResponse
-    | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0]
-      ) => Promise<HealthResponse> | HealthResponse),
-  options?: RequestHandlerOptions
-) => {
-  return http.get(
-    '*/api/v1/health/',
-    async info => {
-      await delay(1000);
+export const getGetSessionByCodeApiV1SessionsCodeCodeGetResponseMock = (overrideResponse: Partial< SessionResponse > = {}): SessionResponse => ({id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, title: faker.string.alpha({length: {min: 10, max: 20}}), description: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), status: faker.helpers.arrayElement(Object.values(SessionStatus)), qr_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), admin_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), max_participants: faker.number.int({min: undefined, max: undefined}), started_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), completed_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), participant_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), activity_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), ...overrideResponse})
 
-      return new HttpResponse(
-        JSON.stringify(
-          overrideResponse !== undefined
-            ? typeof overrideResponse === 'function'
-              ? await overrideResponse(info)
-              : overrideResponse
-            : getHealthCheckApiV1HealthGetResponseMock()
-        ),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
-    },
-    options
-  );
-};
 
-export const getReadinessCheckApiV1HealthReadyGetMockHandler = (
-  overrideResponse?:
-    | HealthResponse
-    | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0]
-      ) => Promise<HealthResponse> | HealthResponse),
-  options?: RequestHandlerOptions
-) => {
-  return http.get(
-    '*/api/v1/health/ready',
-    async info => {
-      await delay(1000);
+export const getHealthCheckApiV1HealthGetMockHandler = (overrideResponse?: HealthResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<HealthResponse> | HealthResponse), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/health/', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getHealthCheckApiV1HealthGetResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  }, options)
+}
 
-      return new HttpResponse(
-        JSON.stringify(
-          overrideResponse !== undefined
-            ? typeof overrideResponse === 'function'
-              ? await overrideResponse(info)
-              : overrideResponse
-            : getReadinessCheckApiV1HealthReadyGetResponseMock()
-        ),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
-    },
-    options
-  );
-};
+export const getReadinessCheckApiV1HealthReadyGetMockHandler = (overrideResponse?: HealthResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<HealthResponse> | HealthResponse), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/health/ready', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getReadinessCheckApiV1HealthReadyGetResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  }, options)
+}
 
-export const getLivenessCheckApiV1HealthLiveGetMockHandler = (
-  overrideResponse?:
-    | HealthResponse
-    | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0]
-      ) => Promise<HealthResponse> | HealthResponse),
-  options?: RequestHandlerOptions
-) => {
-  return http.get(
-    '*/api/v1/health/live',
-    async info => {
-      await delay(1000);
+export const getLivenessCheckApiV1HealthLiveGetMockHandler = (overrideResponse?: HealthResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<HealthResponse> | HealthResponse), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/health/live', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getLivenessCheckApiV1HealthLiveGetResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  }, options)
+}
 
-      return new HttpResponse(
-        JSON.stringify(
-          overrideResponse !== undefined
-            ? typeof overrideResponse === 'function'
-              ? await overrideResponse(info)
-              : overrideResponse
-            : getLivenessCheckApiV1HealthLiveGetResponseMock()
-        ),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
-    },
-    options
-  );
-};
+export const getCreateSessionApiV1SessionsPostMockHandler = (overrideResponse?: SessionResponse | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<SessionResponse> | SessionResponse), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/sessions/', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getCreateSessionApiV1SessionsPostResponseMock()),
+      { status: 201,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  }, options)
+}
 
-export const getCreateSessionApiV1SessionsPostMockHandler = (
-  overrideResponse?:
-    | SessionResponse
-    | ((
-        info: Parameters<Parameters<typeof http.post>[1]>[0]
-      ) => Promise<SessionResponse> | SessionResponse),
-  options?: RequestHandlerOptions
-) => {
-  return http.post(
-    '*/api/v1/sessions/',
-    async info => {
-      await delay(1000);
+export const getListSessionsApiV1SessionsGetMockHandler = (overrideResponse?: SessionList | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<SessionList> | SessionList), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/sessions/', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getListSessionsApiV1SessionsGetResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  }, options)
+}
 
-      return new HttpResponse(
-        JSON.stringify(
-          overrideResponse !== undefined
-            ? typeof overrideResponse === 'function'
-              ? await overrideResponse(info)
-              : overrideResponse
-            : getCreateSessionApiV1SessionsPostResponseMock()
-        ),
-        { status: 201, headers: { 'Content-Type': 'application/json' } }
-      );
-    },
-    options
-  );
-};
+export const getGetSessionApiV1SessionsSessionIdGetMockHandler = (overrideResponse?: SessionDetail | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<SessionDetail> | SessionDetail), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/sessions/:sessionId', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetSessionApiV1SessionsSessionIdGetResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  }, options)
+}
 
-export const getListSessionsApiV1SessionsGetMockHandler = (
-  overrideResponse?:
-    | SessionList
-    | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0]
-      ) => Promise<SessionList> | SessionList),
-  options?: RequestHandlerOptions
-) => {
-  return http.get(
-    '*/api/v1/sessions/',
-    async info => {
-      await delay(1000);
+export const getUpdateSessionApiV1SessionsSessionIdPutMockHandler = (overrideResponse?: SessionResponse | ((info: Parameters<Parameters<typeof http.put>[1]>[0]) => Promise<SessionResponse> | SessionResponse), options?: RequestHandlerOptions) => {
+  return http.put('*/api/v1/sessions/:sessionId', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getUpdateSessionApiV1SessionsSessionIdPutResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  }, options)
+}
 
-      return new HttpResponse(
-        JSON.stringify(
-          overrideResponse !== undefined
-            ? typeof overrideResponse === 'function'
-              ? await overrideResponse(info)
-              : overrideResponse
-            : getListSessionsApiV1SessionsGetResponseMock()
-        ),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
-    },
-    options
-  );
-};
+export const getDeleteSessionApiV1SessionsSessionIdDeleteMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.delete>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
+  return http.delete('*/api/v1/sessions/:sessionId', async (info) => {await delay(1000);
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+    return new HttpResponse(null,
+      { status: 204,
+        
+      })
+  }, options)
+}
 
-export const getGetSessionApiV1SessionsSessionIdGetMockHandler = (
-  overrideResponse?:
-    | SessionDetail
-    | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0]
-      ) => Promise<SessionDetail> | SessionDetail),
-  options?: RequestHandlerOptions
-) => {
-  return http.get(
-    '*/api/v1/sessions/:sessionId',
-    async info => {
-      await delay(1000);
+export const getGetSessionByCodeApiV1SessionsCodeCodeGetMockHandler = (overrideResponse?: SessionResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<SessionResponse> | SessionResponse), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/sessions/code/:code', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetSessionByCodeApiV1SessionsCodeCodeGetResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  }, options)
+}
 
-      return new HttpResponse(
-        JSON.stringify(
-          overrideResponse !== undefined
-            ? typeof overrideResponse === 'function'
-              ? await overrideResponse(info)
-              : overrideResponse
-            : getGetSessionApiV1SessionsSessionIdGetResponseMock()
-        ),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
-    },
-    options
-  );
-};
-
-export const getUpdateSessionApiV1SessionsSessionIdPutMockHandler = (
-  overrideResponse?:
-    | SessionResponse
-    | ((
-        info: Parameters<Parameters<typeof http.put>[1]>[0]
-      ) => Promise<SessionResponse> | SessionResponse),
-  options?: RequestHandlerOptions
-) => {
-  return http.put(
-    '*/api/v1/sessions/:sessionId',
-    async info => {
-      await delay(1000);
-
-      return new HttpResponse(
-        JSON.stringify(
-          overrideResponse !== undefined
-            ? typeof overrideResponse === 'function'
-              ? await overrideResponse(info)
-              : overrideResponse
-            : getUpdateSessionApiV1SessionsSessionIdPutResponseMock()
-        ),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
-    },
-    options
-  );
-};
-
-export const getDeleteSessionApiV1SessionsSessionIdDeleteMockHandler = (
-  overrideResponse?:
-    | void
-    | ((
-        info: Parameters<Parameters<typeof http.delete>[1]>[0]
-      ) => Promise<void> | void),
-  options?: RequestHandlerOptions
-) => {
-  return http.delete(
-    '*/api/v1/sessions/:sessionId',
-    async info => {
-      await delay(1000);
-      if (typeof overrideResponse === 'function') {
-        await overrideResponse(info);
-      }
-      return new HttpResponse(null, { status: 204 });
-    },
-    options
-  );
-};
-
-export const getGetSessionByCodeApiV1SessionsCodeCodeGetMockHandler = (
-  overrideResponse?:
-    | SessionResponse
-    | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0]
-      ) => Promise<SessionResponse> | SessionResponse),
-  options?: RequestHandlerOptions
-) => {
-  return http.get(
-    '*/api/v1/sessions/code/:code',
-    async info => {
-      await delay(1000);
-
-      return new HttpResponse(
-        JSON.stringify(
-          overrideResponse !== undefined
-            ? typeof overrideResponse === 'function'
-              ? await overrideResponse(info)
-              : overrideResponse
-            : getGetSessionByCodeApiV1SessionsCodeCodeGetResponseMock()
-        ),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
-    },
-    options
-  );
-};
-
-export const getRootGetMockHandler = (
-  overrideResponse?:
-    | unknown
-    | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0]
-      ) => Promise<unknown> | unknown),
-  options?: RequestHandlerOptions
-) => {
-  return http.get(
-    '*/',
-    async info => {
-      await delay(1000);
-      if (typeof overrideResponse === 'function') {
-        await overrideResponse(info);
-      }
-      return new HttpResponse(null, { status: 200 });
-    },
-    options
-  );
-};
+export const getRootGetMockHandler = (overrideResponse?: unknown | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<unknown> | unknown), options?: RequestHandlerOptions) => {
+  return http.get('*/', async (info) => {await delay(1000);
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+    return new HttpResponse(null,
+      { status: 200,
+        
+      })
+  }, options)
+}
 export const getCajaBackendMock = () => [
   getHealthCheckApiV1HealthGetMockHandler(),
   getReadinessCheckApiV1HealthReadyGetMockHandler(),
@@ -2255,5 +1268,5 @@ export const getCajaBackendMock = () => [
   getUpdateSessionApiV1SessionsSessionIdPutMockHandler(),
   getDeleteSessionApiV1SessionsSessionIdDeleteMockHandler(),
   getGetSessionByCodeApiV1SessionsCodeCodeGetMockHandler(),
-  getRootGetMockHandler(),
-];
+  getRootGetMockHandler()
+]
