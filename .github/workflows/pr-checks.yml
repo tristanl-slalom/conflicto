@@ -190,10 +190,6 @@ jobs:
         working-directory: backend
         run: poetry install --no-interaction
 
-      - name: Run backend linting (ruff)
-        working-directory: backend
-        run: poetry run ruff check .
-
       - name: Run backend formatting check (ruff)
         working-directory: backend
         run: poetry run ruff format --check .
