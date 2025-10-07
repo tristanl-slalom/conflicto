@@ -63,7 +63,7 @@ The Conflicto development team needs automated testing and deployment pipelines 
 
 #### Frontend Testing Job
 - **Environment:** Ubuntu 22.04
-- **Node Version:** 18.x
+- **Node Version:** 22.x
 - **Steps:** Setup Node, install dependencies, run Jest/Vitest
 - **Artifacts:** Test coverage, build artifacts
 

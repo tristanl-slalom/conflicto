@@ -101,15 +101,13 @@ docker-compose.yml            # Add CI-specific service configurations
 ### Step 3: Frontend CI Pipeline
 **Files:** `.github/actions/setup-frontend/`, `frontend/vitest.config.ts`, `jest.config.js`
 
-1. Create reusable frontend setup action with Node.js 18
+1. Create reusable frontend setup action with Node.js 22
 2. Configure Vitest and Jest for CI environment
 3. Set up component testing with React Testing Library
 4. Add build validation and asset optimization testing
 5. Integrate frontend testing into PR workflow
 
-**Estimated Time:** 2-3 hours
-
-### Step 4: Security and Quality Integration
+**Estimated Time:** 2-3 hours### Step 4: Security and Quality Integration
 **Files:** `.github/workflows/security-scan.yml`, `docker/*/Dockerfile.ci`
 
 1. Integrate Snyk for dependency vulnerability scanning
