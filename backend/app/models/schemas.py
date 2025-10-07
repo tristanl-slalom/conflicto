@@ -4,8 +4,9 @@ Pydantic models for request/response validation.
 from datetime import datetime
 from typing import Any, Optional
 
-from app.db.models import ActivityType, ParticipantRole, SessionStatus
 from pydantic import BaseModel, Field
+
+from app.db.models import ActivityType, ParticipantRole, SessionStatus
 
 
 # Base models

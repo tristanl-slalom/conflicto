@@ -6,8 +6,9 @@ import sys
 from typing import Any
 
 import structlog
-from app.core.settings import settings
 from structlog.typing import FilteringBoundLogger
+
+from app.core.settings import settings
 
 
 def configure_logging() -> FilteringBoundLogger:
@@ -46,7 +47,7 @@ def configure_logging() -> FilteringBoundLogger:
     return logger
 
 
-def get_logger(name: str = None) -> FilteringBoundLogger:
+def get_logger(name: str | None = None) -> FilteringBoundLogger:
     """Get a logger instance."""
     logger = structlog.get_logger()
     if name:
@@ -76,7 +77,7 @@ def log_response(
     )
 
 
-def log_error(error: Exception, context: dict[str, Any] = None) -> None:
+def log_error(error: Exception, context: dict[str, Any] | None = None) -> None:
     """Log an error with context."""
     logger = get_logger("error")
     logger.error(

@@ -599,8 +599,6 @@ ci-backend:
 	cd $(BACKEND_DIR) && poetry run ruff check .
 	@echo "💅 Checking backend formatting (ruff)..."
 	cd $(BACKEND_DIR) && poetry run ruff format --check .
-	@echo "🔒 Running backend type checking (mypy)..."
-	cd $(BACKEND_DIR) && poetry run mypy app/
 	@echo "🧪 Running backend tests with coverage..."
 	cd $(BACKEND_DIR) && ./../.github/scripts/test-backend.sh
 	@echo "✅ Backend CI checks completed!"

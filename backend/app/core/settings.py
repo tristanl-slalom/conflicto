@@ -10,26 +10,33 @@ class Settings(BaseSettings):
     """Application settings."""
 
     # Database
-    database_url: str = Field(..., env="DATABASE_URL")
+    database_url: str = Field(..., description="Database URL for PostgreSQL")
 
     # Security
-    secret_key: str = Field(..., env="SECRET_KEY")
-    algorithm: str = Field(default="HS256", env="ALGORITHM")
+    secret_key: str = Field(..., description="Secret key for JWT token signing")
+    algorithm: str = Field(
+        default="HS256", description="Algorithm for JWT token signing"
+    )
     access_token_expire_minutes: int = Field(
-        default=30, env="ACCESS_TOKEN_EXPIRE_MINUTES"
+        default=30, description="Access token expiration time in minutes"
     )
 
     # Environment
-    environment: str = Field(default="development", env="ENVIRONMENT")
-    debug: bool = Field(default=False, env="DEBUG")
+    environment: str = Field(
+        default="development", description="Application environment"
+    )
+    debug: bool = Field(default=False, description="Debug mode flag")
 
     # CORS
     allowed_origins_str: str = Field(
-        default="http://localhost:3000,http://localhost:3001", env="ALLOWED_ORIGINS"
+        default="http://localhost:3000,http://localhost:3001",
+        description="Allowed CORS origins",
     )
 
     # Polling
-    polling_interval_seconds: int = Field(default=2, env="POLLING_INTERVAL_SECONDS")
+    polling_interval_seconds: int = Field(
+        default=2, description="Polling interval in seconds"
+    )
 
     # API
     api_v1_prefix: str = "/api/v1"

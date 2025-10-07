@@ -2,6 +2,9 @@
 Session management API routes.
 """
 
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.logging import get_logger
 from app.db.database import get_db
 from app.models.schemas import (
@@ -13,8 +16,6 @@ from app.models.schemas import (
     SessionUpdate,
 )
 from app.services.session_service import SessionService
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/sessions", tags=["sessions"])

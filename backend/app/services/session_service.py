@@ -3,15 +3,17 @@ Session service layer for business logic.
 """
 import secrets
 import string
+from datetime import datetime
 from typing import Optional
 
-from app.core.logging import get_logger
-from app.db.models import Activity, Participant, Session, SessionStatus
-from app.models.schemas import SessionCreate, SessionUpdate
 from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
+
+from app.core.logging import get_logger
+from app.db.models import Activity, Participant, Session, SessionStatus
+from app.models.schemas import SessionCreate, SessionUpdate
 
 logger = get_logger(__name__)
 
@@ -99,7 +101,7 @@ class SessionService:
             .order_by(Session.created_at.desc())
         )
         result = await db.execute(query)
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     @staticmethod
     async def update_session(
@@ -128,12 +130,12 @@ class SessionService:
                 old_status == SessionStatus.DRAFT
                 and session.status == SessionStatus.ACTIVE
             ):
-                session.started_at = func.now()
+                session.started_at = datetime.utcnow()
             elif (
                 session.status == SessionStatus.COMPLETED
                 and session.completed_at is None
             ):
-                session.completed_at = func.now()
+                session.completed_at = datetime.utcnow()
 
         await db.commit()
         await db.refresh(session)
@@ -181,7 +183,7 @@ class SessionService:
 
     @staticmethod
     async def _code_exists(
-        db: AsyncSession, qr_code: str = None, admin_code: str = None
+        db: AsyncSession, qr_code: str | None = None, admin_code: str | None = None
     ) -> bool:
         """Check if a code already exists."""
         if qr_code:
