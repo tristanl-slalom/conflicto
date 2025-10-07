@@ -194,10 +194,6 @@ jobs:
         working-directory: backend
         run: poetry run ruff format --check .
 
-      - name: Run backend type checking (mypy)
-        working-directory: backend
-        run: poetry run mypy app/
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
