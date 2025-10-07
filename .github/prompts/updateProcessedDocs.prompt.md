@@ -1,11 +1,11 @@
 ---
 mode: agent
-description: "Update processed folder documentation with development learnings and technical decisions"
+description: "Update ai-docs/architecture documentation with development learnings and technical decisions"
 ---
 
 # /updateProcessedDocs - Documentation Sync Workflow
 
-Updates the processed folder documentation with new technical decisions, implementations, and learnings from recent development work for the Caja live event engagement platform.
+Updates the ai-docs/architecture documentation with new technical decisions, implementations, and learnings from recent development work for the Caja live event engagement platform.
 
 ## Usage
 
@@ -24,7 +24,7 @@ updateProcessedDocs
 ### 1. Intelligent Change Detection
 - **Git Analysis:** Review recent commits, modified files, and new configurations
 - **Technical Decision Detection:** Identify framework migrations, dependency changes, config updates
-- **Implementation Progress:** Compare current state with planned features in processed docs
+- **Implementation Progress:** Compare current state with planned features in ai-docs/architecture
 - **Scope Determination:** Automatically categorize changes (testing, frontend, backend, infrastructure)
 - **Context Gathering:** Extract rationale and impacts from code changes and commit messages
 
@@ -43,8 +43,10 @@ When React components, UI frameworks, or build configs are modified:
 - Component architecture and design system changes
 - State management patterns (TanStack Query, Context, etc.)
 - Persona-specific interface implementations
+- API client generation and integration patterns (Orval, generated hooks)
 - Responsive design and accessibility improvements
 - Build system and deployment optimizations
+- Type safety implementations and OpenAPI integration
 
 #### Detected Backend Changes
 When API code, database models, or service logic is updated:
@@ -65,21 +67,21 @@ When Terraform, AWS configs, or deployment files are modified:
 ### 3. File Updates by Priority
 
 #### Primary Updates
-**`processed/technical_decisions_log.md`**
+**`ai-docs/architecture/technical_decisions_log.md`**
 - Add new technical decisions with full context and rationale
 - Document problem statements and solution approaches
 - Include before/after code examples for significant changes
 - Record performance impacts and developer experience improvements
 - Track migration steps and lessons learned
 
-**`processed/caja_app_features.md`**
+**`ai-docs/architecture/caja-app-features.md`**
 - Update feature implementation status (✅ IMPLEMENTED, ⚠️ PARTIAL, ⏳ PENDING)
 - Add technical implementation details for completed features
 - Document component architecture and integration points
 - Update user story completion status
 - Add performance characteristics and scalability notes
 
-**`processed/copilot_rules_plan.md`**
+**`ai-docs/architecture/copilot-rules-plan.md`**
 - Update development guidelines with new patterns
 - Add code generation rules for new frameworks and tools
 - Update tech stack documentation with current choices
@@ -87,7 +89,7 @@ When Terraform, AWS configs, or deployment files are modified:
 - Include new workflow patterns and team procedures
 
 #### Secondary Updates
-**Create new documentation files as needed:**
+**Create new documentation files in ai-docs/architecture/ as needed:**
 - Architecture decision records for major changes
 - Migration guides for framework transitions
 - Performance benchmarks and optimization guides
@@ -190,12 +192,17 @@ When Terraform, AWS configs, or deployment files are modified:
 - Route files in `/src/routes/` changed
 - UI configuration files updated (`tailwind.config.*`, `vite.config.*`)
 - State management files in `/src/hooks/` or `/src/store/` modified
+- API integration files (`orval.config.*`) added or modified
+- Generated API client files (`src/api/generated.*`) updated
+- Package.json dependencies for API generation tools changed
 
 **Backend Changes Detected When:**
 - API routes in `/backend/app/routes/` modified
 - Database models or migrations changed
 - Service layer files updated
 - FastAPI configuration modified
+- OpenAPI specification (`openapi.json`) updated
+- API schema or endpoint definitions changed
 
 **Infrastructure Changes Detected When:**
 - Terraform files (`*.tf`) modified
@@ -207,7 +214,7 @@ When Terraform, AWS configs, or deployment files are modified:
 
 ### No Recent Changes Detected
 - Analyze git history for the last 7 days
-- Check for unreflected changes in processed documentation
+- Check for unreflected changes in ai-docs/architecture documentation
 - Suggest manual review if significant changes exist but aren't auto-detectable
 - Provide summary of current documentation state
 
@@ -227,12 +234,12 @@ When Terraform, AWS configs, or deployment files are modified:
 � Analyzing workspace for recent changes...
 � Detected changes in: frontend (testing framework), components (persona interfaces)
 🔧 Identified technical decisions: Jest→Vitest migration, TanStack integration
-📝 Updating processed documentation...
+📝 Updating ai-docs/architecture documentation...
 
 Updated files:
-✅ processed/technical_decisions_log.md - Added Jest→Vitest migration details
-✅ processed/caja_app_features.md - Updated Multi-Persona Interface status to ✅ IMPLEMENTED  
-✅ processed/copilot_rules_plan.md - Added Vitest testing standards and frontend completion
+✅ ai-docs/architecture/technical_decisions_log.md - Added Jest→Vitest migration details
+✅ ai-docs/architecture/caja-app-features.md - Updated Multi-Persona Interface status to ✅ IMPLEMENTED  
+✅ ai-docs/architecture/copilot-rules-plan.md - Added Vitest testing standards and frontend completion
 
 Auto-detected changes:
 • Testing Framework: Migrated from Jest to Vitest for better Vite integration
@@ -252,4 +259,4 @@ Auto-detected changes:
 - Additional activity types (component architecture established)
 ```
 
-This command ensures the processed folder documentation stays current with rapid development cycles while maintaining consistency and providing valuable context for AI-assisted development.
+This command ensures the ai-docs/architecture documentation stays current with rapid development cycles while maintaining consistency and providing valuable context for AI-assisted development.
