@@ -1,14 +1,14 @@
-import fs from 'node:fs'
-import { useCallback, useState } from 'react'
-import { createFileRoute, useRouter } from '@tanstack/react-router'
-import { createServerFn } from '@tanstack/react-start'
+import fs from 'node:fs';
+import { useCallback, useState } from 'react';
+import { createFileRoute, useRouter } from '@tanstack/react-router';
+import { createServerFn } from '@tanstack/react-start';
 
 interface Todo {
-  id: number
-  name: string
+  id: number;
+  name: string;
 }
 
-const filePath = 'todos.json'
+const filePath = 'todos.json';
 
 async function readTodos(): Promise<Todo[]> {
   return JSON.parse(
@@ -19,41 +19,41 @@ async function readTodos(): Promise<Todo[]> {
           { id: 2, name: 'Buy a new phone' },
         ],
         null,
-        2,
-      ),
-    ),
-  )
+        2
+      )
+    )
+  );
 }
 
 const getTodos = createServerFn({
   method: 'GET',
-}).handler(async () => await readTodos())
+}).handler(async () => await readTodos());
 
 const addTodo = createServerFn({ method: 'POST' })
   .inputValidator((d: string) => d)
   .handler(async ({ data }) => {
-    const todos = await readTodos()
-    todos.push({ id: todos.length + 1, name: data })
-    await fs.promises.writeFile(filePath, JSON.stringify(todos, null, 2))
-    return todos
-  })
+    const todos = await readTodos();
+    todos.push({ id: todos.length + 1, name: data });
+    await fs.promises.writeFile(filePath, JSON.stringify(todos, null, 2));
+    return todos;
+  });
 
 export const Route = createFileRoute('/demo/start/server-funcs')({
   component: Home,
   loader: async () => await getTodos(),
-})
+});
 
 function Home() {
-  const router = useRouter()
-  let todos = Route.useLoaderData()
+  const router = useRouter();
+  let todos = Route.useLoaderData();
 
-  const [todo, setTodo] = useState('')
+  const [todo, setTodo] = useState('');
 
   const submitTodo = useCallback(async () => {
-    todos = await addTodo({ data: todo })
-    setTodo('')
-    router.invalidate()
-  }, [addTodo, todo])
+    todos = await addTodo({ data: todo });
+    setTodo('');
+    router.invalidate();
+  }, [addTodo, todo]);
 
   return (
     <div
@@ -66,7 +66,7 @@ function Home() {
       <div className="w-full max-w-2xl p-8 rounded-xl backdrop-blur-md bg-black/50 shadow-xl border-8 border-black/10">
         <h1 className="text-2xl mb-4">Start Server Functions - Todo Example</h1>
         <ul className="mb-4 space-y-2">
-          {todos?.map((t) => (
+          {todos?.map(t => (
             <li
               key={t.id}
               className="bg-white/10 border border-white/20 rounded-lg p-3 backdrop-blur-sm shadow-md"
@@ -79,10 +79,10 @@ function Home() {
           <input
             type="text"
             value={todo}
-            onChange={(e) => setTodo(e.target.value)}
-            onKeyDown={(e) => {
+            onChange={e => setTodo(e.target.value)}
+            onKeyDown={e => {
               if (e.key === 'Enter') {
-                submitTodo()
+                submitTodo();
               }
             }}
             placeholder="Enter a new todo..."
@@ -98,5 +98,5 @@ function Home() {
         </div>
       </div>
     </div>
-  )
+  );
 }

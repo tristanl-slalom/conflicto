@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/demo/api/names')({
   server: {
@@ -8,8 +8,8 @@ export const Route = createFileRoute('/demo/api/names')({
           headers: {
             'Content-Type': 'application/json',
           },
-        })
+        });
       },
     },
   },
-})
+});

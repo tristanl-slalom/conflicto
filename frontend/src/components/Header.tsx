@@ -1,6 +1,6 @@
-import { Link } from '@tanstack/react-router'
+import { Link } from '@tanstack/react-router';
 
-import { useState } from 'react'
+import { useState } from 'react';
 import {
   ChevronDown,
   ChevronRight,
@@ -11,13 +11,13 @@ import {
   SquareFunction,
   StickyNote,
   X,
-} from 'lucide-react'
+} from 'lucide-react';
 
 export default function Header() {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
   const [groupedExpanded, setGroupedExpanded] = useState<
     Record<string, boolean>
-  >({})
+  >({});
 
   return (
     <>
@@ -114,7 +114,7 @@ export default function Header() {
             <button
               className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
               onClick={() =>
-                setGroupedExpanded((prev) => ({
+                setGroupedExpanded(prev => ({
                   ...prev,
                   StartSSRDemo: !prev.StartSSRDemo,
                 }))
@@ -213,5 +213,5 @@ export default function Header() {
         </nav>
       </aside>
     </>
-  )
+  );
 }
