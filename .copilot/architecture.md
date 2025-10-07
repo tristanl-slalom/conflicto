@@ -98,7 +98,7 @@ Base = declarative_base()
 
 class Session(Base):
     __tablename__ = "sessions"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False)
     status = Column(String(50), nullable=False, default='draft')
@@ -164,7 +164,7 @@ App
 // Custom hook for polling session state
 function useSessionPolling(sessionId: string) {
   const [sessionState, setSessionState] = useState();
-  
+
   useEffect(() => {
     const interval = setInterval(async () => {
       const updates = await fetchSessionUpdates(sessionId, lastUpdate);
@@ -172,10 +172,10 @@ function useSessionPolling(sessionId: string) {
         setSessionState(prev => mergeUpdates(prev, updates));
       }
     }, 2000); // Poll every 2 seconds
-    
+
     return () => clearInterval(interval);
   }, [sessionId]);
-  
+
   return sessionState;
 }
 ```
@@ -229,7 +229,7 @@ function useApiCall<T>(apiFunction: () => Promise<T>) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [loading, setLoading] = useState(false);
-  
+
   const execute = async () => {
     try {
       setLoading(true);
@@ -242,7 +242,7 @@ function useApiCall<T>(apiFunction: () => Promise<T>) {
       setLoading(false);
     }
   };
-  
+
   return { data, error, loading, execute };
 }
 ```
@@ -261,7 +261,7 @@ import structlog
 logger = structlog.get_logger()
 
 # Structured logging for CloudWatch
-logger.info("Session created", 
+logger.info("Session created",
     session_id=session.id,
     admin_id=session.admin_id,
     activity_count=len(session.activities)

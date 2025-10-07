@@ -329,7 +329,7 @@ test(#9): add unit tests for polling system
 1. **PR Title Format:**
    ```
    [Issue #{number}] {Feature/Fix} - {Component}: {Brief Description}
-   
+
    Examples:
    [Issue #5] Feature - Session Management: Implement lifecycle API
    [Issue #14] Infrastructure - CI/CD: Add GitHub Actions pipeline
@@ -340,20 +340,20 @@ test(#9): add unit tests for polling system
    ```markdown
    ## Related Issue
    Closes #{issue-number}
-   
+
    ## Changes Made
    - [ ] List specific changes
    - [ ] Include acceptance criteria completed
    - [ ] Note any deviations from original plan
-   
+
    ## Testing
    - [ ] Unit tests added/updated
    - [ ] Integration tests verified
    - [ ] Manual testing completed
-   
+
    ## MCP Context
    {Include relevant context from issue analysis}
-   
+
    ## Deployment Notes
    {Any infrastructure or deployment considerations}
    ```
@@ -370,7 +370,7 @@ Before marking issue as complete:
 
 2. **Feature Integration:**
    - Works within session framework
-   - Supports all three personas appropriately  
+   - Supports all three personas appropriately
    - Maintains polling-based synchronization
    - Mobile-responsive (for participant interfaces)
 

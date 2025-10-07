@@ -127,20 +127,20 @@ const ViewerStyles = {
 const ViewerDisplay = ({ session, currentActivity }: ViewerProps) => {
   return (
     <FullScreenLayout>
-      <ActivityDisplay 
+      <ActivityDisplay
         activity={currentActivity}
         showTimer={true}
         fontSize="large"
       />
-      <LiveResults 
+      <LiveResults
         responses={currentActivity.responses}
         animated={true}
       />
-      <QRCodeOverlay 
+      <QRCodeOverlay
         sessionId={session.id}
         position="bottom-right"
       />
-      <RunnerControls 
+      <RunnerControls
         onNext={advanceActivity}
         onPrevious={previousActivity}
         hidden={!isRunner}
@@ -200,19 +200,19 @@ const MobileStyles = {
 // ParticipantInterface.tsx
 const ParticipantInterface = ({ session, participant }: ParticipantProps) => {
   const currentActivity = useCurrentActivity(session.id);
-  
+
   return (
     <MobileLayout>
-      <SessionHeader 
+      <SessionHeader
         sessionName={session.name}
         participantName={participant.nickname}
       />
-      <ActivityInterface 
+      <ActivityInterface
         activity={currentActivity}
         onResponse={submitResponse}
         touchOptimized={true}
       />
-      <ResponseFeedback 
+      <ResponseFeedback
         submitted={hasSubmitted}
         showResults={activity.showResults}
       />
@@ -254,7 +254,7 @@ All personas must stay synchronized with session state:
 // Shared polling hook for all personas
 const useSessionSync = (sessionId: string, persona: PersonaType) => {
   const pollingInterval = persona === 'participant' ? 2000 : 1000;
-  
+
   return usePolling(`/api/sessions/${sessionId}/state`, {
     interval: pollingInterval,
     dependencies: [sessionId]
@@ -325,7 +325,7 @@ const ParticipantApp = lazy(() => import('./participant/ParticipantApp'));
 // Persona detection and routing
 const AppRouter = () => {
   const persona = detectPersona(); // Based on route or query params
-  
+
   return (
     <Suspense fallback={<LoadingSpinner />}>
       {persona === 'admin' && <AdminApp />}

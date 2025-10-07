@@ -16,28 +16,107 @@ conflictoIssue {issue-number}
 ## Examples
 
 - `conflictoIssue 5` - Implement session lifecycle management
-- `conflictoIssue 12` - Build word cloud generator activity  
+- `conflictoIssue 12` - Build word cloud generator activity
 - `conflictoIssue 2` - Setup AWS infrastructure with Terraform
 
-## Workflow Steps
+## Enhanced Workflow Steps
 
-### 1. GitHub MCP Integration
+### 1. Pre-Implementation Phase (Specification Generation)
+
+#### GitHub MCP Integration
 - Use GitHub MCP server to fetch complete issue context
 - Retrieve title, description, acceptance criteria, and labels
 - Get dependencies, related issues, and linked PRs
 - Analyze recent comments and implementation discussions
 
-### 2. Branch Management
-- Auto-generate branch name: `featureconflictoIssue-{number}-{descriptive-slug}`
+#### Issue Documentation Structure Creation
+- Create `ai-docs/requirements/issues/issue-{number}/` folder
+- Generate `issue-{number}_{title-slug}.spec.md` - Technical specification
+- Generate `issue-{number}_{title-slug}.plan.md` - Implementation plan
+
+#### Specification File Generation (`issue-X_title.spec.md`)
+```markdown
+# Technical Specification: [Issue Title]
+
+**GitHub Issue:** [#X](link)
+**Generated:** [timestamp]
+
+## Problem Statement
+[Extracted from issue description]
+
+## Technical Requirements
+[Derived technical requirements]
+
+## API Specifications
+[Endpoint definitions, request/response schemas]
+
+## Data Models
+[Database schemas, entity relationships]
+
+## Interface Requirements
+[UI/UX specifications if applicable]
+
+## Integration Points
+[External services, dependencies]
+
+## Acceptance Criteria
+[Technical acceptance criteria]
+
+## Assumptions & Constraints
+[Technical assumptions and limitations]
+```
+
+#### Plan File Generation (`issue-X_title.plan.md`)
+```markdown
+# Implementation Plan: [Issue Title]
+
+**GitHub Issue:** [#X](link)
+**Generated:** [timestamp]
+
+## Implementation Strategy
+[High-level approach]
+
+## File Structure Changes
+[New files to create, existing files to modify]
+
+## Implementation Steps
+1. [Step 1 with file changes]
+2. [Step 2 with file changes]
+3. [etc.]
+
+## Testing Strategy
+[Unit tests, integration tests to create]
+
+## Deployment Considerations
+[Migration scripts, environment changes]
+
+## Risk Assessment
+[Potential issues and mitigation strategies]
+
+## Estimated Effort
+[Time estimation and complexity assessment]
+```
+
+### 2. Developer Review Phase
+- Command pauses and displays generated specification and plan files
+- Developer reviews ai-docs/requirements/issue-X/ documentation
+- Provides feedback or approval to proceed with implementation
+- Allows modifications to spec/plan before code generation
+
+### 3. Implementation Phase (After Approval)
+
+#### Branch Management
+- Auto-generate branch name: `feature/issue-{number}-{descriptive-slug}`
 - Ensure main branch is current
 - Create and push feature branch
 - Switch to feature branch for implementation
 
-### 3. Issue Analysis
+#### Issue Analysis
 - Categorize issue by labels (infrastructure/backend/frontend/activity)
 - Identify Caja architecture requirements
 - Determine multi-persona impact (admin/viewer/participant)
 - Assess dependencies and potential blockers
+- Reference approved specification and plan files during implementation
 
 ### 4. Code Generation by Category
 
@@ -122,7 +201,7 @@ Provide detailed validation checklist:
 - Session context maintained across all components
 - Session recovery and state persistence supported
 
-### Multi-Persona Architecture  
+### Multi-Persona Architecture
 - **Admin Interface:** Configuration and content management
 - **Viewer Interface:** Large screen displays with QR codes and live results
 - **Participant Interface:** Mobile-first interaction and activity engagement
@@ -148,7 +227,7 @@ Provide detailed validation checklist:
 - Monitoring, alerting, and observability setup
 - CI/CD pipeline integration and deployment automation
 
-### Backend Development (Mauricio) - API Focus  
+### Backend Development (Mauricio) - API Focus
 - FastAPI routing patterns and middleware integration
 - Database design principles and migration strategies
 - Real-time polling implementation and optimization
@@ -181,22 +260,54 @@ Provide detailed validation checklist:
 - Provide conflict resolution guidance
 - Maintain development continuity
 
+## Command Options
+
+- `/conflictoIssue <number>` - Full workflow (spec → plan → review → implement)
+- `/conflictoIssue <number> --spec-only` - Generate only specification file
+- `/conflictoIssue <number> --plan-only` - Generate only implementation plan
+- `/conflictoIssue <number> --implement` - Skip to implementation (if spec/plan exist)
+
 ## Expected Output Format
 
+### Phase 1: Specification Generation
 ```
 🔍 Fetching issue #{number} via GitHub MCP...
 📋 Issue: "{issue-title}"
+📄 Generated specification: ai-docs/requirements/issue-{number}/issue-{number}_{title-slug}.spec.md
+📋 Generated plan: ai-docs/requirements/issue-{number}/issue-{number}_{title-slug}.plan.md
+
+📚 Specification and implementation plan generated!
+
+Please review:
+- ai-docs/requirements/issue-{number}/issue-{number}_{title-slug}.spec.md
+- ai-docs/requirements/issue-{number}/issue-{number}_{title-slug}.plan.md
+
+Type 'proceed' to continue with implementation, or 'abort' to stop.
+```
+
+### Phase 2: Implementation (After Approval)
+```
+✅ Proceeding with implementation based on approved specification...
 🌿 Created branch: feature/issue-{number}-{slug}
-🏗️  Generated {file-count} files with boilerplate code
+🏗️  Generated {file-count} files following specification
 🧪 Added comprehensive test suite
-📚 Updated documentation and API specs  
+📚 Updated documentation and API specs
 ✅ Implementation checklist ready with {criteria-count} acceptance criteria
 
 Next steps:
-1. Review generated code and customize for specific requirements
+1. Review generated code against specification requirements
 2. Run test suite: npm test (frontend) or pytest (backend)
 3. Validate acceptance criteria implementation
 4. Create pull request when ready for review
 ```
+
+## Benefits of Enhanced Workflow
+
+1. **Better Planning:** Forces detailed thinking before coding
+2. **Review Process:** Allows developer oversight of AI interpretation
+3. **Documentation:** Creates searchable implementation history
+4. **Consistency:** Ensures all implementations follow reviewed specifications
+5. **Debugging:** Easier to trace implementation decisions back to plans
+6. **Learning:** Developers can see AI's interpretation and planning process
 
 This custom prompt enables efficient, MCP-powered issue implementation while maintaining consistency with Caja's architecture and development standards.
