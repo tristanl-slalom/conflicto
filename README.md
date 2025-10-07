@@ -55,16 +55,45 @@ The setup script automatically installs and configures:
 
 Use these Make commands from the project root (recommended):
 
+### 🚀 Quick Commands
 ```bash
-make help     # 📋 Show all available commands
-make setup    # 🚀 Complete project setup
-make dev      # 🟢 Start development environment (alias: make start)
-make stop     # 🔴 Stop development environment
-make test     # 🧪 Run all tests and quality checks
-make reset-db # 💥 Reset database (destructive)
+make help       # 📋 Show all available commands with descriptions
+make setup      # 🚀 Complete project setup (backend + frontend)
+make start-all  # 🟢 Start all servers (backend + frontend)
+make stop-all   # � Stop all servers gracefully
+make status     # 📊 Check server status and process health
+make test       # 🧪 Run all tests (backend + frontend)
+make clean      # 🧹 Clean all cache and build files
 ```
 
-**💡 Pro tip:** Run `make help` to see all available commands including database operations, Docker commands, and more!
+### 🔧 Individual Component Commands
+```bash
+# Backend only
+make start-backend   # Start FastAPI server (port 8000)
+make test-backend    # Run backend tests with pytest
+make format-backend  # Format Python code with black/isort
+
+# Frontend only
+make start-frontend  # Start React server (port 3000)
+make test-frontend   # Run frontend tests with Jest
+make format-frontend # Format TypeScript code with prettier
+```
+
+### 📊 Quality & Testing
+```bash
+make test-watch     # Run tests in watch mode (interactive)
+make test-coverage  # Generate comprehensive coverage reports
+make lint          # Run all linting (flake8 + eslint)
+make format        # Format all code (black + prettier)
+make type-check    # Run type checking (mypy + tsc)
+make quality       # Run all quality checks together
+```
+
+**💡 Pro tips:**
+- Run `make help` to see all 25+ available commands
+- Use `make status` to check if your servers are running
+- `make start-all` runs servers in background with PID tracking
+- All commands work cross-platform (Linux, macOS, Windows WSL)
 
 **Alternative - Backend scripts directly:**
 ```bash
@@ -77,11 +106,14 @@ cd backend && ./reset-db.sh   # Reset database
 
 ## 🌐 Access Your Application
 
-Once started, you can access:
+After running `make start-all`, you can access:
 
-- **API Documentation**: http://localhost:8000/docs
-- **FastAPI Application**: http://localhost:8000
+- **Backend API**: http://localhost:8000 (FastAPI)
+- **API Documentation**: http://localhost:8000/docs (Swagger/OpenAPI)
+- **Frontend App**: http://localhost:3000 (React + Vite)
 - **Health Check**: http://localhost:8000/api/v1/health/
+
+Use `make status` to verify all servers are running properly.
 
 ## 📁 Project Structure
 
