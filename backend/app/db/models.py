@@ -48,6 +48,14 @@ class ParticipantRole(str, Enum):
     PARTICIPANT = "participant"
 
 
+class ActivityStatus(str, Enum):
+    """Activity status enumeration for activity framework."""
+    DRAFT = "draft"
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
+
 class Session(Base):
     """Session model representing a live event session."""
 
@@ -74,39 +82,27 @@ class Session(Base):
     participants = relationship(
         "Participant", back_populates="session", cascade="all, delete-orphan"
     )
-    new_activities = relationship(
-        "NewActivity", back_populates="session", cascade="all, delete-orphan"
-    )
     user_responses = relationship(
         "UserResponse", back_populates="session", cascade="all, delete-orphan"
     )
 
 
 class Activity(Base):
-    """Activity model representing activities within a session."""
-
+    """Activity model with JSONB configuration storage."""
     __tablename__ = "activities"
-
-    id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(Integer, ForeignKey("sessions.id"), nullable=False)
-    title = Column(String(255), nullable=False)
-    description = Column(Text)
-    activity_type = Column(String(50), nullable=False)
-    configuration = Column(JSON, default=dict)  # Store activity-specific config
-    is_active = Column(Boolean, default=False)
-    order_index = Column(Integer, default=0)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
-    )
-    started_at = Column(DateTime(timezone=True), nullable=True)
-    completed_at = Column(DateTime(timezone=True), nullable=True)
-
+    
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    session_id: Mapped[int] = mapped_column(Integer, ForeignKey("sessions.id", ondelete="CASCADE"))
+    type: Mapped[str] = mapped_column(String(50))
+    config: Mapped[dict] = mapped_column(JSONB, default=dict)
+    order_index: Mapped[int] = mapped_column(Integer)
+    status: Mapped[ActivityStatus] = mapped_column(String(20), default=ActivityStatus.DRAFT)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
     # Relationships
     session = relationship("Session", back_populates="activities")
-    responses = relationship(
-        "ActivityResponse", back_populates="activity", cascade="all, delete-orphan"
-    )
+    user_responses = relationship("UserResponse", back_populates="activity", cascade="all, delete-orphan")
 
 
 class Participant(Base):
@@ -124,57 +120,9 @@ class Participant(Base):
 
     # Relationships
     session = relationship("Session", back_populates="participants")
-    responses = relationship(
-        "ActivityResponse", back_populates="participant", cascade="all, delete-orphan"
-    )
     user_responses = relationship(
         "UserResponse", back_populates="participant", cascade="all, delete-orphan"
     )
-
-
-class ActivityResponse(Base):
-    """Activity response model for storing participant responses."""
-
-    __tablename__ = "activity_responses"
-
-    id = Column(Integer, primary_key=True, index=True)
-    activity_id = Column(Integer, ForeignKey("activities.id"), nullable=False)
-    participant_id = Column(Integer, ForeignKey("participants.id"), nullable=False)
-    response_data = Column(JSON, nullable=False)  # Store response content
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
-    )
-
-    # Relationships
-    activity = relationship("Activity", back_populates="responses")
-    participant = relationship("Participant", back_populates="responses")
-
-
-class ActivityStatus(str, Enum):
-    """Activity status enumeration for new activity framework."""
-    DRAFT = "draft"
-    ACTIVE = "active"
-    COMPLETED = "completed"
-    CANCELLED = "cancelled"
-
-
-class NewActivity(Base):
-    """New Activity model with JSONB configuration storage."""
-    __tablename__ = "new_activities"
-    
-    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
-    session_id: Mapped[int] = mapped_column(Integer, ForeignKey("sessions.id", ondelete="CASCADE"))
-    type: Mapped[str] = mapped_column(String(50))
-    config: Mapped[dict] = mapped_column(JSONB, default=dict)
-    order_index: Mapped[int] = mapped_column(Integer)
-    status: Mapped[ActivityStatus] = mapped_column(String(20), default=ActivityStatus.DRAFT)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-    
-    # Relationships
-    session = relationship("Session", back_populates="new_activities")
-    user_responses = relationship("UserResponse", back_populates="new_activity", cascade="all, delete-orphan")
 
 
 class UserResponse(Base):
@@ -183,7 +131,7 @@ class UserResponse(Base):
     
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     session_id: Mapped[int] = mapped_column(Integer, ForeignKey("sessions.id", ondelete="CASCADE"))
-    activity_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("new_activities.id", ondelete="CASCADE"))
+    activity_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("activities.id", ondelete="CASCADE"))
     participant_id: Mapped[int] = mapped_column(Integer, ForeignKey("participants.id", ondelete="CASCADE"))
     response_data: Mapped[dict] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -191,5 +139,5 @@ class UserResponse(Base):
     
     # Relationships
     session = relationship("Session", back_populates="user_responses")
-    new_activity = relationship("NewActivity", back_populates="user_responses")
+    activity = relationship("Activity", back_populates="user_responses")
     participant = relationship("Participant", back_populates="user_responses")

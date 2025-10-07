@@ -1,4 +1,4 @@
-"""API routes for New Activity operations."""
+"""API routes for Activity operations."""
 from typing import List
 from uuid import UUID
 
@@ -7,31 +7,30 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_db
 from app.db.models import ActivityStatus
-from app.models.jsonb_schemas.new_activity import (
-    NewActivity,
-    NewActivityCreate,
-    NewActivityUpdate,
-    NewActivityList,
-    NewActivitySummary,
+from app.models.jsonb_schemas.activity import (
+    Activity,
+    ActivityCreate,
+    ActivityUpdate,
+    ActivityList,
 )
-from app.services.new_activity_service import NewActivityService
+from app.services.activity_service import ActivityService
 
-router = APIRouter(prefix="/api/v1", tags=["new-activities"])
+router = APIRouter(prefix="/api/v1", tags=["activities"])
 
 
 @router.post(
     "/sessions/{session_id}/activities",
-    response_model=NewActivity,
+    response_model=Activity,
     status_code=status.HTTP_201_CREATED
 )
 async def create_activity(
     session_id: int,
-    activity_data: NewActivityCreate,
+    activity_data: ActivityCreate,
     db: AsyncSession = Depends(get_db),
-) -> NewActivity:
+) -> Activity:
     """Create a new activity for a session."""
     try:
-        activity = await NewActivityService.create_activity(
+        activity = await ActivityService.create_activity(
             db=db,
             session_id=session_id,
             activity_data=activity_data,
@@ -46,23 +45,23 @@ async def create_activity(
 
 @router.get(
     "/sessions/{session_id}/activities",
-    response_model=NewActivityList
+    response_model=ActivityList
 )
 async def get_session_activities(
     session_id: int,
     offset: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     db: AsyncSession = Depends(get_db),
-) -> NewActivityList:
+) -> ActivityList:
     """Get all activities for a session."""
     try:
-        activities = await NewActivityService.get_session_activities(
+        activities, total_count = await ActivityService.get_session_activities_with_count(
             db=db,
             session_id=session_id,
             offset=offset,
             limit=limit,
         )
-        return NewActivityList(activities=activities, total_count=len(activities))
+        return ActivityList(activities=activities, total=total_count)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -72,15 +71,15 @@ async def get_session_activities(
 
 @router.get(
     "/activities/{activity_id}",
-    response_model=NewActivity
+    response_model=Activity
 )
 async def get_activity(
     activity_id: UUID,
     db: AsyncSession = Depends(get_db),
-) -> NewActivity:
+) -> Activity:
     """Get an activity by ID."""
     try:
-        activity = await NewActivityService.get_activity(
+        activity = await ActivityService.get_activity(
             db=db,
             activity_id=activity_id,
         )
@@ -101,16 +100,16 @@ async def get_activity(
 
 @router.put(
     "/activities/{activity_id}",
-    response_model=NewActivity
+    response_model=Activity
 )
 async def update_activity(
     activity_id: UUID,
-    activity_data: NewActivityUpdate,
+    activity_data: ActivityUpdate,
     db: AsyncSession = Depends(get_db),
-) -> NewActivity:
+) -> Activity:
     """Update an existing activity."""
     try:
-        activity = await NewActivityService.update_activity(
+        activity = await ActivityService.update_activity(
             db=db,
             activity_id=activity_id,
             activity_data=activity_data,
@@ -140,7 +139,7 @@ async def delete_activity(
 ) -> None:
     """Delete an activity."""
     try:
-        deleted = await NewActivityService.delete_activity(
+        deleted = await ActivityService.delete_activity(
             db=db,
             activity_id=activity_id,
         )
@@ -160,16 +159,16 @@ async def delete_activity(
 
 @router.patch(
     "/activities/{activity_id}/status",
-    response_model=NewActivity
+    response_model=Activity
 )
 async def update_activity_status(
     activity_id: UUID,
     status: ActivityStatus,
     db: AsyncSession = Depends(get_db),
-) -> NewActivity:
+) -> Activity:
     """Update activity status."""
     try:
-        activity = await NewActivityService.update_activity_status(
+        activity = await ActivityService.update_activity_status(
             db=db,
             activity_id=activity_id,
             status=status,
@@ -191,15 +190,15 @@ async def update_activity_status(
 
 @router.get(
     "/sessions/{session_id}/activities/active",
-    response_model=NewActivity | None
+    response_model=Activity | None
 )
 async def get_active_activity(
     session_id: int,
     db: AsyncSession = Depends(get_db),
-) -> NewActivity | None:
+) -> Activity | None:
     """Get the currently active activity for a session."""
     try:
-        activity = await NewActivityService.get_active_activity(
+        activity = await ActivityService.get_active_activity(
             db=db,
             session_id=session_id,
         )
