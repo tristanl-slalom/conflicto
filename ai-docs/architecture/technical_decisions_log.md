@@ -2,9 +2,9 @@
 
 ## Testing Framework Migration: Jest → Vitest
 
-**Date:** October 7, 2025  
-**Issue:** React frontend test framework alignment  
-**Decision:** Migrate from Jest to Vitest for better Vite integration  
+**Date:** October 7, 2025
+**Issue:** React frontend test framework alignment
+**Decision:** Migrate from Jest to Vitest for better Vite integration
 
 ### Background
 The React frontend was initially implemented with Jest testing but the project uses Vite as the build tool. This created conflicts and compatibility issues when running `npm test`.
@@ -46,7 +46,7 @@ expect((button as HTMLButtonElement).disabled).toBe(true)
 jest.fn()
 jest.mock()
 
-// After  
+// After
 vi.fn()
 vi.mock()
 ```
@@ -124,9 +124,9 @@ export default defineConfig({
 
 ## Frontend Architecture Implementation
 
-**Date:** October 7, 2025  
-**Component:** React Multi-Persona Interface System  
-**Status:** Completed - MVP Implementation  
+**Date:** October 7, 2025
+**Component:** React Multi-Persona Interface System
+**Status:** Completed - MVP Implementation
 
 ### Implementation Summary
 Successfully implemented the three-persona interface system with:
@@ -162,12 +162,12 @@ src/routes/
 - Test utilities for TanStack Query and Router integration
 
 ### Technical Stack Validation
-✅ **React 18+** with TypeScript for type safety  
-✅ **TanStack Start** for file-based routing and SSR capability  
-✅ **TanStack Query** for server state management with polling  
-✅ **shadcn/ui + Tailwind CSS** for consistent UI components  
-✅ **Vitest** for testing framework aligned with Vite build system  
-✅ **Lucide React** for consistent iconography  
+✅ **React 18+** with TypeScript for type safety
+✅ **TanStack Start** for file-based routing and SSR capability
+✅ **TanStack Query** for server state management with polling
+✅ **shadcn/ui + Tailwind CSS** for consistent UI components
+✅ **Vitest** for testing framework aligned with Vite build system
+✅ **Lucide React** for consistent iconography
 
 ### Performance Considerations
 - Implemented 2-3 second polling intervals for real-time updates
@@ -179,9 +179,9 @@ src/routes/
 
 ## Development Tooling Enhancements
 
-**Date:** October 7, 2025  
-**Area:** Testing and Development Workflow  
-**Impact:** Improved Developer Experience  
+**Date:** October 7, 2025
+**Area:** Testing and Development Workflow
+**Impact:** Improved Developer Experience
 
 ### Key Improvements
 1. **Test Framework Alignment:** Vitest integration with Vite build system
@@ -366,23 +366,160 @@ const server = setupServer(...getCajaBackendMock())
 
 ---
 
+## Backend Data Architecture Refinement
+
+**Date:** October 7, 2025
+**Issue:** Activity data model and user response storage strategy
+**Decision:** Flexible JSON-based user response storage with activity-specific components
+
+### Background
+During backend architecture refinement discussions, the team debated between a structured relational approach vs. a flexible JSON-based approach for storing user responses across different activity types.
+
+### Problem Analysis
+
+#### Structured Relational Approach
+**Proposed Structure:**
+- Session → Activities → Questions → Answers (with predefined answer types)
+- Enforced schema: statement, question_type, possible_answers
+- Relational integrity and easy querying
+
+**Challenges Identified:**
+- Premature optimization for unknown future activity types
+- System responsibility for data structure interpretation
+- Rigid schema limiting activity innovation
+- Complex migrations when adding new activity types
+
+#### Flexible JSON Approach
+**Proposed Structure:**
+- Session → Activities → User Responses (JSON blobs)
+- Activity-defined response schema
+- Front-end responsibility for data interpretation
+
+**Advantages:**
+- Future-proof for unknown activity types
+- Activity autonomy over data structure
+- Simpler backend implementation
+- Easier activity development and deployment
+
+### Decision Rationale
+
+#### Why JSON Blob Storage Won
+1. **Modularity:** Each activity type becomes self-contained with its own data contract
+2. **Extensibility:** New activities can be added without backend schema changes
+3. **Simplicity:** Backend becomes activity-agnostic data storage
+4. **Scale Appropriate:** Expected response volumes (≤100 per activity) make JSON querying feasible
+
+#### Trade-offs Accepted
+- **Query Complexity:** Aggregation requires JSON processing instead of SQL joins
+- **Type Safety:** Response structure validation moves to application layer
+- **Reporting:** Cross-activity analytics become more complex
+
+### Implementation Details
+
+#### Database Schema
+```sql
+-- Core entities
+sessions (id, name, status, admin_id, created_at)
+activities (id, session_id, type, config, order, status)
+participants (id, session_id, nickname, joined_at)
+
+-- Flexible user responses
+user_responses (id, session_id, activity_id, participant_id, response_data, created_at)
+-- response_data: JSONB column containing activity-specific response structure
+```
+
+#### Activity Component Architecture
+Each activity type implements three distinct components:
+1. **Configuration Component:** Admin interface for activity setup
+2. **Participant Component:** User interaction interface
+3. **Viewer Component:** Real-time results display
+
+#### Data Flow Pattern
+1. **Configuration:** Admin configures activity using configuration component
+2. **Storage:** Configuration stored in `activities.config` (JSON)
+3. **Participation:** Users interact via participant component
+4. **Response:** User responses stored in `user_responses.response_data` (JSON)
+5. **Aggregation:** Viewer component processes and displays aggregated responses
+
+### Activity Autonomy Principle
+- **Frontend Responsibility:** Each activity defines its own data structure
+- **Backend Responsibility:** Generic CRUD operations on JSON data
+- **No System Interpretation:** Backend has no knowledge of response semantics
+
+### Session Configuration vs. Instance Pattern
+**Configuration (Class):** Template defining activity types and order
+**Instance (Object):** Runtime session with participant data and responses
+
+Example: Sprint Planning session configuration enables repeated planning poker activities without predefined story count.
+
+### Development Workflow Impact
+- **New Activity Development:** Only requires frontend component creation
+- **Backend Stability:** Core API remains unchanged for new activity types
+- **Testing:** Each activity can be tested in isolation
+- **Deployment:** Activity updates deployable independently
+
+---
+
+## Development Orchestration Enhancement
+
+**Date:** October 7, 2025
+**Issue:** Cross-service development workflow coordination
+**Decision:** Comprehensive Makefile for backend and frontend orchestration
+
+### Background
+The project evolved from backend-only development to full-stack application requiring coordinated development workflows across both services.
+
+### Implementation Plan
+**Makefile targets identified for implementation:**
+- `start-backend`, `start-frontend`, `start-all`
+- `stop-all`, `restart-all`, `status`
+- `test-backend`, `test-frontend`, `test-all`
+- `test-watch`, `test-coverage`
+
+### Development Process Innovation
+**Enhanced Issue Implementation Process:**
+1. AI generates implementation plan from issue description
+2. Developer reviews and modifies plan before execution
+3. Provides opportunity for scope refinement and technical approach validation
+4. Estimated effort tracking for retrospective analysis
+
+**Benefits:**
+- Scope validation before implementation begins
+- Technical approach alignment across team
+- Effort estimation for planning purposes
+- Implementation plan serves as documentation
+
+---
+
 ## Next Implementation Phases
 
-### Phase 2: Backend Integration
+### Phase 2: Backend Integration & Data Foundation
 - Connect generated API client to actual FastAPI backend endpoints
-- Implement WebSocket connections for real-time updates
-- Add comprehensive error handling and retry logic
+- Implement flexible user response storage with JSONB
+- Create generic activity CRUD endpoints
+- Establish session configuration vs. instance pattern
+- Build activity-agnostic aggregation endpoints
 - Replace MSW mocks with actual API calls in production
 
-### Phase 3: Activity Framework
-- Implement specific activity types (Poll, Poker, Quiz, Word Cloud)
+### Phase 3: Activity Component Framework
+- Implement activity-specific React components (Poll, Poker, Quiz, Word Cloud)
 - Add activity state management using generated API hooks
-- Create activity-specific UI components
+- Create configuration interfaces for each activity type
+- Build real-time viewer components with JSON response processing
 - Implement result aggregation and display with type-safe API calls
+- Establish activity development patterns and guidelines
 
-### Phase 4: Production Readiness
-- Performance optimization and bundle analysis
-- Error boundary implementation with proper API error handling
+### Phase 4: Development Workflow & Real-time Features
+- Complete Makefile implementation for service orchestration
+- Implement WebSocket connections for real-time updates
+- Add comprehensive error handling and retry logic
+- Establish activity deployment and versioning strategy
+- Create activity development documentation and templates
+- Implement cross-service testing automation
+
+### Phase 5: Production Readiness
+- Performance optimization for JSON querying at scale and bundle analysis
+- Error boundary implementation for activity component failures and API error handling
+- Activity monitoring and analytics integration with API client instrumentation
+- Session archival and data retention policies
 - Offline capability and connection recovery
-- Analytics and monitoring integration with API client instrumentation
-````

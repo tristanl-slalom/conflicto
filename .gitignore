@@ -101,10 +101,8 @@ temp/
 *.orig
 
 ## Generated scripts (created by setup)
-backend/start-dev.sh
-backend/stop-dev.sh
-backend/run-tests.sh
-backend/reset-db.sh
+# Note: Backend scripts are now tracked as they are the authoritative versions
+# Root-level scripts are duplicates and will be removed
 
 ## macOS
 .DS_Store
@@ -137,3 +135,7 @@ pnp.js
 ## Temporary
 tmp/
 temp/
+
+## Development Process Management
+.dev-processes/
+*.pid

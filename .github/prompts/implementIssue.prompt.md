@@ -3,21 +3,21 @@ mode: agent
 description: "Fetch GitHub issue via MCP and implement complete solution with code generation"
 ---
 
-# /conflictoIssue - Complete Issue Implementation Workflow
+# /implementIssue - Complete Issue Implementation Workflow
 
 Implements a complete GitHub issue using the Model Context Protocol (MCP) server integration for the Caja live event engagement platform.
 
 ## Usage
 
 ```
-conflictoIssue {issue-number}
+implementIssue {issue-number}
 ```
 
 ## Examples
 
-- `conflictoIssue 5` - Implement session lifecycle management
-- `conflictoIssue 12` - Build word cloud generator activity
-- `conflictoIssue 2` - Setup AWS infrastructure with Terraform
+- `implementIssue 5` - Implement session lifecycle management
+- `implementIssue 12` - Build word cloud generator activity
+- `implementIssue 2` - Setup AWS infrastructure with Terraform
 
 ## Enhanced Workflow Steps
 
@@ -170,7 +170,164 @@ Update project documentation:
 - Deployment procedures for infrastructure changes
 - Feature documentation and usage examples
 
-### 7. Implementation Checklist
+### 7. Automatic Pull Request Creation
+Create a comprehensive pull request with complete template:
+- Generate PR title from issue title
+- Populate description with implementation details
+- Include all acceptance criteria with status
+- Add testing instructions and checklist
+- Copy labels from original issue
+- Auto-assign reviewers based on issue type
+- Link to specification and plan documents
+- Ready for immediate review
+
+### 8. Pull Request Creation with Complete Template
+
+After successful implementation, automatically create a pull request with a comprehensive template:
+
+#### PR Title Format
+```
+{Issue Title} (#{issue-number})
+```
+
+#### PR Description Template
+```markdown
+## 🎯 Summary
+
+Implements #{issue-number}: {Issue Title}
+
+{Brief description from issue}
+
+## 🔧 Implementation Details
+
+### Changes Made
+- {List of key changes from implementation}
+- {Files created/modified}
+- {Features implemented}
+
+### Technical Approach
+{Summary from implementation plan}
+
+## ✅ Acceptance Criteria
+
+{Checklist from original issue with ✅ or ❌ status}
+
+## 🧪 Testing
+
+### Test Coverage
+- [ ] Unit tests added/updated
+- [ ] Integration tests added/updated
+- [ ] Manual testing completed
+- [ ] All tests passing
+
+### Test Commands
+```bash
+make test  # Run all tests
+# Add specific test commands if needed
+```
+
+## 📋 Checklist
+
+### Functional Requirements
+- [ ] All acceptance criteria implemented and verified
+- [ ] Multi-persona support working (admin/viewer/participant)
+- [ ] Session integration functioning correctly
+- [ ] Polling-based synchronization implemented
+- [ ] Mobile responsiveness confirmed (if applicable)
+
+### Technical Requirements
+- [ ] Code follows Caja architecture patterns and conventions
+- [ ] Comprehensive test coverage achieved (>80%)
+- [ ] Proper error handling and structured logging
+- [ ] Database migrations created and tested (if applicable)
+- [ ] API documentation updated and accurate
+
+### Quality Assurance
+- [ ] All CI/CD pipeline checks passing
+- [ ] Performance acceptable with 50+ concurrent participants
+- [ ] Security considerations addressed and validated
+- [ ] Accessibility requirements met (WCAG 2.1 AA)
+- [ ] Cross-browser compatibility verified
+
+## 🚀 Deployment
+
+### Database Changes
+{List any database migrations or schema changes}
+
+### Environment Variables
+{List any new environment variables needed}
+
+### Configuration Changes
+{List any configuration file changes}
+
+## 📚 Documentation
+
+- [ ] API documentation updated
+- [ ] README updated if needed
+- [ ] Architecture docs updated if needed
+- [ ] Deployment docs updated if needed
+
+## 🔗 Related Issues
+
+Closes #{issue-number}
+{List any related/dependent issues}
+
+## 📸 Screenshots (if applicable)
+
+{Add screenshots for UI changes}
+
+---
+
+**Review Notes:** This PR was generated using the `/implementIssue` command. All implementation follows the approved specification and plan in `ai-docs/requirements/issues/issue-{number}/`.
+```
+
+#### PR Configuration
+- **Base Branch:** `main`
+- **Head Branch:** `feature/issue-{number}-{descriptive-slug}`
+- **Labels:** Copy from original issue + add `auto-generated`
+- **Reviewers:** Auto-assign based on issue type:
+  - Infrastructure issues → Platform Engineering team
+  - Backend issues → Backend team
+  - Frontend issues → Frontend team
+  - Full-stack issues → All teams
+- **Draft Status:** False (ready for review)
+
+#### Implementation Commands
+The AI should execute these GitHub MCP commands after implementation:
+
+1. **Create Pull Request:**
+	```
+	mcp_github_create_pull_request(
+		 owner="repository-owner",
+		 repo="repository-name",
+		 title="{issue-title} (#{issue-number})",
+		 body="[Generated PR description using template above]",
+		 head="feature/issue-{number}-{descriptive-slug}",
+		 base="main"
+	)
+	```
+
+2. **Update PR with Labels:**
+	```
+	mcp_github_update_pull_request(
+		 owner="repository-owner",
+		 repo="repository-name",
+		 pullNumber={pr-number},
+		 labels=[...issue_labels, "auto-generated"]
+	)
+	```
+
+3. **Assign Reviewers (if applicable):**
+	```
+	mcp_github_update_pull_request(
+		 owner="repository-owner",
+		 repo="repository-name",
+		 pullNumber={pr-number},
+		 reviewers=[...team_members_based_on_issue_type]
+	)
+	```
+
+### 9. Implementation Checklist
 Provide detailed validation checklist:
 
 **Functional Requirements:**
@@ -262,10 +419,10 @@ Provide detailed validation checklist:
 
 ## Command Options
 
-- `/conflictoIssue <number>` - Full workflow (spec → plan → review → implement)
-- `/conflictoIssue <number> --spec-only` - Generate only specification file
-- `/conflictoIssue <number> --plan-only` - Generate only implementation plan
-- `/conflictoIssue <number> --implement` - Skip to implementation (if spec/plan exist)
+- `/implementIssue <number>` - Full workflow (spec → plan → review → implement)
+- `/implementIssue <number> --spec-only` - Generate only specification file
+- `/implementIssue <number> --plan-only` - Generate only implementation plan
+- `/implementIssue <number> --implement` - Skip to implementation (if spec/plan exist)
 
 ## Expected Output Format
 
@@ -292,13 +449,22 @@ Type 'proceed' to continue with implementation, or 'abort' to stop.
 🏗️  Generated {file-count} files following specification
 🧪 Added comprehensive test suite
 📚 Updated documentation and API specs
-✅ Implementation checklist ready with {criteria-count} acceptance criteria
+🔗 Created pull request: #{pr-number} - {issue-title}
+✅ Implementation complete with {criteria-count} acceptance criteria validated
+
+Pull Request Details:
+- 📋 Title: {issue-title} (#{issue-number})
+- 📝 Description: Complete template with implementation details, testing info, and checklists
+- 🏷️ Labels: {original-issue-labels} + auto-generated
+- 👥 Reviewers: Auto-assigned based on issue category
+- ✅ Status: Ready for review and testing
+- 🔗 Link: https://github.com/{owner}/{repo}/pull/{pr-number}
 
 Next steps:
-1. Review generated code against specification requirements
-2. Run test suite: npm test (frontend) or pytest (backend)
-3. Validate acceptance criteria implementation
-4. Create pull request when ready for review
+1. ✅ Pull request created and ready for team review
+2. 🔄 CI/CD pipeline will run automated tests
+3. 👀 Team members will review according to issue type
+4. 🚀 Merge after approval and testing complete
 ```
 
 ## Benefits of Enhanced Workflow
@@ -309,5 +475,14 @@ Next steps:
 4. **Consistency:** Ensures all implementations follow reviewed specifications
 5. **Debugging:** Easier to trace implementation decisions back to plans
 6. **Learning:** Developers can see AI's interpretation and planning process
+7. **Complete PR Template:** Automatically generates comprehensive pull requests with:
+	- Detailed implementation summary
+	- Complete acceptance criteria checklist
+	- Testing instructions and coverage info
+	- Quality assurance checklist
+	- Deployment notes and documentation updates
+	- Proper labeling and reviewer assignment
+8. **Zero Manual PR Setup:** Eliminates empty PR templates and manual description writing
+9. **Immediate Review Ready:** PRs are created in review-ready state with all necessary context
 
 This custom prompt enables efficient, MCP-powered issue implementation while maintaining consistency with Caja's architecture and development standards.
