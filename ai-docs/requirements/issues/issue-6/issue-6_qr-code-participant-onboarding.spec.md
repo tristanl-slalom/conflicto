@@ -10,9 +10,9 @@ Participants currently lack an easy way to join interactive sessions without com
 ## Technical Requirements
 
 ### QR Code Generation
-- Frontend-based QR code generation using session UUID directly
+- Frontend-based QR code generation using session ID directly
 - QR codes generated client-side for immediate display without server requests
-- QR code content contains join URL with session UUID: `https://app.caja.dbash.dev/join/{session_uuid}`
+- QR code content contains join URL with session ID: `https://app.caja.dbash.dev/join/{session_id}`
 - QR codes must be persistent and displayed throughout all session activities
 - QR codes should be optimized for scanning from various distances and screen sizes
 - No server-side QR generation or join tokens required
@@ -36,12 +36,12 @@ Participants currently lack an easy way to join interactive sessions without com
 ### Backend Endpoints
 
 #### Session Access (No QR endpoint needed)
-QR codes generated client-side using session UUID directly from session data.
-Join URL format: `https://app.caja.dbash.dev/join/{session_uuid}`
+QR codes generated client-side using session ID directly from session data.
+Join URL format: `https://app.caja.dbash.dev/join/{session_id}`
 
 #### Participant Join
 ```
-POST /api/sessions/{session_uuid}/join
+POST /api/sessions/{session_id}/join
 Request: {
   "nickname": "string"
 }
@@ -74,7 +74,7 @@ Note: Status is automatically determined by backend based on time since last hea
 
 #### Nickname Validation
 ```
-GET /api/sessions/{session_uuid}/nicknames/validate?nickname={nickname}
+GET /api/sessions/{session_id}/nicknames/validate?nickname={nickname}
 Response: {
   "available": boolean,
   "suggested_alternatives": ["nickname1", "nickname2"]
@@ -89,13 +89,13 @@ Response: {
 ```sql
 ALTER TABLE sessions ADD COLUMN allow_late_join BOOLEAN DEFAULT true;
 ```
-Note: No QR token fields needed since QR codes are generated client-side using session UUID.
+Note: No QR token fields needed since QR codes are generated client-side using session ID.
 
 #### Participants Table
 ```sql
 CREATE TABLE participants (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    session_id UUID NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+    session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
     nickname VARCHAR(50) NOT NULL,
     status VARCHAR(20) DEFAULT 'online',
     joined_at TIMESTAMP DEFAULT NOW(),
@@ -141,7 +141,7 @@ class ParticipantHeartbeatResponse(BaseModel):
 - QR code should not obstruct activity content
 - Include text instructions: "Scan to join session"
 - Display current participant count and recent joiners
-- QR code remains static (session UUID never changes)
+- QR code remains static (session ID never changes)
 
 ### Participant Interface (Mobile-Optimized)
 - Landing page optimized for mobile scanning experience
@@ -163,9 +163,9 @@ class ParticipantHeartbeatResponse(BaseModel):
 - No server-side dependencies required
 
 ### Session Management Integration
-- QR codes tied to static session UUID (never changes)
+- QR codes tied to static session ID (never changes)
 - QR codes remain valid as long as session is accessible
-- No need for QR code regeneration since UUID is immutable
+- No need for QR code regeneration since session ID is immutable
 - Integration with existing session polling mechanism
 
 ### Activity Framework Integration
@@ -206,11 +206,11 @@ class ParticipantHeartbeatResponse(BaseModel):
 - QR codes remain valid for session duration (no automatic expiry)
 
 ### Security Considerations
-- Session UUID provides basic session access control
-- No sensitive data transmitted in QR codes (only session UUID)
+- Session ID provides basic session access control
+- No sensitive data transmitted in QR codes (only session ID)
 - Rate limiting on join attempts to prevent abuse
 - Participant nickname filtering for inappropriate content
-- Public session access via UUID (no additional authentication for MVP)
+- Public session access via session ID (no additional authentication for MVP)
 
 ### Performance Constraints
 - Join flow should complete within 2 seconds on mobile networks

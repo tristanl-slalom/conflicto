@@ -8,7 +8,7 @@
 This implementation follows a **frontend-first, client-side QR generation approach** that integrates seamlessly with the existing session management and polling-based synchronization architecture. The strategy prioritizes **participant experience** while maintaining **session integrity** and **real-time updates**.
 
 ### Core Approach
-1. **Frontend QR Generation**: Generate QR codes client-side using session UUID directly
+1. **Frontend QR Generation**: Generate QR codes client-side using session ID directly
 2. **Backend Participant Management**: Focus on participant models, join validation, and API endpoints  
 3. **Progressive Mobile Enhancement**: Build viewer QR display, then mobile joining interface
 4. **Real-time Integration**: Leverage existing polling mechanism for participant status updates
@@ -139,10 +139,10 @@ frontend/src/
 **Files**: `backend/app/routes/participants.py`
 
 1. **Participant Endpoints**
-   - `POST /api/sessions/{session_uuid}/join` - Join session with nickname (no token required)
-   - `GET /api/sessions/{session_uuid}/nicknames/validate` - Validate nickname availability
+   - `POST /api/sessions/{session_id}/join` - Join session with nickname (no token required)
+   - `GET /api/sessions/{session_id}/nicknames/validate` - Validate nickname availability
    - `POST /api/participants/{participant_id}/heartbeat` - Maintain heartbeat + return activity context
-   - `GET /api/sessions/{session_uuid}/participants` - List session participants (with computed status)
+   - `GET /api/sessions/{session_id}/participants` - List session participants (with computed status)
    - `DELETE /api/participants/{participant_id}` - Remove participant (admin)
 
 2. **Request/Response Schema Updates**
@@ -158,9 +158,9 @@ frontend/src/
    - Configure error correction and sizing options
 
 2. **QRCodeDisplay Component**
-   - Client-side QR code generation using static session UUID
+   - Client-side QR code generation using static session ID
    - SVG rendering with responsive sizing
-   - Generate QR code once when component mounts (UUID never changes)
+   - Generate QR code once when component mounts (session ID never changes)
    - Error handling for generation failures
    - Accessibility support with alt text and descriptions
 
@@ -255,7 +255,7 @@ frontend/src/
    - Participant heartbeat with activity context synchronization
    - Activity state updates delivered via heartbeat responses
    - Session state synchronization for late joiners
-   - Error handling for invalid session UUIDs and full sessions
+   - Error handling for invalid session IDs and full sessions
 
 2. **Database Integration Tests**
    - Participant model relationships
@@ -346,7 +346,7 @@ QR_CODE_BASE_URL=https://app.caja.dbash.dev  # Production join URL base
 
 1. **Session Access Control**
    - **Risk**: Unauthorized participants join sessions via leaked QR codes
-   - **Mitigation**: Session UUID access control, participant moderation, rate limiting
+   - **Mitigation**: Session ID access control, participant moderation, rate limiting
    - **Contingency**: Manual participant approval process for sensitive sessions
 
 2. **Participant Impersonation**
