@@ -10,7 +10,7 @@ Implements a complete GitHub issue using the Model Context Protocol (MCP) server
 ## Usage
 
 ```
-implementIssue {issue-number}
+implementgit Issue {issue-number}
 ```
 
 ## Examples
