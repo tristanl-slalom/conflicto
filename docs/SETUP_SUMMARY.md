@@ -53,23 +53,23 @@ That's it! Everything will be installed and configured automatically.
 ### Daily Development
 
 ```bash
-# Start working
-./start-dev.sh
+# Start working (from backend directory)
+cd backend && ./start-dev.sh
 
-# Run tests
-./run-tests.sh
+# Run tests (from backend directory)
+cd backend && ./run-tests.sh
 
-# Stop when done
-./stop-dev.sh
+# Stop when done (from backend directory)
+cd backend && ./stop-dev.sh
 ```
 
 ### Using Make Commands
 
 ```bash
 make setup      # Same as ./setup.sh
-make start      # Same as ./start-dev.sh
-make test       # Same as ./run-tests.sh
-make stop       # Same as ./stop-dev.sh
+make start      # Same as cd backend && ./start-dev.sh
+make test       # Same as cd backend && ./run-tests.sh
+make stop       # Same as cd backend && ./stop-dev.sh
 make help       # Show all available commands
 ```
 
@@ -140,7 +140,7 @@ Your custom environment setup is ready! Team members can now:
 
 1. Clone the repository
 2. Run `./setup.sh`
-3. Start developing with `./start-dev.sh`
+3. Start developing with `cd backend && ./start-dev.sh`
 
 The setup handles everything automatically and provides clear instructions for any manual steps needed.
 
