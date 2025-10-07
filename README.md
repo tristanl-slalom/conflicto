@@ -9,22 +9,24 @@ Get up and running in under 5 minutes:
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd conflicto/backend
+cd conflicto
 
 # Run the automated setup
-./setup.sh
+make setup
+
+# Start development
+make dev
 ```
 
-That's it! The setup script will install everything you need and start the development environment.
+That's it! The Makefile handles everything you need and starts the development environment.
 
 ### Alternative Setup Methods
 
-**Using Make from project root:**
+**Direct backend scripts (if you prefer):**
 ```bash
-make setup    # Complete setup
-make dev      # Start development
-make test     # Run tests
-make stop     # Stop services
+cd backend
+./setup.sh    # Setup
+./start-dev.sh # Start development
 ```
 
 **Manual setup:**
@@ -51,29 +53,26 @@ The setup script automatically installs and configures:
 
 ## 🛠️ Development Commands
 
-After setup, use these commands from the `backend/` directory:
+Use these Make commands from the project root (recommended):
 
 ```bash
-# Start development environment
-cd backend && ./start-dev.sh
-
-# Stop development environment
-cd backend && ./stop-dev.sh
-
-# Run tests
-cd backend && ./run-tests.sh
-
-# Reset database (if needed)
-cd backend && ./reset-db.sh
+make help     # 📋 Show all available commands
+make setup    # 🚀 Complete project setup
+make dev      # 🟢 Start development environment (alias: make start)
+make stop     # 🔴 Stop development environment
+make test     # 🧪 Run all tests and quality checks
+make reset-db # 💥 Reset database (destructive)
 ```
 
-Or use Make commands from the project root:
+**💡 Pro tip:** Run `make help` to see all available commands including database operations, Docker commands, and more!
 
+**Alternative - Backend scripts directly:**
 ```bash
-make dev      # Start development (alias: make start)
-make stop     # Stop development
-make test     # Run tests
-make reset-db # Reset database
+# From backend/ directory
+cd backend && ./start-dev.sh  # Start development
+cd backend && ./stop-dev.sh   # Stop development
+cd backend && ./run-tests.sh  # Run tests
+cd backend && ./reset-db.sh   # Reset database
 ```
 
 ## 🌐 Access Your Application
@@ -107,15 +106,15 @@ conflicto/
 
 ## 🧪 Testing
 
-Run the complete test suite from the backend directory:
+Run the complete test suite:
 
-```bash
-cd backend && ./run-tests.sh
-```
-
-Or from the project root:
 ```bash
 make test
+```
+
+**Alternative - Direct backend script:**
+```bash
+cd backend && ./run-tests.sh
 ```
 
 This runs:
@@ -165,11 +164,11 @@ If you encounter issues:
 
 1. Check [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for detailed troubleshooting
 2. Run `make env-info` to check your environment
-3. Try resetting: `cd backend && ./setup.sh`
+3. Try resetting: `make setup`
 
 ## 🤝 Contributing
 
-1. Run tests: `cd backend && ./run-tests.sh`
+1. Run tests: `make test`
 2. Ensure code quality checks pass
 3. Pre-commit hooks will run automatically
 
