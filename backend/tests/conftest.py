@@ -74,10 +74,21 @@ def client(db_session: AsyncSession) -> TestClient:
 
 
 @pytest.fixture
-async def sample_session_data():
+def sample_session_data():
     """Sample session data for testing."""
     return {
         "title": "Test Session",
         "description": "A test session for unit tests",
         "max_participants": 50
     }
+
+
+@pytest.fixture
+def sample_session_create():
+    """Sample SessionCreate object for testing."""
+    from app.models.schemas import SessionCreate
+    return SessionCreate(
+        title="Test Session",
+        description="A test session for unit tests",
+        max_participants=50
+    )
