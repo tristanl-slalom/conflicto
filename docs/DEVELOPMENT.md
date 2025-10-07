@@ -78,17 +78,17 @@ If you prefer to set up manually or the automated script doesn't work:
 After setup, use these utility scripts:
 
 ```bash
-# Start development environment
-./start-dev.sh
+# Start development environment (from backend directory)
+cd backend && ./start-dev.sh
 
-# Stop development environment
-./stop-dev.sh
+# Stop development environment (from backend directory)
+cd backend && ./stop-dev.sh
 
-# Run tests and code quality checks
-./run-tests.sh
+# Run tests and code quality checks (from backend directory)
+cd backend && ./run-tests.sh
 
-# Reset database (DESTRUCTIVE - removes all data)
-./reset-db.sh
+# Reset database (DESTRUCTIVE - removes all data) (from backend directory)
+cd backend && ./reset-db.sh
 ```
 
 ## 📖 Manual Development Commands
@@ -151,7 +151,7 @@ backend/
 
 Run the full test suite:
 ```bash
-./run-tests.sh
+cd backend && ./run-tests.sh
 ```
 
 Or run specific test commands:
@@ -206,6 +206,7 @@ Key environment variables in `.env`:
 
 If you need to start fresh:
 ```bash
+cd backend
 ./stop-dev.sh
 docker-compose down -v  # Remove volumes
 ./reset-db.sh
@@ -221,7 +222,7 @@ docker-compose down -v  # Remove volumes
 
 ## 🤝 Contributing
 
-1. Make sure all tests pass: `./run-tests.sh`
+1. Make sure all tests pass: `cd backend && ./run-tests.sh`
 2. Code is formatted: `poetry run black app tests`
 3. No linting errors: `poetry run flake8 app tests`
 4. Type checking passes: `poetry run mypy app`
