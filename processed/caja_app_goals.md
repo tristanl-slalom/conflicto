@@ -2,13 +2,13 @@
 
 ## High-Level Goals
 
-- **Live Event Engagement:**  
+- **Live Event Engagement:**
   Create a platform to boost audience engagement at events (town halls, tech talks, training sessions).
 
-- **Extensible Foundation:**  
+- **Extensible Foundation:**
   Allow engineering leaders and contributors to easily add new games or interaction types to the platform.
 
-- **Real-Time, Device-Friendly Interaction:**  
+- **Real-Time, Device-Friendly Interaction:**
   Enable participation via personal devices (QR codes, live polls, voting, drawing, etc.), supporting both shared and individual displays.
 
 ---
@@ -54,19 +54,19 @@
 
 ## Non-Functional Requirements
 
-- **Scalability:**  
+- **Scalability:**
   Must support large numbers of users (e.g., for company-wide events).
 
-- **Extensibility/Modularity:**  
+- **Extensibility/Modularity:**
   Platform must be easily extendable by contributors.
 
-- **Accessibility:**  
+- **Accessibility:**
   Works on mobile and desktop, easy to join/participate.
 
-- **Reliability:**  
+- **Reliability:**
   Stable, real-time sync (webhooks, pub/sub, etc).
 
-- **Documentation & Onboarding:**  
+- **Documentation & Onboarding:**
   Built-in resources for contributors to understand and extend the repo.
 
 ---
@@ -79,7 +79,7 @@
 - **Testing:** Pytest for backend, Jest for frontend testing
 - **Real-Time Communication:** Polling-based updates (simpler than WebSockets for MVP)
 
-### AWS Infrastructure  
+### AWS Infrastructure
 - **Application Hosting:** Amazon ECS (containerized FastAPI application)
 - **Frontend Hosting:** Amazon S3 with CloudFront CDN
 - **Database:** Amazon RDS (PostgreSQL) for persistent data
@@ -110,7 +110,7 @@
 ### Sprint 0 (Scaffolding) Assignments
 - **Platform Engineering (Joe):** AWS infrastructure setup with Terraform, ECS deployment, RDS configuration
 - **Backend Development (Mauricio):** Python FastAPI application, database models, API endpoints
-- **Frontend Development (Tristan):** React application with TanStack, participant and viewer interfaces  
+- **Frontend Development (Tristan):** React application with TanStack, participant and viewer interfaces
 - **Development Tooling (Tristan):** GitHub MCP integration, VS Code configuration, development workflow setup
 
 ### Development Workflow

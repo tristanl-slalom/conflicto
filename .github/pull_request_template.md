@@ -50,9 +50,9 @@
 
 ### Testing Instructions
 <!-- Provide step-by-step instructions for reviewers to test the changes -->
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 ### Test Results
 <!-- Include any relevant test output, screenshots, or performance metrics -->
@@ -112,9 +112,9 @@
 
 ### Deployment Steps
 <!-- If special deployment steps are required -->
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 ## Reviewer Notes
 <!-- Any specific areas you'd like reviewers to focus on -->
