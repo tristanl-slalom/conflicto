@@ -57,7 +57,7 @@ After setup, use these commands from the `backend/` directory:
 # Start development environment
 ./start-dev.sh
 
-# Stop development environment  
+# Stop development environment
 ./stop-dev.sh
 
 # Run tests
@@ -71,7 +71,7 @@ Or use Make commands from the project root:
 
 ```bash
 make dev      # Start development (alias: make start)
-make stop     # Stop development  
+make stop     # Stop development
 make test     # Run tests
 make reset-db # Reset database
 ```
@@ -90,7 +90,7 @@ Once started, you can access:
 conflicto/
 ├── backend/                # FastAPI backend
 │   ├── app/               # Application code
-│   ├── tests/             # Test suite  
+│   ├── tests/             # Test suite
 │   ├── migrations/        # Database migrations
 │   ├── docker-compose.yml # Local services
 │   ├── setup.sh          # Backend setup script
@@ -122,7 +122,7 @@ make test
 This runs:
 - Unit tests
 - Code formatting checks (Black)
-- Import sorting (isort) 
+- Import sorting (isort)
 - Linting (flake8)
 - Type checking (mypy)
 

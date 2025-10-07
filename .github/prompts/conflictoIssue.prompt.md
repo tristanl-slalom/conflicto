@@ -16,7 +16,7 @@ conflictoIssue {issue-number}
 ## Examples
 
 - `conflictoIssue 5` - Implement session lifecycle management
-- `conflictoIssue 12` - Build word cloud generator activity  
+- `conflictoIssue 12` - Build word cloud generator activity
 - `conflictoIssue 2` - Setup AWS infrastructure with Terraform
 
 ## Workflow Steps
@@ -122,7 +122,7 @@ Provide detailed validation checklist:
 - Session context maintained across all components
 - Session recovery and state persistence supported
 
-### Multi-Persona Architecture  
+### Multi-Persona Architecture
 - **Admin Interface:** Configuration and content management
 - **Viewer Interface:** Large screen displays with QR codes and live results
 - **Participant Interface:** Mobile-first interaction and activity engagement
@@ -148,7 +148,7 @@ Provide detailed validation checklist:
 - Monitoring, alerting, and observability setup
 - CI/CD pipeline integration and deployment automation
 
-### Backend Development (Mauricio) - API Focus  
+### Backend Development (Mauricio) - API Focus
 - FastAPI routing patterns and middleware integration
 - Database design principles and migration strategies
 - Real-time polling implementation and optimization
@@ -189,7 +189,7 @@ Provide detailed validation checklist:
 🌿 Created branch: feature/issue-{number}-{slug}
 🏗️  Generated {file-count} files with boilerplate code
 🧪 Added comprehensive test suite
-📚 Updated documentation and API specs  
+📚 Updated documentation and API specs
 ✅ Implementation checklist ready with {criteria-count} acceptance criteria
 
 Next steps:

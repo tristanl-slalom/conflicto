@@ -92,11 +92,11 @@ main() {
     install_python
     install_poetry
     install_docker
-    
+
     log_info "Running common setup..."
     # The rest follows the same pattern as the main setup script
     # but with Windows-specific paths and commands
-    
+
     log_success "Windows setup complete! Please run the main setup script now."
 }
 

@@ -9,7 +9,7 @@ conflicto/
 ├── backend/
 │   ├── setup.sh          # Backend setup script
 │   ├── start-dev.sh      # Start development environment
-│   ├── stop-dev.sh       # Stop development environment  
+│   ├── stop-dev.sh       # Stop development environment
 │   ├── run-tests.sh      # Run tests and quality checks
 │   ├── reset-db.sh       # Reset database
 │   ├── app/              # Application code
@@ -37,7 +37,7 @@ cd conflicto/backend
 # From backend/ directory
 cd backend
 ./start-dev.sh    # Start development
-./run-tests.sh    # Run tests  
+./run-tests.sh    # Run tests
 ./stop-dev.sh     # Stop when done
 ```
 

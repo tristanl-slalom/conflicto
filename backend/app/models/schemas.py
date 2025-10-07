@@ -2,16 +2,17 @@
 Pydantic models for request/response validation.
 """
 from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
-from app.db.models import SessionStatus, ActivityType, ParticipantRole
+from app.db.models import ActivityType, ParticipantRole, SessionStatus
 
 
 # Base models
 class BaseResponse(BaseModel):
     """Base response model."""
+
     id: int
     created_at: datetime
     updated_at: datetime
@@ -23,6 +24,7 @@ class BaseResponse(BaseModel):
 # Session models
 class SessionCreate(BaseModel):
     """Session creation request model."""
+
     title: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
     max_participants: int = Field(default=100, ge=1, le=1000)
@@ -30,6 +32,7 @@ class SessionCreate(BaseModel):
 
 class SessionUpdate(BaseModel):
     """Session update request model."""
+
     title: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
     max_participants: Optional[int] = Field(None, ge=1, le=1000)
@@ -38,6 +41,7 @@ class SessionUpdate(BaseModel):
 
 class SessionResponse(BaseResponse):
     """Session response model."""
+
     title: str
     description: Optional[str]
     status: SessionStatus
@@ -52,6 +56,7 @@ class SessionResponse(BaseResponse):
 
 class SessionDetail(SessionResponse):
     """Detailed session response with activities and participants."""
+
     activities: List["ActivityResponse"] = []
     participants: List["ParticipantResponse"] = []
 
@@ -59,6 +64,7 @@ class SessionDetail(SessionResponse):
 # Activity models
 class ActivityCreate(BaseModel):
     """Activity creation request model."""
+
     title: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
     activity_type: ActivityType
@@ -68,6 +74,7 @@ class ActivityCreate(BaseModel):
 
 class ActivityUpdate(BaseModel):
     """Activity update request model."""
+
     title: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
     configuration: Optional[Dict[str, Any]] = None
@@ -77,6 +84,7 @@ class ActivityUpdate(BaseModel):
 
 class ActivityResponse(BaseResponse):
     """Activity response model."""
+
     session_id: int
     title: str
     description: Optional[str]
@@ -92,12 +100,14 @@ class ActivityResponse(BaseResponse):
 # Participant models
 class ParticipantCreate(BaseModel):
     """Participant creation request model."""
+
     display_name: str = Field(..., min_length=1, max_length=100)
     role: ParticipantRole = ParticipantRole.PARTICIPANT
 
 
 class ParticipantUpdate(BaseModel):
     """Participant update request model."""
+
     display_name: Optional[str] = Field(None, min_length=1, max_length=100)
     role: Optional[ParticipantRole] = None
     is_active: Optional[bool] = None
@@ -105,6 +115,7 @@ class ParticipantUpdate(BaseModel):
 
 class ParticipantResponse(BaseResponse):
     """Participant response model."""
+
     session_id: int
     display_name: str
     role: ParticipantRole
@@ -116,16 +127,19 @@ class ParticipantResponse(BaseResponse):
 # Activity Response models
 class ActivityResponseCreate(BaseModel):
     """Activity response creation request model."""
+
     response_data: Dict[str, Any]
 
 
 class ActivityResponseUpdate(BaseModel):
     """Activity response update request model."""
+
     response_data: Dict[str, Any]
 
 
 class ActivityResponseResponse(BaseResponse):
     """Activity response response model."""
+
     activity_id: int
     participant_id: int
     response_data: Dict[str, Any]
@@ -134,6 +148,7 @@ class ActivityResponseResponse(BaseResponse):
 # List response models
 class SessionList(BaseModel):
     """Session list response model."""
+
     sessions: List[SessionResponse]
     total: int
     offset: int
@@ -142,12 +157,14 @@ class SessionList(BaseModel):
 
 class ActivityList(BaseModel):
     """Activity list response model."""
+
     activities: List[ActivityResponse]
     total: int
 
 
 class ParticipantList(BaseModel):
     """Participant list response model."""
+
     participants: List[ParticipantResponse]
     total: int
 
@@ -155,6 +172,7 @@ class ParticipantList(BaseModel):
 # Error models
 class ErrorResponse(BaseModel):
     """Error response model."""
+
     detail: str
     error_type: str = "ValidationError"
     timestamp: datetime = Field(default_factory=datetime.utcnow)
@@ -163,6 +181,7 @@ class ErrorResponse(BaseModel):
 # Health check model
 class HealthResponse(BaseModel):
     """Health check response model."""
+
     status: str = "healthy"
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     version: str = "0.1.0"
