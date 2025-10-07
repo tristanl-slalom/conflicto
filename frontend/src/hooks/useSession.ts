@@ -68,7 +68,7 @@ const mockApi = {
     return { ...session, ...updates, updatedAt: new Date().toISOString() }
   },
 
-  getSessionResponses: async (sessionId: string): Promise<SessionResponse[]> => {
+  getSessionResponses: async (_sessionId: string): Promise<SessionResponse[]> => {
     await new Promise(resolve => setTimeout(resolve, 200))
     // Mock response data
     return [
@@ -119,7 +119,7 @@ export function useSessionResponses(sessionId: string, enabled = false) {
 // Create session mutation
 export function useCreateSession() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: mockApi.createSession,
     onSuccess: () => {
@@ -132,9 +132,9 @@ export function useCreateSession() {
 // Update session mutation
 export function useUpdateSession() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: ({ id, updates }: { id: string, updates: Partial<Session> }) => 
+    mutationFn: ({ id, updates }: { id: string, updates: Partial<Session> }) =>
       mockApi.updateSession(id, updates),
     onSuccess: (updatedSession) => {
       // Update the session in the cache
@@ -148,13 +148,13 @@ export function useUpdateSession() {
 // Submit vote mutation
 export function useSubmitVote() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: mockApi.submitVote,
     onSuccess: (_, variables) => {
       // Invalidate session responses to get updated results
-      queryClient.invalidateQueries({ 
-        queryKey: ['session-responses', variables.sessionId] 
+      queryClient.invalidateQueries({
+        queryKey: ['session-responses', variables.sessionId]
       })
     },
   })
@@ -165,7 +165,7 @@ export function useParticipantSession() {
   const [participantId] = useState(() => {
     const stored = localStorage.getItem('caja-participant-id')
     if (stored) return stored
-    
+
     const newId = Math.random().toString(36).substr(2, 9)
     localStorage.setItem('caja-participant-id', newId)
     return newId

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 
 import { createFileRoute } from '@tanstack/react-router'
 
-function getNames() {
+function getNames(): Promise<string[]> {
   return fetch('/demo/api/names').then((res) => res.json())
 }
 

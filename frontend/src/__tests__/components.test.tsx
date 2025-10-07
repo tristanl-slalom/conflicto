@@ -1,6 +1,6 @@
 import React from 'react'
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 // Create test wrapper for TanStack Query
@@ -34,14 +34,14 @@ const MockHomePage = () => {
       link: '/admin',
     },
     {
-      id: 'viewer', 
+      id: 'viewer',
       title: 'Viewer Display',
       description: 'Large screen display with QR codes and live results',
       link: '/viewer',
     },
     {
       id: 'participant',
-      title: 'Participant Interface', 
+      title: 'Participant Interface',
       description: 'Mobile-optimized interaction and engagement',
       link: '/participant',
     },
@@ -51,7 +51,7 @@ const MockHomePage = () => {
     <div data-testid="home-page">
       <h1>CAJA</h1>
       <p>Interactive Engagement Platform</p>
-      
+
       <section data-testid="persona-selection">
         <h2>Choose Your Interface</h2>
         {personas.map((persona) => (
@@ -108,12 +108,12 @@ const MockViewerDisplay = () => {
     <div data-testid="viewer-display">
       <h1>{sessionData.name}</h1>
       <div data-testid="participant-count">{sessionData.participantCount}</div>
-      
+
       <div data-testid="qr-section">
         <h2>Join the Session</h2>
         <p>Session Code: CAJA-ABC123</p>
       </div>
-      
+
       <div data-testid="results-section">
         <h2>Live Results</h2>
         <h3>{sessionData.question}</h3>
@@ -137,7 +137,7 @@ const MockParticipantInterface = () => {
     question: 'What went well in our last sprint?',
     options: [
       'Great collaboration',
-      'Smooth deployment', 
+      'Smooth deployment',
       'Good communication',
       'Clear requirements',
     ],
@@ -162,7 +162,7 @@ const MockParticipantInterface = () => {
     <div data-testid="participant-interface">
       <h1>Team Retrospective Poll</h1>
       <h2>{sessionData.question}</h2>
-      
+
       <div data-testid="voting-options">
         {sessionData.options.map((option, index) => (
           <button
@@ -175,7 +175,7 @@ const MockParticipantInterface = () => {
           </button>
         ))}
       </div>
-      
+
       <button
         data-testid="submit-vote-btn"
         onClick={handleVote}
@@ -195,14 +195,14 @@ describe('Caja Frontend Components', () => {
   describe('HomePage', () => {
     it('renders the main landing page with branding', () => {
       render(<MockHomePage />, { wrapper: TestWrapper })
-      
+
       expect(screen.getByText('CAJA')).toBeDefined()
       expect(screen.getByText('Interactive Engagement Platform')).toBeDefined()
     })
 
     it('displays all three persona options', () => {
       render(<MockHomePage />, { wrapper: TestWrapper })
-      
+
       expect(screen.getByTestId('persona-link-admin')).toBeDefined()
       expect(screen.getByTestId('persona-link-viewer')).toBeDefined()
       expect(screen.getByTestId('persona-link-participant')).toBeDefined()
@@ -214,7 +214,7 @@ describe('Caja Frontend Components', () => {
 
     it('has correct navigation links for each persona', () => {
       render(<MockHomePage />, { wrapper: TestWrapper })
-      
+
       expect(screen.getByTestId('persona-link-admin').getAttribute('href')).toBe('/admin')
       expect(screen.getByTestId('persona-link-viewer').getAttribute('href')).toBe('/viewer')
       expect(screen.getByTestId('persona-link-participant').getAttribute('href')).toBe('/participant')
@@ -224,18 +224,18 @@ describe('Caja Frontend Components', () => {
   describe('Admin Interface', () => {
     it('renders the admin dashboard with session controls', () => {
       render(<MockAdminInterface />, { wrapper: TestWrapper })
-      
+
       expect(screen.getByText('Caja Admin')).toBeDefined()
       expect(screen.getByTestId('session-form')).toBeDefined()
     })
 
     it('has session configuration inputs', () => {
       render(<MockAdminInterface />, { wrapper: TestWrapper })
-      
+
       const nameInput = screen.getByTestId('session-name-input')
       const typeSelect = screen.getByTestId('session-type-select')
       const createBtn = screen.getByTestId('create-session-btn')
-      
+
       expect(nameInput).toBeDefined()
       expect(typeSelect).toBeDefined()
       expect(createBtn).toBeDefined()
@@ -243,13 +243,13 @@ describe('Caja Frontend Components', () => {
 
     it('allows input of session details', async () => {
       render(<MockAdminInterface />, { wrapper: TestWrapper })
-      
+
       const nameInput = screen.getByTestId('session-name-input') as HTMLInputElement
       const typeSelect = screen.getByTestId('session-type-select') as HTMLSelectElement
-      
+
       fireEvent.change(nameInput, { target: { value: 'Test Session' } })
       fireEvent.change(typeSelect, { target: { value: 'quiz' } })
-      
+
       expect(nameInput.value).toBe('Test Session')
       expect(typeSelect.value).toBe('quiz')
     })
@@ -258,14 +258,14 @@ describe('Caja Frontend Components', () => {
   describe('Viewer Display', () => {
     it('renders the viewer interface with session info', () => {
       render(<MockViewerDisplay />, { wrapper: TestWrapper })
-      
+
       expect(screen.getByText('Team Retrospective Poll')).toBeDefined()
       expect(screen.getByTestId('participant-count').textContent).toBe('12')
     })
 
     it('displays QR code section for participant joining', () => {
       render(<MockViewerDisplay />, { wrapper: TestWrapper })
-      
+
       expect(screen.getByTestId('qr-section')).toBeDefined()
       expect(screen.getByText('Join the Session')).toBeDefined()
       expect(screen.getByText(/Session Code:/)).toBeDefined()
@@ -273,7 +273,7 @@ describe('Caja Frontend Components', () => {
 
     it('shows live results with voting data', () => {
       render(<MockViewerDisplay />, { wrapper: TestWrapper })
-      
+
       expect(screen.getByTestId('results-section')).toBeDefined()
       expect(screen.getByText('What went well in our last sprint?')).toBeDefined()
       expect(screen.getByTestId('result-0')).toBeDefined()
@@ -284,40 +284,40 @@ describe('Caja Frontend Components', () => {
   describe('Participant Interface', () => {
     it('renders the participant voting interface', () => {
       render(<MockParticipantInterface />, { wrapper: TestWrapper })
-      
+
       expect(screen.getByTestId('participant-interface')).toBeDefined()
       expect(screen.getByText('What went well in our last sprint?')).toBeDefined()
     })
 
     it('displays voting options as interactive buttons', () => {
       render(<MockParticipantInterface />, { wrapper: TestWrapper })
-      
+
       expect(screen.getByTestId('option-0')).toBeDefined()
       expect(screen.getByTestId('option-1')).toBeDefined()
       expect(screen.getByTestId('option-2')).toBeDefined()
       expect(screen.getByTestId('option-3')).toBeDefined()
-      
+
       expect(screen.getByText('Great collaboration')).toBeDefined()
       expect(screen.getByText('Smooth deployment')).toBeDefined()
     })
 
     it('allows selection and submission of votes', async () => {
       render(<MockParticipantInterface />, { wrapper: TestWrapper })
-      
+
       const option1 = screen.getByTestId('option-1')
       const submitBtn = screen.getByTestId('submit-vote-btn')
-      
+
       // Initially submit button should be disabled
       expect((submitBtn as HTMLButtonElement).disabled).toBe(true)
-      
+
       // Select an option
       fireEvent.click(option1)
       expect(option1.classList.contains('selected')).toBe(true)
       expect((submitBtn as HTMLButtonElement).disabled).toBe(false)
-      
+
       // Submit vote
       fireEvent.click(submitBtn)
-      
+
       await waitFor(() => {
         expect(screen.getByTestId('participant-voted')).toBeDefined()
         expect(screen.getByText('Vote Submitted!')).toBeDefined()
@@ -326,11 +326,11 @@ describe('Caja Frontend Components', () => {
 
     it('shows confirmation screen after voting', async () => {
       render(<MockParticipantInterface />, { wrapper: TestWrapper })
-      
+
       // Select and submit
       fireEvent.click(screen.getByTestId('option-0'))
       fireEvent.click(screen.getByTestId('submit-vote-btn'))
-      
+
       await waitFor(() => {
         expect(screen.getByText('Vote Submitted!')).toBeDefined()
         expect(screen.getByText('Thank you for participating.')).toBeDefined()

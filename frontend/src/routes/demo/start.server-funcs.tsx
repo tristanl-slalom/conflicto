@@ -3,9 +3,14 @@ import { useCallback, useState } from 'react'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 
+interface Todo {
+  id: number
+  name: string
+}
+
 const filePath = 'todos.json'
 
-async function readTodos() {
+async function readTodos(): Promise<Todo[]> {
   return JSON.parse(
     await fs.promises.readFile(filePath, 'utf-8').catch(() =>
       JSON.stringify(
