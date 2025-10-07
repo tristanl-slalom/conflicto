@@ -206,22 +206,183 @@ The frontend foundation is now ready for:
 
 ---
 
+## Orval API Client Generation Implementation
+
+**Date:** October 7, 2025  
+**Issue:** GitHub Issue #32 - Add Orval for automatic API client generation  
+**Decision:** Implement automatic TypeScript API client generation from OpenAPI spec  
+
+### Background
+The frontend needed a reliable way to consume backend APIs with type safety and minimal manual maintenance. Previously, API integration would require manually creating API clients, TypeScript types, and mock implementations for testing.
+
+### Problem Details
+- Manual API client code requires constant updates when backend changes
+- TypeScript interfaces can become out of sync with actual API responses
+- Testing requires manual creation of mock data and handlers
+- Developer experience suffers from lack of auto-completion and type checking
+- Risk of runtime errors from API mismatches
+
+### Solution Implemented
+
+#### 1. Orval Configuration
+**Added:** `frontend/orval.config.ts` with React Query integration and mock generation
+```typescript
+import { defineConfig } from 'orval';
+
+export default defineConfig({
+  caja: {
+    input: '../openapi.json',
+    output: {
+      target: './src/api/generated.ts',
+      client: 'react-query',
+      mock: true
+    },
+  }
+});
+```
+
+#### 2. Build System Integration
+**Package.json Scripts:**
+```json
+{
+  "scripts": {
+    "generate:api": "orval",
+    "generate:api:watch": "orval --watch",
+    "dev": "npm run generate:api && vite",
+    "build": "npm run generate:api && vite build"
+  }
+}
+```
+
+#### 3. Generated API Client Features
+- **Complete TypeScript API Client** auto-generated from OpenAPI spec
+- **React Query Hooks** for all endpoints with caching and error handling
+- **MSW Mock Handlers** with Faker.js data generation for testing
+- **Type Definitions** that exactly match backend schema
+- **Axios Integration** for HTTP client with proper configuration
+
+#### 4. Dependencies Added
+```json
+{
+  "devDependencies": {
+    "orval": "^7.13.2"
+  },
+  "dependencies": {
+    "axios": "^1.x.x",
+    "@faker-js/faker": "^8.x.x", 
+    "msw": "^2.x.x"
+  }
+}
+```
+
+### Results
+- ✅ **Zero Manual API Code** - Everything generated from OpenAPI specification
+- ✅ **Type Safety Guarantee** - Compile-time validation of all API calls
+- ✅ **Automatic Synchronization** - Frontend types update when backend changes
+- ✅ **Enhanced Developer Experience** - Full IntelliSense and auto-completion
+- ✅ **Testing Infrastructure** - MSW mocks generated automatically with realistic data
+- ✅ **React Query Integration** - Built-in caching, optimistic updates, and error handling
+
+### Code Examples
+
+**Generated Query Hook Usage:**
+```typescript
+import { useListSessionsApiV1SessionsGet } from '../api/generated'
+
+function SessionsList() {
+  const { data, isLoading, error } = useListSessionsApiV1SessionsGet()
+  
+  if (isLoading) return <div>Loading...</div>
+  if (error) return <div>Error: {error.message}</div>
+  
+  return (
+    <div>
+      {data?.data.sessions.map(session => (
+        <div key={session.id}>{session.title}</div>
+      ))}
+    </div>
+  )
+}
+```
+
+**Generated Mutation Hook Usage:**
+```typescript
+import { useCreateSessionApiV1SessionsPost } from '../api/generated'
+
+function CreateSession() {
+  const mutation = useCreateSessionApiV1SessionsPost()
+  
+  const handleCreate = () => {
+    mutation.mutate({
+      data: {
+        title: "New Session",
+        description: "Auto-generated types!",
+        max_participants: 100
+      }
+    })
+  }
+  
+  return (
+    <button onClick={handleCreate} disabled={mutation.isPending}>
+      {mutation.isPending ? 'Creating...' : 'Create Session'}
+    </button>
+  )
+}
+```
+
+**MSW Testing Setup:**
+```typescript
+import { setupServer } from 'msw/node'
+import { getCajaBackendMock } from '../api/generated'
+
+// All API endpoints mocked with realistic Faker.js data
+const server = setupServer(...getCajaBackendMock())
+```
+
+### Impact on Development Workflow
+- API integration now happens automatically during dev and build processes
+- TypeScript compilation catches API mismatches before deployment
+- Testing infrastructure ready without manual mock creation
+- Developer onboarding simplified with auto-generated documentation
+- Backend API changes immediately reflected in frontend types
+
+### Legacy Code Removal
+- **Removed:** `src/hooks/useSession.ts` - Eliminated manual wrapper hooks
+- **Reasoning:** Generated hooks provide better type safety and direct API access
+- **Migration:** All components now use generated hooks directly
+
+### Integration with Existing Architecture
+- **TanStack Query:** Orval generates hooks compatible with existing React Query setup
+- **TypeScript:** Generated types integrate seamlessly with existing type system
+- **Testing:** MSW mocks work with existing Vitest test framework
+- **Build System:** Integrates cleanly with Vite development and production builds
+
+### Recommendations for Future Development
+1. **Always regenerate API client** when backend OpenAPI spec changes
+2. **Use generated hooks directly** instead of creating wrapper abstractions
+3. **Leverage generated types** for all API-related TypeScript interfaces
+4. **Utilize MSW mocks** for comprehensive frontend testing without backend dependency
+5. **Monitor API generation** in CI/CD to catch breaking changes early
+
+---
+
 ## Next Implementation Phases
 
 ### Phase 2: Backend Integration
-- Replace mock hooks with actual API calls
+- Connect generated API client to actual FastAPI backend endpoints
 - Implement WebSocket connections for real-time updates
-- Add error handling and retry logic
-- Integrate with session management backend
+- Add comprehensive error handling and retry logic
+- Replace MSW mocks with actual API calls in production
 
 ### Phase 3: Activity Framework
 - Implement specific activity types (Poll, Poker, Quiz, Word Cloud)
-- Add activity state management
+- Add activity state management using generated API hooks
 - Create activity-specific UI components
-- Implement result aggregation and display
+- Implement result aggregation and display with type-safe API calls
 
 ### Phase 4: Production Readiness
 - Performance optimization and bundle analysis
-- Error boundary implementation
+- Error boundary implementation with proper API error handling
 - Offline capability and connection recovery
-- Analytics and monitoring integration
+- Analytics and monitoring integration with API client instrumentation
+````

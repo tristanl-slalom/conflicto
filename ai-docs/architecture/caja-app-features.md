@@ -99,11 +99,12 @@ This flow ensures a seamless experience from setup through completion, with clea
 - As a late arrival, I can join the session by scanning the always-visible QR code ✅
 - As a user, I can switch between roles as needed ✅
 
-### 4. Polling-Based Synchronization Engine ⚠️ **PARTIALLY IMPLEMENTED**
-**Description:** Near real-time synchronization of activity states, participant actions, and results using efficient polling.
+### 5. Polling-Based Synchronization Engine ⚠️ **PARTIALLY IMPLEMENTED**
+**Description:** Near real-time synchronization of activity states, participant actions, and results using efficient polling with generated API clients.
 
 **Key Components:**
 - Client-side polling for state updates (every 2-3 seconds) ✅
+- Generated API hooks with automatic caching and invalidation ✅
 - Optimized API endpoints for incremental state changes ⏳
 - Live result aggregation and display ⏳
 - Connection state monitoring and graceful degradation ⏳
@@ -112,10 +113,10 @@ This flow ensures a seamless experience from setup through completion, with clea
 
 **Technical Implementation:**
 - **Frontend Polling:** TanStack Query configured with 2-3 second refetch intervals
-- **State Management:** Custom hooks (useSession, useSessionResponses) ready for API integration
-- **Mock Implementation:** Complete mock system for development and testing
+- **Generated API Hooks:** `useListSessionsApiV1SessionsGet`, `useCreateSessionApiV1SessionsPost` ready for backend
+- **Mock Implementation:** Complete MSW mock system for development and testing
 - **Error Handling:** Query retry logic and error boundaries prepared
-- **Backend Integration:** Ready for FastAPI WebSocket or polling endpoints
+- **Backend Integration:** Generated hooks ready for FastAPI endpoint integration
 
 **User Stories Foundation:**
 - As a participant, I can see updates within seconds without manual refresh ⚠️ (Mock)
@@ -326,17 +327,20 @@ This flow ensures a seamless experience from setup through completion, with clea
 - Session Management ⏳ (Backend needed)
 - Activity Framework ⏳ (Backend needed) 
 - Multi-Persona Interface System ✅ **COMPLETED**
-- Real-Time Communication Engine ⚠️ (Frontend ready, backend needed)
+- API Client Integration System ✅ **COMPLETED**
+- Polling-Based Synchronization Engine ⚠️ (Frontend ready, backend needed)
 - QR Code and Participant Onboarding ⚠️ (UI ready, backend needed)
 - Live Polling System ⏳ (Frontend framework ready)
 - Anonymous User Management ⏳ (Backend needed)
 
 **Frontend Foundation Status:** ✅ **COMPLETE**
-- React multi-persona interface fully implemented
-- TanStack Query polling framework configured
-- Component architecture established
-- Testing framework (Vitest) operational
-- Ready for backend API integration
+- React multi-persona interface fully implemented ✅
+- TanStack Query polling framework configured ✅
+- Orval API client generation with type safety ✅
+- Component architecture established ✅
+- Testing framework (Vitest) operational ✅
+- MSW mock infrastructure for comprehensive testing ✅
+- Ready for backend API integration with zero additional frontend work ✅
 
 **Enhanced Engagement (Phase 2):**
 - Planning Poker System

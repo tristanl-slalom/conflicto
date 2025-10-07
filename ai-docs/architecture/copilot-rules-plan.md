@@ -205,16 +205,21 @@ All activities follow the same state machine:
 ### API Development
 - Use FastAPI dependency injection for services
 - Implement request/response models with Pydantic
-- Add OpenAPI documentation for all endpoints
+- **OpenAPI Integration:** Maintain comprehensive OpenAPI specification for Orval generation
+- **Frontend Integration:** Ensure OpenAPI spec changes trigger frontend API regeneration
 - Use async/await for database operations
 - Implement proper CORS for CloudFront integration
 - Add health check endpoints for ECS service discovery
 - Use structured logging for CloudWatch integration
+- **API Design:** Follow REST conventions that generate clean TypeScript interfaces
+- **Response Models:** Structure responses to match expected frontend usage patterns
 
 ### Frontend Development
 - Use React Context for session state management
-- Implement custom hooks for WebSocket connections
-- Use TanStack Query for API state management and polling
+- **API Integration:** Use Orval-generated hooks directly, avoid wrapper abstractions
+- **Generated API Hooks:** `useListSessionsApiV1SessionsGet`, `useCreateSessionApiV1SessionsPost` etc.
+- Use TanStack Query for API state management and polling (integrated via Orval)
+- **API Generation:** Always run `npm run generate:api` after OpenAPI spec changes
 - Implement proper error boundaries and Suspense for loading states
 - Optimize for CloudFront caching with proper headers
 - Implement responsive design for mobile-first approach
@@ -222,6 +227,8 @@ All activities follow the same state machine:
 - **Test Setup:** Configure jsdom environment with proper mocks in setup.ts
 - **Assertions:** Use native Vitest assertions (toBeDefined, textContent) not jest-dom matchers
 - **Mocking:** Use vi.fn() and vi.mock() syntax for all test mocking
+- **MSW Integration:** Use generated `getCajaBackendMock()` for API mocking in tests
+- **Type Safety:** Leverage generated TypeScript interfaces for all API-related code
 
 ### Real-time Communication
 - WebSocket connection per participant
@@ -253,11 +260,21 @@ All activities follow the same state machine:
 - Mock external dependencies (TanStack Router/Query, Lucide icons) in setup.ts
 - Use native assertions: expect(element).toBeDefined() not toBeInTheDocument()
 - Test all three persona interfaces (admin, viewer, participant) separately
-- Mock session management with realistic data structures
+- **MSW Mock Integration:** Use `getCajaBackendMock()` from generated API for realistic testing
+- **API Hook Testing:** Test generated hooks with MSW handlers, not custom mocks
 - **Import Paths:** Always use TypeScript path aliases (@/components/Component) not relative imports (../components/Component)
 - **Test Mocks:** Return proper components/values, not functions (Link: ({ children }) => children)
 - **Config Patterns:** Use specific patterns in exclude/include arrays (src/**/__tests__/setup.{ts,js})
 - **File Cleanup:** Remove obsolete configuration files immediately after framework migrations
+
+**API Integration Workflow:**
+- **Backend Changes:** Update OpenAPI spec (`../openapi.json`) when adding/modifying endpoints
+- **Frontend Sync:** Run `npm run generate:api` to update TypeScript client and hooks
+- **Development Flow:** API generation integrated into `npm run dev` and `npm run build`
+- **Type Safety:** TypeScript compilation catches API contract mismatches at build time
+- **Testing Strategy:** Use generated MSW handlers for consistent mock behavior
+- **Hook Usage:** Use generated hooks directly (e.g., `useCreateSessionApiV1SessionsPost`) without wrapper layers
+- **Error Handling:** Leverage TanStack Query's built-in error handling from generated hooks
 
 ### Security Standards
 - **Database:** Encrypted RDS instances with rotation
@@ -328,8 +345,11 @@ Focus Copilot rules on:
 - ✅ shadcn/ui + Tailwind CSS component system
 - ✅ Vitest testing framework (migrated from Jest)
 - ✅ Complete test coverage for all persona interfaces
-- ✅ Mock session management hooks ready for backend
+- ✅ Orval API client generation with OpenAPI integration
+- ✅ MSW mock infrastructure with Faker.js data generation
+- ✅ Type-safe API hooks ready for backend integration
 - ✅ Responsive design for mobile-first participant experience
+- ✅ Zero-configuration API consumption workflow established
 
 ### Phase 1 - MVP Core (Weeks 2-5)
 Focus Copilot rules on:
