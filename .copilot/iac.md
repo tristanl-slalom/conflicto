@@ -1,3 +1,7 @@
+---
+feature_tag: iac-bootstraping
+---
+
 # Caja Infrastructure as Code Plan (Terraform)
 
 Last updated: 2025-10-07 (amended: added bootstrap & domain strategy, caja subdomain naming, incremental execution phases)
@@ -28,6 +32,8 @@ This document defines the execution‑ready plan for provisioning Caja platform 
 **Terraform Version:** >= 1.7 (AWS provider `~> 5.0`)
 
 **Module Philosophy:** Thin root; composable, opinionated internal modules.
+
+**Feature Tag:** #IaC-Bootstrap
 
 ---
 
