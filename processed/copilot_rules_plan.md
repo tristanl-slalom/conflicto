@@ -12,7 +12,7 @@ This will be the main instruction file that GitHub Copilot references for all co
 
 ### Supporting Context Files:
 - `.copilot/architecture.md` - System architecture and design patterns
-- `.copilot/personas.md` - User persona definitions and UX guidelines  
+- `.copilot/personas.md` - User persona definitions and UX guidelines
 - `.copilot/activities.md` - Activity framework specifications
 - `.copilot/tech-stack.md` - Technology choices and implementation standards
 
@@ -39,12 +39,12 @@ You are working on Caja, a modular platform for live event engagement at workpla
 ## Technology Stack
 
 ### Backend
-- **Framework:** Python with FastAPI 
+- **Framework:** Python with FastAPI
 - **Testing:** Pytest for comprehensive test coverage
 - **Deployment:** Amazon ECS (Elastic Container Service)
 - **Real-time:** WebSocket connections for live updates
 
-### Frontend  
+### Frontend
 - **Framework:** React with TypeScript for type safety
 - **Hosting:** Amazon S3 with CloudFront CDN
 - **Styling:** Tailwind CSS for responsive design
@@ -109,7 +109,7 @@ caja/
 ### Session
 - id: UUID
 - name: string
-- status: 'draft' | 'active' | 'completed'  
+- status: 'draft' | 'active' | 'completed'
 - activities: Activity[]
 - created_at: datetime
 - admin_id: string
@@ -140,13 +140,13 @@ caja/
 - **Purpose:** Configure sessions and activities before launch
 - **Interface:** Desktop-optimized with comprehensive controls
 - **Key Actions:** Create sessions, configure activities, manage content
-- **UI Rules:** 
+- **UI Rules:**
   - Use form-based interfaces with validation
   - Provide preview modes for activities
   - Include draft/publish workflows
   - Show clear save states and error messages
 
-### Viewer/Runner Persona  
+### Viewer/Runner Persona
 - **Purpose:** Display session on large screen and control flow
 - **Interface:** Large screen optimized with minimal controls
 - **Key Actions:** Display activities, show live results, control progression
@@ -176,7 +176,7 @@ caja/
 ### Activity Base Class
 Every activity type must implement:
 - `ActivityConfig` interface for admin configuration
-- `ParticipantView` component for mobile interaction  
+- `ParticipantView` component for mobile interaction
 - `ViewerDisplay` component for large screen display
 - `ResultProcessor` for aggregating participant responses
 - `StateManager` for activity lifecycle
@@ -184,7 +184,7 @@ Every activity type must implement:
 ### Activity States
 All activities follow the same state machine:
 1. **Draft:** Being configured by admin
-2. **Active:** Accepting participant responses  
+2. **Active:** Accepting participant responses
 3. **Expired:** No longer accepting responses, showing results
 
 ### Real-time Updates
@@ -208,7 +208,7 @@ All activities follow the same state machine:
 - Add health check endpoints for ECS service discovery
 - Use structured logging for CloudWatch integration
 
-### Frontend Development  
+### Frontend Development
 - Use React Context for session state management
 - Implement custom hooks for WebSocket connections
 - Use React Query for API state management
@@ -311,7 +311,7 @@ Focus Copilot rules on:
 - Three-persona UI framework
 - QR code generation and participant onboarding
 
-### Phase 2 - Enhanced Activities (Weeks 6-9)  
+### Phase 2 - Enhanced Activities (Weeks 6-9)
 Expand Copilot rules for:
 - Planning poker implementation
 - Quiz/trivia system
@@ -345,7 +345,7 @@ Add Copilot rules for:
 
 1. **Create `.copilot/` directory structure**
 2. **Implement core instructions.md with project identity**
-3. **Add architecture.md with system design patterns**  
+3. **Add architecture.md with system design patterns**
 4. **Define personas.md with UX guidelines**
 5. **Create activities.md with framework specifications**
 6. **Establish tech-stack.md with implementation standards**
@@ -358,7 +358,7 @@ This plan ensures GitHub Copilot understands the full context of the Caja platfo
 
 ### Development Team Structure
 - **Platform Engineering (Dom):** AWS infrastructure, Terraform, ECS deployment
-- **Backend Development (Mauricio):** FastAPI application, database design, API endpoints  
+- **Backend Development (Mauricio):** FastAPI application, database design, API endpoints
 - **Frontend Development (Joe):** React application, participant/viewer interfaces
 - **Development Tooling (Dom):** GitHub MCP integration, VS Code configuration
 
