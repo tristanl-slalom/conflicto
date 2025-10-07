@@ -46,20 +46,26 @@ detect_environment() {
     fi
 }
 
-# Check if Homebrew is installed
-check_homebrew() {
-    log_info "Checking Homebrew installation..."
-    if ! command -v brew &> /dev/null; then
-        log_warning "Homebrew not found. Installing Homebrew..."
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-        
-        # Add Homebrew to PATH for Apple Silicon Macs
-        if [[ $(uname -m) == 'arm64' ]]; then
-            echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zshrc
-            eval "$(/opt/homebrew/bin/brew shellenv)"
+# Install package manager (Homebrew for macOS, apt for Linux/Codespaces)
+setup_package_manager() {
+    if [[ "$ENVIRONMENT" == "macos" ]]; then
+        log_info "Checking Homebrew installation..."
+        if ! command -v brew &> /dev/null; then
+            log_warning "Homebrew not found. Installing Homebrew..."
+            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+            
+            # Add Homebrew to PATH for Apple Silicon Macs
+            if [[ $(uname -m) == 'arm64' ]]; then
+                echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zshrc
+                eval "$(/opt/homebrew/bin/brew shellenv)"
+            fi
+        else
+            log_success "Homebrew is already installed"
         fi
-    else
-        log_success "Homebrew is already installed"
+    elif [[ "$ENVIRONMENT" == "linux" || "$ENVIRONMENT" == "codespaces" ]]; then
+        log_info "Updating package manager..."
+        sudo apt-get update
+        log_success "Package manager updated"
     fi
 }
 
