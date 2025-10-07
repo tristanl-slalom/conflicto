@@ -214,21 +214,25 @@ All activities follow the same state machine:
 - **API Design:** Follow REST conventions that generate clean TypeScript interfaces
 - **Response Models:** Structure responses to match expected frontend usage patterns
 
-### Frontend Development
-- Use React Context for session state management
+### Frontend Development (SPA Architecture)
+- **SPA Configuration:** Use Vite for static build, TanStack Router for client-side routing
+- **Build System:** Use `npm run build:spa` for production static assets
+- **Deployment:** Optimize for S3 static hosting with CloudFront CDN caching
 - **API Integration:** Use Orval-generated hooks directly, avoid wrapper abstractions
 - **Generated API Hooks:** `useListSessionsApiV1SessionsGet`, `useCreateSessionApiV1SessionsPost` etc.
 - Use TanStack Query for API state management and polling (integrated via Orval)
 - **API Generation:** Always run `npm run generate:api` after OpenAPI spec changes
 - Implement proper error boundaries and Suspense for loading states
-- Optimize for CloudFront caching with proper headers
+- **Static Assets:** Ensure all resources are bundled or referenced properly for CDN
 - Implement responsive design for mobile-first approach
-- **Testing:** Use Vitest (not Jest) for better Vite integration
+- **Testing:** Use Vitest (not Jest) for better Vite integration and SPA compatibility
 - **Test Setup:** Configure jsdom environment with proper mocks in setup.ts
 - **Assertions:** Use native Vitest assertions (toBeDefined, textContent) not jest-dom matchers
 - **Mocking:** Use vi.fn() and vi.mock() syntax for all test mocking
 - **MSW Integration:** Use generated `getCajaBackendMock()` for API mocking in tests
 - **Type Safety:** Leverage generated TypeScript interfaces for all API-related code
+- **Client-Side Storage:** Use localStorage for temporary data, API calls for persistence
+- **Routing:** Handle deep links properly with client-side router fallbacks
 
 ### Real-time Communication
 - WebSocket connection per participant
@@ -329,27 +333,31 @@ All activities follow the same state machine:
 
 ## Implementation Priorities
 
-### Sprint 0 - Project Scaffolding (Week 1) ✅ **FRONTEND COMPLETE**
+### Sprint 0 - Project Scaffolding (Week 1) ✅ **FRONTEND COMPLETE & PRODUCTION READY**
 Focus Copilot rules on:
-- Terraform AWS infrastructure setup (ECS, RDS, S3, CloudFront) ⏳
+- Terraform AWS infrastructure setup (S3, CloudFront, RDS, ECS for backend) ⏳
 - FastAPI application structure with health checks ⏳
-- React application setup with TanStack ✅ **DONE**
+- React SPA application with static deployment ✅ **DONE**
 - GitHub Actions CI/CD pipeline ⏳
 - MCP integration for GitHub workflow ✅ **DONE**
 - Database schema and migrations ⏳
 
 **Completed Frontend Tasks:**
 - ✅ React 18+ with TypeScript setup
-- ✅ TanStack Start (router) and Query (state) integration
+- ✅ TanStack Router (SPA mode) and Query (state) integration  
 - ✅ Multi-persona interface system (admin/viewer/participant)
 - ✅ shadcn/ui + Tailwind CSS component system
-- ✅ Vitest testing framework (migrated from Jest)
+- ✅ Vitest testing framework (migrated from Jest for better Vite integration)
 - ✅ Complete test coverage for all persona interfaces
 - ✅ Orval API client generation with OpenAPI integration
 - ✅ MSW mock infrastructure with Faker.js data generation
 - ✅ Type-safe API hooks ready for backend integration
 - ✅ Responsive design for mobile-first participant experience
+- ✅ SPA architecture optimized for AWS S3 + CloudFront deployment
+- ✅ Static build system producing CDN-ready assets
+- ✅ Client-side routing with proper fallback handling
 - ✅ Zero-configuration API consumption workflow established
+- ✅ Production deployment strategy validated and tested
 
 ### Phase 1 - MVP Core (Weeks 2-5)
 Focus Copilot rules on:
