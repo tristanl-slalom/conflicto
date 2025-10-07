@@ -16,6 +16,7 @@ COPY openapi.json ./openapi.json
 COPY frontend/ .
 
 # Build the application
+RUN npm install
 RUN npm run build
 
 # Production stage
