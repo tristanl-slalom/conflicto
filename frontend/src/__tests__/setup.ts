@@ -75,7 +75,7 @@ vi.mock('@tanstack/react-query', () => ({
 
 // Mock Lucide React icons
 vi.mock('lucide-react', () => {
-  const MockIcon = ({ className, ...props }: any) => null;
+  const MockIcon = () => null;
   
   return {
     Settings: MockIcon,
