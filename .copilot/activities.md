@@ -53,7 +53,7 @@ class ActivityStateManager:
         # Set start timestamp
         # Notify all participants
         pass
-    
+
     def transition_to_expired(self, activity_id: UUID) -> Activity:
         """Transition activity to expired (results-only)"""
         # Stop accepting new responses
@@ -70,7 +70,7 @@ const useActivityState = (activityId: string) => {
     interval: 2000,
     enabled: !!activityId
   });
-  
+
   return {
     activity,
     isActive: activity?.status === 'active',
@@ -105,24 +105,24 @@ interface PollOption {
 const PollEditor = ({ activity, onChange }: ActivityEditorProps<PollConfig>) => {
   return (
     <ActivityEditorLayout title="Poll Configuration">
-      <QuestionInput 
+      <QuestionInput
         value={activity.config.question}
         onChange={(question) => onChange({ ...activity.config, question })}
       />
-      <OptionsEditor 
+      <OptionsEditor
         options={activity.config.options}
         onAddOption={addOption}
         onRemoveOption={removeOption}
         onEditOption={editOption}
       />
       <SettingsPanel>
-        <Checkbox 
+        <Checkbox
           checked={activity.config.allow_multiple}
           onChange={(allow_multiple) => onChange({ ...activity.config, allow_multiple })}
         >
           Allow multiple selections
         </Checkbox>
-        <Checkbox 
+        <Checkbox
           checked={activity.config.show_results_live}
           onChange={(show_results_live) => onChange({ ...activity.config, show_results_live })}
         >
@@ -138,7 +138,7 @@ const PollEditor = ({ activity, onChange }: ActivityEditorProps<PollConfig>) => 
 ```typescript
 const PollParticipant = ({ activity, onSubmit }: ParticipantProps<PollConfig>) => {
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
-  
+
   return (
     <ParticipantLayout>
       <ActivityTitle>{activity.config.question}</ActivityTitle>
@@ -154,7 +154,7 @@ const PollParticipant = ({ activity, onSubmit }: ParticipantProps<PollConfig>) =
           </OptionButton>
         ))}
       </OptionsList>
-      <SubmitButton 
+      <SubmitButton
         onClick={() => onSubmit({ selectedOptions })}
         disabled={selectedOptions.length === 0}
       >
@@ -169,12 +169,12 @@ const PollParticipant = ({ activity, onSubmit }: ParticipantProps<PollConfig>) =
 ```typescript
 const PollViewer = ({ activity, responses }: ViewerProps<PollConfig>) => {
   const results = usePollResults(responses);
-  
+
   return (
     <ViewerLayout>
       <LargeTitle>{activity.config.question}</LargeTitle>
       {activity.config.show_results_live && (
-        <LiveChart 
+        <LiveChart
           data={results}
           type="bar"
           animated
@@ -255,28 +255,28 @@ interface WordCloudConfig {
 # Backend response processing
 class ActivityResponseProcessor:
     def process_response(
-        self, 
-        activity_id: UUID, 
-        participant_id: UUID, 
+        self,
+        activity_id: UUID,
+        participant_id: UUID,
         response_data: dict
     ) -> ResponseResult:
         activity = self.get_activity(activity_id)
-        
+
         # Validate response against activity config
         validator = self.get_validator(activity.type)
         if not validator.validate(response_data, activity.config):
             raise ValidationError("Invalid response format")
-        
+
         # Store response
         response = self.store_response(activity_id, participant_id, response_data)
-        
+
         # Update aggregated results
         self.update_results(activity_id)
-        
+
         # Notify other participants if live results enabled
         if self.should_broadcast_update(activity):
             self.broadcast_update(activity_id)
-        
+
         return ResponseResult(success=True, response=response)
 ```
 
@@ -285,7 +285,7 @@ class ActivityResponseProcessor:
 const useActivityResponse = (activityId: string) => {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  
+
   const submitResponse = async (responseData: any) => {
     setSubmitting(true);
     try {
@@ -299,7 +299,7 @@ const useActivityResponse = (activityId: string) => {
       setSubmitting(false);
     }
   };
-  
+
   return { submitResponse, submitted, submitting };
 };
 ```
@@ -353,24 +353,24 @@ export const ACTIVITY_REGISTRY = {
 ```typescript
 const ActivityRenderer = ({ activity, persona, ...props }: ActivityRendererProps) => {
   const activityDef = ACTIVITY_REGISTRY[activity.type];
-  
+
   if (!activityDef) {
     throw new Error(`Unknown activity type: ${activity.type}`);
   }
-  
+
   switch (persona) {
     case 'admin':
       const AdminComponent = activityDef.AdminEditor;
       return <AdminComponent activity={activity} {...props} />;
-      
+
     case 'viewer':
       const ViewerComponent = activityDef.ViewerDisplay;
       return <ViewerComponent activity={activity} {...props} />;
-      
+
     case 'participant':
       const ParticipantComponent = activityDef.ParticipantInterface;
       return <ParticipantComponent activity={activity} {...props} />;
-      
+
     default:
       throw new Error(`Unknown persona: ${persona}`);
   }
@@ -396,22 +396,22 @@ describe('PollActivity', () => {
       show_results_live: true
     }
   };
-  
+
   describe('ParticipantInterface', () => {
     it('allows selecting options', () => {
       render(<PollParticipant activity={mockActivity} onSubmit={jest.fn()} />);
-      
+
       fireEvent.click(screen.getByText('Option 1'));
       expect(screen.getByText('Option 1')).toHaveClass('selected');
     });
-    
+
     it('submits response on button click', () => {
       const onSubmit = jest.fn();
       render(<PollParticipant activity={mockActivity} onSubmit={onSubmit} />);
-      
+
       fireEvent.click(screen.getByText('Option 1'));
       fireEvent.click(screen.getByText('Submit Vote'));
-      
+
       expect(onSubmit).toHaveBeenCalledWith({ selectedOptions: ['1'] });
     });
   });
@@ -424,15 +424,15 @@ describe('PollActivity', () => {
 def test_poll_response_processing():
     activity = create_test_poll_activity()
     participant = create_test_participant()
-    
+
     response_data = {"selected_options": ["option_1"]}
-    
+
     result = process_activity_response(
-        activity.id, 
-        participant.id, 
+        activity.id,
+        participant.id,
         response_data
     )
-    
+
     assert result.success is True
     assert len(activity.responses) == 1
     assert activity.responses[0].response_data == response_data

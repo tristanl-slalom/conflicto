@@ -99,7 +99,7 @@ start:
 	@echo "🎯 Backend: Starting FastAPI server..."
 	cd backend && ./start-dev.sh
 
-# Stop development environment  
+# Stop development environment
 stop:
 	@echo "🔴 Stopping Conflicto development environment..."
 	cd backend && ./stop-dev.sh

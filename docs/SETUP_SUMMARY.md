@@ -67,7 +67,7 @@ That's it! Everything will be installed and configured automatically.
 
 ```bash
 make setup      # Same as ./setup.sh
-make start      # Same as ./start-dev.sh  
+make start      # Same as ./start-dev.sh
 make test       # Same as ./run-tests.sh
 make stop       # Same as ./stop-dev.sh
 make help       # Show all available commands

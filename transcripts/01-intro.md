@@ -294,4 +294,3 @@ Seriously. Yeah, through and like, there's no way I could have sworn you sounded
 And if you want Sonic, use your Copilot license. Again, like you can use Copilot as the back to something like open code and still access the Sonic model through it without API access to Copilot. Yeah 'cause it basically what it does is open code, for example, will just implement the agent of Copilot and it'll say like hey.
 Sopilot use this model, right? OK, so let's do that after lunch. Just kind of settle in on our tooling and then we can come up with the way that we want to set up rules and things like that and the way that we I think before we have.
 Have an in-depth discussion around our requirements. Let's talk about how we want to capture them and convert them into. Let's talk about what we might want our pipeline to be from requirements to user stories to acceptance criteria to tasks to actual working code.
-

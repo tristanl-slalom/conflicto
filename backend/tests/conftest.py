@@ -1,17 +1,17 @@
 """
 Test configuration and fixtures.
 """
-import pytest
 import asyncio
 from typing import AsyncGenerator
+
+import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from fastapi.testclient import TestClient
 
-from app.main import app
-from app.db.database import Base, get_db
 from app.core.settings import settings
-
+from app.db.database import Base, get_db
+from app.main import app
 
 # Test database URL (use in-memory SQLite for tests)
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
@@ -54,11 +54,11 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
     # Create all tables
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     # Provide session
     async with TestSessionLocal() as session:
         yield session
-    
+
     # Drop all tables
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
@@ -79,7 +79,7 @@ def sample_session_data():
     return {
         "title": "Test Session",
         "description": "A test session for unit tests",
-        "max_participants": 50
+        "max_participants": 50,
     }
 
 
@@ -87,8 +87,9 @@ def sample_session_data():
 def sample_session_create():
     """Sample SessionCreate object for testing."""
     from app.models.schemas import SessionCreate
+
     return SessionCreate(
         title="Test Session",
         description="A test session for unit tests",
-        max_participants=50
+        max_participants=50,
     )

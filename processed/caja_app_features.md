@@ -10,7 +10,7 @@ The Caja platform follows a structured flow that supports three main personas th
    - Session remains in draft state until ready to launch
    - Activities are pre-configured with specific settings and content
 
-2. **Session Launch Phase** 
+2. **Session Launch Phase**
    - Admin opens/starts the session, transitioning it to active state
    - Viewer displays session start screen with prominent QR code
    - System generates unique session join URL and QR code
@@ -309,7 +309,7 @@ This flow ensures a seamless experience from setup through completion, with clea
 
 **MVP Core (Phase 1):**
 - Session Management
-- Activity Framework  
+- Activity Framework
 - Multi-Persona Interface System
 - Real-Time Communication Engine
 - QR Code and Participant Onboarding

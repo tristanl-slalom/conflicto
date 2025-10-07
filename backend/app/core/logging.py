@@ -13,7 +13,7 @@ from app.core.settings import settings
 
 def configure_logging() -> FilteringBoundLogger:
     """Configure structured logging."""
-    
+
     # Configure structlog
     structlog.configure(
         processors=[
@@ -22,7 +22,9 @@ def configure_logging() -> FilteringBoundLogger:
             structlog.processors.StackInfoRenderer(),
             structlog.dev.set_exc_info,
             structlog.processors.TimeStamper(fmt="iso"),
-            structlog.dev.ConsoleRenderer() if settings.debug else structlog.processors.JSONRenderer(),
+            structlog.dev.ConsoleRenderer()
+            if settings.debug
+            else structlog.processors.JSONRenderer(),
         ],
         wrapper_class=structlog.make_filtering_bound_logger(
             logging.DEBUG if settings.debug else logging.INFO
@@ -31,17 +33,17 @@ def configure_logging() -> FilteringBoundLogger:
         logger_factory=structlog.PrintLoggerFactory(),
         cache_logger_on_first_use=False,
     )
-    
+
     # Configure standard library logging
     logging.basicConfig(
         format="%(message)s",
         stream=sys.stdout,
         level=logging.DEBUG if settings.debug else logging.INFO,
     )
-    
+
     # Get logger
     logger = structlog.get_logger()
-    
+
     return logger
 
 
@@ -57,15 +59,13 @@ def log_request(request_id: str, method: str, path: str, **kwargs) -> None:
     """Log incoming request."""
     logger = get_logger("request")
     logger.info(
-        "Request received",
-        request_id=request_id,
-        method=method,
-        path=path,
-        **kwargs
+        "Request received", request_id=request_id, method=method, path=path, **kwargs
     )
 
 
-def log_response(request_id: str, status_code: int, duration_ms: float, **kwargs) -> None:
+def log_response(
+    request_id: str, status_code: int, duration_ms: float, **kwargs
+) -> None:
     """Log outgoing response."""
     logger = get_logger("response")
     logger.info(
@@ -73,7 +73,7 @@ def log_response(request_id: str, status_code: int, duration_ms: float, **kwargs
         request_id=request_id,
         status_code=status_code,
         duration_ms=duration_ms,
-        **kwargs
+        **kwargs,
     )
 
 
@@ -84,5 +84,5 @@ def log_error(error: Exception, context: Dict[str, Any] = None) -> None:
         "Error occurred",
         error=str(error),
         error_type=type(error).__name__,
-        **(context or {})
+        **(context or {}),
     )

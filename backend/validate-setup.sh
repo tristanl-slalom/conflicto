@@ -35,11 +35,11 @@ fi
 if command -v poetry &> /dev/null; then
     log_success "Poetry is installed"
     cd backend
-    
+
     # Check virtual environment
     if poetry env info &> /dev/null; then
         log_success "Poetry virtual environment exists"
-        
+
         # Check Python version
         python_version=$(poetry run python --version 2>&1 | grep -o "3\.11\.[0-9]*" || echo "")
         if [ -n "$python_version" ]; then
@@ -48,7 +48,7 @@ if command -v poetry &> /dev/null; then
             log_error "Python 3.11 not found in virtual environment"
             exit 1
         fi
-        
+
         # Check if dependencies are installed
         if poetry run python -c "import fastapi, sqlalchemy, alembic" &> /dev/null; then
             log_success "Key dependencies are installed"
@@ -69,7 +69,7 @@ fi
 # Check Docker
 if command -v docker &> /dev/null; then
     log_success "Docker is installed"
-    
+
     if docker info &> /dev/null; then
         log_success "Docker is running"
     else

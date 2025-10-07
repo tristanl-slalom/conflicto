@@ -81,7 +81,7 @@ After setup, use these utility scripts:
 # Start development environment
 ./start-dev.sh
 
-# Stop development environment  
+# Stop development environment
 ./stop-dev.sh
 
 # Run tests and code quality checks
@@ -126,7 +126,7 @@ poetry run alembic downgrade -1
 After starting the development environment:
 
 - **FastAPI Application**: http://localhost:8000
-- **API Documentation**: http://localhost:8000/docs  
+- **API Documentation**: http://localhost:8000/docs
 - **PostgreSQL**: localhost:5432
 - **Redis**: localhost:6379
 

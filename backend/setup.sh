@@ -5,6 +5,9 @@
 
 set -e  # Exit on any error
 
+# Environment variable
+ENVIRONMENT=""
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -53,7 +56,7 @@ setup_package_manager() {
         if ! command -v brew &> /dev/null; then
             log_warning "Homebrew not found. Installing Homebrew..."
             /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-            
+
             # Add Homebrew to PATH for Apple Silicon Macs
             if [[ $(uname -m) == 'arm64' ]]; then
                 echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zshrc
@@ -71,12 +74,36 @@ setup_package_manager() {
 
 # Install Python 3.11
 install_python() {
-    log_info "Checking Python 3.11 installation..."
-    if ! brew list python@3.11 &> /dev/null; then
-        log_info "Installing Python 3.11..."
-        brew install python@3.11
-    else
-        log_success "Python 3.11 is already installed"
+    log_info "Checking Python installation..."
+
+    if [[ "$ENVIRONMENT" == "macos" ]]; then
+        if ! brew list python@3.11 &> /dev/null; then
+            log_info "Installing Python 3.11..."
+            brew install python@3.11
+        else
+            log_success "Python 3.11 is already installed"
+        fi
+    elif [[ "$ENVIRONMENT" == "linux" || "$ENVIRONMENT" == "codespaces" ]]; then
+        # Check if Python 3.11+ is available
+        if command -v python3.11 &> /dev/null; then
+            log_success "Python 3.11 is already installed"
+        elif command -v python3.12 &> /dev/null; then
+            log_success "Python 3.12 is available (compatible)"
+        elif command -v python3 &> /dev/null; then
+            PYTHON_VERSION=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
+            log_info "Found Python $PYTHON_VERSION"
+            # Simple version comparison without bc
+            MAJOR=$(echo $PYTHON_VERSION | cut -d. -f1)
+            MINOR=$(echo $PYTHON_VERSION | cut -d. -f2)
+            if [[ $MAJOR -gt 3 ]] || [[ $MAJOR -eq 3 && $MINOR -ge 11 ]]; then
+                log_success "Python $PYTHON_VERSION is compatible"
+            else
+                log_warning "Python $PYTHON_VERSION may not be optimal. Recommend 3.11+"
+            fi
+        else
+            log_error "Python 3 not found. Installing..."
+            sudo apt-get install -y python3 python3-pip python3-venv
+        fi
     fi
 }
 
@@ -85,7 +112,21 @@ install_poetry() {
     log_info "Checking Poetry installation..."
     if ! command -v poetry &> /dev/null; then
         log_info "Installing Poetry..."
-        brew install poetry
+        if [[ "$ENVIRONMENT" == "macos" ]]; then
+            brew install poetry
+        elif [[ "$ENVIRONMENT" == "linux" || "$ENVIRONMENT" == "codespaces" ]]; then
+            # Install Poetry using the official installer
+            curl -sSL https://install.python-poetry.org | python3 -
+
+            # Add Poetry to PATH
+            export PATH="$HOME/.local/bin:$PATH"
+            echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+
+            # For Codespaces, also add to .profile
+            if [[ "$ENVIRONMENT" == "codespaces" ]]; then
+                echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.profile
+            fi
+        fi
     else
         log_success "Poetry is already installed"
     fi
@@ -94,36 +135,79 @@ install_poetry() {
 # Install Docker and Docker Compose
 install_docker() {
     log_info "Checking Docker installation..."
+
+    if [[ "$ENVIRONMENT" == "codespaces" ]]; then
+        log_success "Docker is pre-installed in Codespaces"
+        return 0
+    fi
+
     if ! command -v docker &> /dev/null; then
-        log_warning "Docker not found. Please install Docker Desktop manually from:"
-        log_warning "https://www.docker.com/products/docker-desktop/"
-        log_warning "After installation, please restart this script."
-        exit 1
+        if [[ "$ENVIRONMENT" == "macos" ]]; then
+            log_warning "Docker not found. Please install Docker Desktop manually from:"
+            log_warning "https://www.docker.com/products/docker-desktop/"
+            log_warning "After installation, please restart this script."
+            exit 1
+        elif [[ "$ENVIRONMENT" == "linux" ]]; then
+            log_info "Installing Docker..."
+            # Install Docker using official script
+            curl -fsSL https://get.docker.com -o get-docker.sh
+            sudo sh get-docker.sh
+            rm get-docker.sh
+
+            # Add user to docker group
+            sudo usermod -aG docker $USER
+            log_warning "Please log out and back in for Docker group membership to take effect"
+
+            # Install Docker Compose
+            sudo apt-get install -y docker-compose-plugin
+        fi
     else
         log_success "Docker is already installed"
     fi
-    
-    # Check if Docker is running
-    if ! docker info &> /dev/null; then
-        log_error "Docker is installed but not running. Please start Docker Desktop and try again."
-        exit 1
+
+    # Check if Docker is running (skip for Codespaces as it may not be started yet)
+    if [[ "$ENVIRONMENT" != "codespaces" ]]; then
+        if ! docker info &> /dev/null; then
+            if [[ "$ENVIRONMENT" == "macos" ]]; then
+                log_error "Docker is installed but not running. Please start Docker Desktop and try again."
+                exit 1
+            elif [[ "$ENVIRONMENT" == "linux" ]]; then
+                log_info "Starting Docker service..."
+                sudo systemctl start docker
+                sudo systemctl enable docker
+            fi
+        fi
     fi
 }
 
 # Setup backend environment
 setup_backend() {
     log_info "Setting up backend environment..."
-    
-    cd backend
-    
-    # Configure Poetry to use Python 3.11
-    log_info "Configuring Poetry to use Python 3.11..."
-    poetry env use /opt/homebrew/bin/python3.11 || poetry env use /usr/local/bin/python3.11 || poetry env use python3.11
-    
+
+    # Navigate to backend directory (handle both cases where script is run from root or backend dir)
+    if [[ -d "backend" ]]; then
+        cd backend
+    elif [[ -f "setup.sh" && -f "pyproject.toml" ]]; then
+        # Already in backend directory
+        log_info "Already in backend directory"
+    else
+        log_error "Cannot find backend directory or pyproject.toml. Please run from project root or backend directory."
+        exit 1
+    fi
+
+    # Configure Poetry to use the best available Python version
+    log_info "Configuring Poetry to use the best available Python version..."
+    if [[ "$ENVIRONMENT" == "macos" ]]; then
+        poetry env use /opt/homebrew/bin/python3.11 || poetry env use /usr/local/bin/python3.11 || poetry env use python3.11
+    elif [[ "$ENVIRONMENT" == "linux" || "$ENVIRONMENT" == "codespaces" ]]; then
+        # Try to use the best available Python version
+        poetry env use python3.12 || poetry env use python3.11 || poetry env use python3
+    fi
+
     # Install dependencies
     log_info "Installing Python dependencies..."
     poetry install
-    
+
     # Copy environment file
     if [ ! -f .env ]; then
         log_info "Creating .env file from template..."
@@ -132,22 +216,35 @@ setup_backend() {
     else
         log_success ".env file already exists"
     fi
-    
+
     # Setup pre-commit hooks
     log_info "Setting up pre-commit hooks..."
     poetry run pre-commit install
-    
-    cd ..
+
+    # Return to parent directory if we changed into backend
+    if [[ -d "../.git" ]]; then
+        cd ..
+    fi
 }
 
 # Start services
 start_services() {
     log_info "Starting Docker services..."
-    cd backend
-    
+
+    # Navigate to backend directory
+    if [[ -d "backend" ]]; then
+        cd backend
+    elif [[ -f "docker-compose.yml" ]]; then
+        # Already in backend directory
+        log_info "Already in backend directory"
+    else
+        log_error "Cannot find backend directory or docker-compose.yml"
+        exit 1
+    fi
+
     # Start PostgreSQL and Redis
     docker-compose up -d postgres redis
-    
+
     # Wait for PostgreSQL to be ready
     log_info "Waiting for PostgreSQL to be ready..."
     timeout=30
@@ -159,20 +256,23 @@ start_services() {
             exit 1
         fi
     done
-    
+
     log_success "PostgreSQL is ready"
-    
+
     # Run database migrations
     log_info "Running database migrations..."
     poetry run alembic upgrade head
-    
-    cd ..
+
+    # Return to parent directory if we changed into backend
+    if [[ -d "../.git" ]]; then
+        cd ..
+    fi
 }
 
 # Create useful scripts
 create_scripts() {
     log_info "Creating utility scripts..."
-    
+
     # Create start script
     cat > start-dev.sh << 'EOF'
 #!/bin/bash
@@ -273,14 +373,14 @@ echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     log_info "Stopping backend service..."
     docker-compose stop backend
-    
+
     log_info "Dropping and recreating database..."
     docker-compose exec postgres psql -U caja_user -d postgres -c "DROP DATABASE IF EXISTS caja_db;"
     docker-compose exec postgres psql -U caja_user -d postgres -c "CREATE DATABASE caja_db;"
-    
+
     log_info "Running migrations..."
     poetry run alembic upgrade head
-    
+
     log_info "Database reset complete"
 else
     log_info "Database reset cancelled"
@@ -289,8 +389,32 @@ EOF
 
     # Make scripts executable
     chmod +x start-dev.sh stop-dev.sh run-tests.sh reset-db.sh
-    
+
     log_success "Utility scripts created: start-dev.sh, stop-dev.sh, run-tests.sh, reset-db.sh"
+}
+
+# Codespaces-specific setup
+setup_codespaces_extras() {
+    log_info "Setting up Codespaces-specific configuration..."
+
+    # Set up port forwarding configuration
+    if [[ -d ".devcontainer" ]]; then
+        log_info "Codespaces devcontainer detected"
+    fi
+
+    # Add helpful aliases for Codespaces
+    cat >> ~/.bashrc << 'EOF'
+
+# Caja project aliases
+alias caja-start='cd /workspaces/conflicto && ./start-dev.sh'
+alias caja-stop='cd /workspaces/conflicto && ./stop-dev.sh'
+alias caja-test='cd /workspaces/conflicto && ./run-tests.sh'
+alias caja-backend='cd /workspaces/conflicto/backend'
+alias caja-logs='cd /workspaces/conflicto/backend && docker-compose logs -f'
+EOF
+
+    log_success "Codespaces aliases added to ~/.bashrc"
+    log_info "Available aliases: caja-start, caja-stop, caja-test, caja-backend, caja-logs"
 }
 
 # Display usage information
@@ -303,6 +427,16 @@ show_usage() {
     echo "   ./stop-dev.sh     - Stop the development environment"
     echo "   ./run-tests.sh    - Run tests and code quality checks"
     echo "   ./reset-db.sh     - Reset the database (DESTRUCTIVE)"
+
+    if [[ "$ENVIRONMENT" == "codespaces" ]]; then
+        echo ""
+        echo "🚀 Codespaces shortcuts (available after reloading shell):"
+        echo "   caja-start        - Start the development environment"
+        echo "   caja-stop         - Stop the development environment"
+        echo "   caja-test         - Run tests"
+        echo "   caja-backend      - Navigate to backend directory"
+        echo "   caja-logs         - View application logs"
+    fi
     echo ""
     echo "🚀 Quick start:"
     echo "   1. Run: ./start-dev.sh"
@@ -334,9 +468,9 @@ main() {
     echo ""
     log_info "🚀 Caja Backend - Development Environment Setup"
     echo ""
-    
-    check_os
-    check_homebrew
+
+    detect_environment
+    setup_package_manager
     install_python
     install_poetry
     install_docker
@@ -344,7 +478,12 @@ main() {
     start_services
     create_scripts
     show_usage
-    
+
+    # Codespaces-specific setup
+    if [[ "$ENVIRONMENT" == "codespaces" ]]; then
+        setup_codespaces_extras
+    fi
+
     echo ""
     log_success "✨ Setup completed successfully!"
     echo ""
