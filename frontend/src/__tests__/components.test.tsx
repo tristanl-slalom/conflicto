@@ -1,9 +1,6 @@
-/**
- * @jest-environment jsdom
- */
 import React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import '@testing-library/jest-dom'
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 // Create test wrapper for TanStack Query
@@ -191,32 +188,36 @@ const MockParticipantInterface = () => {
 }
 
 describe('Caja Frontend Components', () => {
+  afterEach(() => {
+    cleanup()
+  })
+
   describe('HomePage', () => {
     it('renders the main landing page with branding', () => {
       render(<MockHomePage />, { wrapper: TestWrapper })
       
-      expect(screen.getByText('CAJA')).toBeInTheDocument()
-      expect(screen.getByText('Interactive Engagement Platform')).toBeInTheDocument()
+      expect(screen.getByText('CAJA')).toBeDefined()
+      expect(screen.getByText('Interactive Engagement Platform')).toBeDefined()
     })
 
     it('displays all three persona options', () => {
       render(<MockHomePage />, { wrapper: TestWrapper })
       
-      expect(screen.getByTestId('persona-link-admin')).toBeInTheDocument()
-      expect(screen.getByTestId('persona-link-viewer')).toBeInTheDocument()
-      expect(screen.getByTestId('persona-link-participant')).toBeInTheDocument()
-      
-      expect(screen.getByText('Admin Interface')).toBeInTheDocument()
-      expect(screen.getByText('Viewer Display')).toBeInTheDocument()
-      expect(screen.getByText('Participant Interface')).toBeInTheDocument()
+      expect(screen.getByTestId('persona-link-admin')).toBeDefined()
+      expect(screen.getByTestId('persona-link-viewer')).toBeDefined()
+      expect(screen.getByTestId('persona-link-participant')).toBeDefined()
+
+      expect(screen.getByText('Admin Interface')).toBeDefined()
+      expect(screen.getByText('Viewer Display')).toBeDefined()
+      expect(screen.getByText('Participant Interface')).toBeDefined()
     })
 
     it('has correct navigation links for each persona', () => {
       render(<MockHomePage />, { wrapper: TestWrapper })
       
-      expect(screen.getByTestId('persona-link-admin')).toHaveAttribute('href', '/admin')
-      expect(screen.getByTestId('persona-link-viewer')).toHaveAttribute('href', '/viewer')
-      expect(screen.getByTestId('persona-link-participant')).toHaveAttribute('href', '/participant')
+      expect(screen.getByTestId('persona-link-admin').getAttribute('href')).toBe('/admin')
+      expect(screen.getByTestId('persona-link-viewer').getAttribute('href')).toBe('/viewer')
+      expect(screen.getByTestId('persona-link-participant').getAttribute('href')).toBe('/participant')
     })
   })
 
@@ -224,8 +225,8 @@ describe('Caja Frontend Components', () => {
     it('renders the admin dashboard with session controls', () => {
       render(<MockAdminInterface />, { wrapper: TestWrapper })
       
-      expect(screen.getByText('Caja Admin')).toBeInTheDocument()
-      expect(screen.getByTestId('session-form')).toBeInTheDocument()
+      expect(screen.getByText('Caja Admin')).toBeDefined()
+      expect(screen.getByTestId('session-form')).toBeDefined()
     })
 
     it('has session configuration inputs', () => {
@@ -235,9 +236,9 @@ describe('Caja Frontend Components', () => {
       const typeSelect = screen.getByTestId('session-type-select')
       const createBtn = screen.getByTestId('create-session-btn')
       
-      expect(nameInput).toBeInTheDocument()
-      expect(typeSelect).toBeInTheDocument()
-      expect(createBtn).toBeInTheDocument()
+      expect(nameInput).toBeDefined()
+      expect(typeSelect).toBeDefined()
+      expect(createBtn).toBeDefined()
     })
 
     it('allows input of session details', async () => {
@@ -258,25 +259,25 @@ describe('Caja Frontend Components', () => {
     it('renders the viewer interface with session info', () => {
       render(<MockViewerDisplay />, { wrapper: TestWrapper })
       
-      expect(screen.getByText('Team Retrospective Poll')).toBeInTheDocument()
-      expect(screen.getByTestId('participant-count')).toHaveTextContent('12')
+      expect(screen.getByText('Team Retrospective Poll')).toBeDefined()
+      expect(screen.getByTestId('participant-count').textContent).toBe('12')
     })
 
     it('displays QR code section for participant joining', () => {
       render(<MockViewerDisplay />, { wrapper: TestWrapper })
       
-      expect(screen.getByTestId('qr-section')).toBeInTheDocument()
-      expect(screen.getByText('Join the Session')).toBeInTheDocument()
-      expect(screen.getByText(/Session Code:/)).toBeInTheDocument()
+      expect(screen.getByTestId('qr-section')).toBeDefined()
+      expect(screen.getByText('Join the Session')).toBeDefined()
+      expect(screen.getByText(/Session Code:/)).toBeDefined()
     })
 
     it('shows live results with voting data', () => {
       render(<MockViewerDisplay />, { wrapper: TestWrapper })
       
-      expect(screen.getByTestId('results-section')).toBeInTheDocument()
-      expect(screen.getByText('What went well in our last sprint?')).toBeInTheDocument()
-      expect(screen.getByTestId('result-0')).toBeInTheDocument()
-      expect(screen.getByTestId('result-1')).toBeInTheDocument()
+      expect(screen.getByTestId('results-section')).toBeDefined()
+      expect(screen.getByText('What went well in our last sprint?')).toBeDefined()
+      expect(screen.getByTestId('result-0')).toBeDefined()
+      expect(screen.getByTestId('result-1')).toBeDefined()
     })
   })
 
@@ -284,20 +285,20 @@ describe('Caja Frontend Components', () => {
     it('renders the participant voting interface', () => {
       render(<MockParticipantInterface />, { wrapper: TestWrapper })
       
-      expect(screen.getByTestId('participant-interface')).toBeInTheDocument()
-      expect(screen.getByText('What went well in our last sprint?')).toBeInTheDocument()
+      expect(screen.getByTestId('participant-interface')).toBeDefined()
+      expect(screen.getByText('What went well in our last sprint?')).toBeDefined()
     })
 
     it('displays voting options as interactive buttons', () => {
       render(<MockParticipantInterface />, { wrapper: TestWrapper })
       
-      expect(screen.getByTestId('option-0')).toBeInTheDocument()
-      expect(screen.getByTestId('option-1')).toBeInTheDocument()
-      expect(screen.getByTestId('option-2')).toBeInTheDocument()
-      expect(screen.getByTestId('option-3')).toBeInTheDocument()
+      expect(screen.getByTestId('option-0')).toBeDefined()
+      expect(screen.getByTestId('option-1')).toBeDefined()
+      expect(screen.getByTestId('option-2')).toBeDefined()
+      expect(screen.getByTestId('option-3')).toBeDefined()
       
-      expect(screen.getByText('Great collaboration')).toBeInTheDocument()
-      expect(screen.getByText('Smooth deployment')).toBeInTheDocument()
+      expect(screen.getByText('Great collaboration')).toBeDefined()
+      expect(screen.getByText('Smooth deployment')).toBeDefined()
     })
 
     it('allows selection and submission of votes', async () => {
@@ -307,19 +308,19 @@ describe('Caja Frontend Components', () => {
       const submitBtn = screen.getByTestId('submit-vote-btn')
       
       // Initially submit button should be disabled
-      expect(submitBtn).toBeDisabled()
+      expect((submitBtn as HTMLButtonElement).disabled).toBe(true)
       
       // Select an option
       fireEvent.click(option1)
-      expect(option1).toHaveClass('selected')
-      expect(submitBtn).not.toBeDisabled()
+      expect(option1.classList.contains('selected')).toBe(true)
+      expect((submitBtn as HTMLButtonElement).disabled).toBe(false)
       
       // Submit vote
       fireEvent.click(submitBtn)
       
       await waitFor(() => {
-        expect(screen.getByTestId('participant-voted')).toBeInTheDocument()
-        expect(screen.getByText('Vote Submitted!')).toBeInTheDocument()
+        expect(screen.getByTestId('participant-voted')).toBeDefined()
+        expect(screen.getByText('Vote Submitted!')).toBeDefined()
       })
     })
 
@@ -331,8 +332,8 @@ describe('Caja Frontend Components', () => {
       fireEvent.click(screen.getByTestId('submit-vote-btn'))
       
       await waitFor(() => {
-        expect(screen.getByText('Vote Submitted!')).toBeInTheDocument()
-        expect(screen.getByText('Thank you for participating.')).toBeInTheDocument()
+        expect(screen.getByText('Vote Submitted!')).toBeDefined()
+        expect(screen.getByText('Thank you for participating.')).toBeDefined()
       })
     })
   })
