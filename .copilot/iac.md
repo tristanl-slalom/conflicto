@@ -1,3 +1,7 @@
+---
+feature_tag: iac-bootstraping
+---
+
 # Caja Infrastructure as Code Plan (Terraform)
 
 Last updated: 2025-10-07 (amended: added bootstrap & domain strategy, caja subdomain naming, incremental execution phases)
@@ -28,6 +32,8 @@ This document defines the execution‑ready plan for provisioning Caja platform 
 **Terraform Version:** >= 1.7 (AWS provider `~> 5.0`)
 
 **Module Philosophy:** Thin root; composable, opinionated internal modules.
+
+**Feature Tag:** #IaC-Bootstrap
 
 ---
 
@@ -110,6 +116,7 @@ Delegation / multi-account future: optionally introduce a delegated hosted zone 
 | Phase | Scope | Artifacts Created | Manual Step | Exit Criteria |
 |-------|-------|-------------------|-------------|---------------|
 | 0 | Bootstrap foundations | S3 state bucket, DynamoDB lock table, Route 53 hosted zone | Hover NS update | `dig NS dbash.dev` shows AWS NS |
+| 0.5 | IAM OIDC & deployer roles | GitHub OIDC provider, IAM roles & policies (`caja-terraform-deployer-*`) | None | OIDC `sts:GetCallerIdentity` succeeds in dry-run plan job |
 | 1 | Domain & certificates | `modules/domain` ACM certs + DNS validation records (no alias A records yet) | None | Both certs status = Issued |
 | 2 | Core network & security | VPC, subnets, NAT, security groups | None | `terraform plan` clean; VPC reachable |
 | 3 | Persistence | RDS Postgres + secret (no app yet) | None | DB available; secret populated |
@@ -235,7 +242,7 @@ Adjustment: Uses `frontend_certificate_arn` and sets `alternate_domain_names = [
 
 ## 8. Environment Composition (Dev) – Phase Mapping
 
-Layer application of phases instead of all modules at once:
+Phases 0 (bootstrap) and 0.5 (IAM OIDC + deployer roles) are global, one-time foundations. Environment roots begin applying from Phase 2 onward. Layer application of phases instead of all modules at once:
 
 1. Phase 2: networking + security
 2. Phase 3: rds-postgres (+ secrets for DB credentials)
@@ -263,21 +270,23 @@ backend_image_tag  = "dev-initial"
 | DNS cutover race | Zone and infra interleaved | Bootstrap zone first, pause for propagation |
 | Alias pointing to missing targets | Created too early | Defer alias creation to Phase 7 |
 | Env sprawl in SANs | Hard to retract | San lists controlled by boolean + list inputs |
+| Late IAM/OIDC introduction | Blocks CI pipeline & secure applies | Introduce Phase 0.5 IAM OIDC + deployer roles early |
 
 ## 10. Incremental PR Workflow
 
 | PR | Contents | Acceptance Checks |
 |----|----------|-------------------|
 | #1 | Bootstrap stack docs only (no code run yet) | Plan reviewed (local) |
-| #2 | Domain module code & apply (cert issuance) | Both certs Issued |
-| #3 | Networking + security | VPC/Subnets routing validated |
-| #4 | RDS + secret | Connection test via temporary script |
-| #5 | ECS cluster + ECR + base image push | Repo exists; cluster healthy |
-| #6 | ALB + ECS service (API reachable) | `/health` returns 200 via ALB DNS |
-| #7 | Static site + CloudFront | CF deploy complete; default index reachable |
-| #8 | DNS alias records | `curl https://api.caja.dbash.dev/health` OK |
-| #9 | Observability alarms | Alarms show OK states |
-| #10 | CI/CD workflow | PR plan comments successfully posted |
+| #2 | IAM OIDC provider + deployer roles (Phase 0.5) | GitHub Actions dry-run plan assumes role successfully |
+| #3 | Domain module code & apply (cert issuance) | Both certs Issued |
+| #4 | Networking + security | VPC/Subnets routing validated |
+| #5 | RDS + secret | Connection test via temporary script |
+| #6 | ECS cluster + ECR + base image push | Repo exists; cluster healthy |
+| #7 | ALB + ECS service (API reachable) | `/health` returns 200 via ALB DNS |
+| #8 | Static site + CloudFront | CF deploy complete; default index reachable |
+| #9 | DNS alias records | `curl https://api.caja.dbash.dev/health` OK |
+| #10 | Observability alarms | Alarms show OK states |
+| #11 | CI/CD workflow | PR plan comments successfully posted |
 
 ## 11. Manual Step Recap (Only One)
 
@@ -292,7 +301,8 @@ All previously auto-created `.tf` files for bootstrap/domain scaffolding have be
 1. Approve this updated `iac.md` (add APPROVED marker below).
 2. Create PR #1 adding bootstrap stack code (no apply in CI yet; local only).
 3. Apply bootstrap locally → update Hover NS → wait propagation.
-4. Proceed with Phase 1 domain module PR.
+4. Create PR #2 for Phase 0.5 IAM OIDC provider + deployer roles (enables future automated plans).
+5. After role assumption validated, proceed with Phase 1 domain module PR (now PR #3).
 
 ## 17. Approval Marker (Incremental Plan)
 

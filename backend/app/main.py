@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.logging import configure_logging, get_logger
 from app.core.settings import settings
-from app.routes import health, sessions
+from app.routes import health, sessions, user_responses, activities
 
 # Configure logging
 configure_logging()
@@ -37,6 +37,8 @@ app.add_middleware(
 # Include routers
 app.include_router(health.router, prefix=settings.api_v1_prefix)
 app.include_router(sessions.router, prefix=settings.api_v1_prefix)
+app.include_router(user_responses.router)
+app.include_router(activities.router)
 
 
 @app.on_event("startup")
