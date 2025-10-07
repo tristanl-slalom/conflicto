@@ -9,22 +9,24 @@ Get up and running in under 5 minutes:
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd conflicto/backend
+cd conflicto
 
 # Run the automated setup
-./setup.sh
+make setup
+
+# Start development
+make dev
 ```
 
-That's it! The setup script will install everything you need and start the development environment.
+That's it! The Makefile handles everything you need and starts the development environment.
 
 ### Alternative Setup Methods
 
-**Using Make from project root:**
+**Direct backend scripts (if you prefer):**
 ```bash
-make setup    # Complete setup
-make dev      # Start development
-make test     # Run tests
-make stop     # Stop services
+cd backend
+./setup.sh    # Setup
+./start-dev.sh # Start development
 ```
 
 **Manual setup:**
@@ -51,38 +53,67 @@ The setup script automatically installs and configures:
 
 ## 🛠️ Development Commands
 
-After setup, use these commands from the `backend/` directory:
+Use these Make commands from the project root (recommended):
 
+### 🚀 Quick Commands
 ```bash
-# Start development environment
-./start-dev.sh
-
-# Stop development environment
-./stop-dev.sh
-
-# Run tests
-./run-tests.sh
-
-# Reset database (if needed)
-./reset-db.sh
+make help       # 📋 Show all available commands with descriptions
+make setup      # 🚀 Complete project setup (backend + frontend)
+make start-all  # 🟢 Start all servers (backend + frontend)
+make stop-all   # � Stop all servers gracefully
+make status     # 📊 Check server status and process health
+make test       # 🧪 Run all tests (backend + frontend)
+make clean      # 🧹 Clean all cache and build files
 ```
 
-Or use Make commands from the project root:
-
+### 🔧 Individual Component Commands
 ```bash
-make dev      # Start development (alias: make start)
-make stop     # Stop development
-make test     # Run tests
-make reset-db # Reset database
+# Backend only
+make start-backend   # Start FastAPI server (port 8000)
+make test-backend    # Run backend tests with pytest
+make format-backend  # Format Python code with black/isort
+
+# Frontend only
+make start-frontend  # Start React server (port 3000)
+make test-frontend   # Run frontend tests with Jest
+make format-frontend # Format TypeScript code with prettier
+```
+
+### 📊 Quality & Testing
+```bash
+make test-watch     # Run tests in watch mode (interactive)
+make test-coverage  # Generate comprehensive coverage reports
+make lint          # Run all linting (flake8 + eslint)
+make format        # Format all code (black + prettier)
+make type-check    # Run type checking (mypy + tsc)
+make quality       # Run all quality checks together
+```
+
+**💡 Pro tips:**
+- Run `make help` to see all 25+ available commands
+- Use `make status` to check if your servers are running
+- `make start-all` runs servers in background with PID tracking
+- All commands work cross-platform (Linux, macOS, Windows WSL)
+
+**Alternative - Backend scripts directly:**
+```bash
+# From backend/ directory
+cd backend && ./start-dev.sh  # Start development
+cd backend && ./stop-dev.sh   # Stop development
+cd backend && ./run-tests.sh  # Run tests
+cd backend && ./reset-db.sh   # Reset database
 ```
 
 ## 🌐 Access Your Application
 
-Once started, you can access:
+After running `make start-all`, you can access:
 
-- **API Documentation**: http://localhost:8000/docs
-- **FastAPI Application**: http://localhost:8000
+- **Backend API**: http://localhost:8000 (FastAPI)
+- **API Documentation**: http://localhost:8000/docs (Swagger/OpenAPI)
+- **Frontend App**: http://localhost:3000 (React + Vite)
 - **Health Check**: http://localhost:8000/api/v1/health/
+
+Use `make status` to verify all servers are running properly.
 
 ## 📁 Project Structure
 
@@ -107,16 +138,15 @@ conflicto/
 
 ## 🧪 Testing
 
-Run the complete test suite from the backend directory:
+Run the complete test suite:
 
-```bash
-cd backend
-./run-tests.sh
-```
-
-Or from the project root:
 ```bash
 make test
+```
+
+**Alternative - Direct backend script:**
+```bash
+cd backend && ./run-tests.sh
 ```
 
 This runs:
@@ -166,11 +196,11 @@ If you encounter issues:
 
 1. Check [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for detailed troubleshooting
 2. Run `make env-info` to check your environment
-3. Try resetting: `cd backend && ./setup.sh`
+3. Try resetting: `make setup`
 
 ## 🤝 Contributing
 
-1. Run tests: `./run-tests.sh`
+1. Run tests: `make test`
 2. Ensure code quality checks pass
 3. Pre-commit hooks will run automatically
 
