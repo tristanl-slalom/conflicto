@@ -47,6 +47,25 @@ class UUIDType(TypeDecorator):
         else:
             return dialect.type_descriptor(String(36))
 
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+        if dialect.name == 'postgresql':
+            return value
+        else:
+            # Convert UUID to string for SQLite
+            return str(value)
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return value
+        if dialect.name == 'postgresql':
+            return value
+        else:
+            # Convert string back to UUID for SQLite
+            from uuid import UUID
+            return UUID(value)
+
 
 class SessionStatus(str, Enum):
     """Session status enumeration."""
