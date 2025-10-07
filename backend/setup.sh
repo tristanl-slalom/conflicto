@@ -29,10 +29,19 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Check if running on macOS
-check_os() {
-    if [[ "$OSTYPE" != "darwin"* ]]; then
-        log_error "This setup script is designed for macOS. For other OS, please check the manual setup instructions."
+# Detect the operating system and environment
+detect_environment() {
+    if [[ -n "$CODESPACES" ]]; then
+        ENVIRONMENT="codespaces"
+        log_info "Detected GitHub Codespaces environment"
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        ENVIRONMENT="macos"
+        log_info "Detected macOS environment"
+    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        ENVIRONMENT="linux"
+        log_info "Detected Linux environment"
+    else
+        log_error "Unsupported operating system: $OSTYPE"
         exit 1
     fi
 }
