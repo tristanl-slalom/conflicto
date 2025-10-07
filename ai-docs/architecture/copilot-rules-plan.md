@@ -254,6 +254,10 @@ All activities follow the same state machine:
 - Use native assertions: expect(element).toBeDefined() not toBeInTheDocument()
 - Test all three persona interfaces (admin, viewer, participant) separately
 - Mock session management with realistic data structures
+- **Import Paths:** Always use TypeScript path aliases (@/components/Component) not relative imports (../components/Component)
+- **Test Mocks:** Return proper components/values, not functions (Link: ({ children }) => children)
+- **Config Patterns:** Use specific patterns in exclude/include arrays (src/**/__tests__/setup.{ts,js})
+- **File Cleanup:** Remove obsolete configuration files immediately after framework migrations
 
 ### Security Standards
 - **Database:** Encrypted RDS instances with rotation
