@@ -55,16 +55,16 @@ After setup, use these commands from the `backend/` directory:
 
 ```bash
 # Start development environment
-./start-dev.sh
+cd backend && ./start-dev.sh
 
 # Stop development environment
-./stop-dev.sh
+cd backend && ./stop-dev.sh
 
 # Run tests
-./run-tests.sh
+cd backend && ./run-tests.sh
 
 # Reset database (if needed)
-./reset-db.sh
+cd backend && ./reset-db.sh
 ```
 
 Or use Make commands from the project root:
@@ -110,8 +110,7 @@ conflicto/
 Run the complete test suite from the backend directory:
 
 ```bash
-cd backend
-./run-tests.sh
+cd backend && ./run-tests.sh
 ```
 
 Or from the project root:
@@ -170,7 +169,7 @@ If you encounter issues:
 
 ## 🤝 Contributing
 
-1. Run tests: `./run-tests.sh`
+1. Run tests: `cd backend && ./run-tests.sh`
 2. Ensure code quality checks pass
 3. Pre-commit hooks will run automatically
 
