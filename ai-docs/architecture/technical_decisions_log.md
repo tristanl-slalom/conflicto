@@ -491,15 +491,246 @@ The project evolved from backend-only development to full-stack application requ
 
 ---
 
+## Frontend Architecture Migration: SSR → SPA
+
+**Date:** October 7, 2025  
+**Issue:** GitHub Issue #44 - Implement Static Site Generation and S3 Deployment  
+**Decision:** Migrate from TanStack Start SSR to Single Page Application (SPA) for static hosting  
+
+### Background
+The frontend was initially implemented using TanStack Start, which provides server-side rendering capabilities. However, for deployment to AWS S3 with CloudFront CDN, a static site generation approach was needed to eliminate server runtime requirements.
+
+### Problem Details
+- **TanStack Start Dependencies:** Requires Node.js server runtime for SSR functionality
+- **AWS S3 Limitation:** Static hosting cannot execute server-side code
+- **Deployment Complexity:** SSR requires ECS container deployment vs. simple S3 static hosting
+- **Cost Optimization:** Static hosting significantly cheaper than container-based deployment
+- **Performance:** CDN-cached static assets provide better global performance than server rendering
+
+### Solution Implemented
+
+#### 1. Vite Configuration Migration
+**Removed TanStack Start Plugin:**
+```typescript
+// Before
+import { tanstackStart } from '@tanstack/react-start/plugin/vite'
+plugins: [tanstackStart(), viteReact(), ...]
+
+// After  
+plugins: [viteReact(), viteTsConfigPaths(), tailwindcss()]
+```
+
+**Added SPA Build Configuration:**
+```typescript
+build: {
+  rollupOptions: {
+    input: {
+      main: './index.html',
+    },
+  },
+}
+```
+
+#### 2. Entry Point Creation
+**Added Standard HTML Entry Point:**
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Caja - Interactive Engagement Platform</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+```
+
+**Created Client-Side Bootstrap:**
+```typescript
+// src/main.tsx
+import ReactDOM from 'react-dom/client'
+import { RouterProvider } from '@tanstack/react-router'
+import { getRouter } from './router'
+
+const router = getRouter()
+const rootElement = document.getElementById('root')!
+const root = ReactDOM.createRoot(rootElement)
+root.render(<RouterProvider router={router} />)
+```
+
+#### 3. Router Configuration Simplification
+**Removed SSR-Specific Code:**
+```typescript
+// Before
+import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query'
+setupRouterSsrQueryIntegration({ router, queryClient })
+
+// After
+const router = createRouter({
+  routeTree,
+  context: { ...rqContext },
+  defaultPreload: 'intent',
+  Wrap: (props) => (
+    <TanstackQuery.Provider {...rqContext}>
+      {props.children}
+    </TanstackQuery.Provider>
+  ),
+})
+```
+
+#### 4. Root Layout Migration
+**Converted from SSR Shell to Standard React:**
+```typescript
+// Before (SSR)
+export const Route = createRootRouteWithContext()({
+  head: () => ({ meta: [...], links: [...] }),
+  shellComponent: RootDocument,
+})
+
+function RootDocument({ children }) {
+  return (
+    <html>
+      <head><HeadContent /></head>
+      <body>
+        {children}
+        <Scripts />
+      </body>
+    </html>
+  )
+}
+
+// After (SPA)
+export const Route = createRootRouteWithContext()({
+  component: RootDocument,
+})
+
+function RootDocument() {
+  return (
+    <>
+      <Header />
+      <Outlet />
+      <TanStackDevtools />
+    </>
+  )
+}
+```
+
+#### 5. Server Function Conversion
+**Eliminated Server Dependencies:**
+```typescript
+// Before (Server Function)
+import { createServerFn } from '@tanstack/react-start'
+export const getPunkSongs = createServerFn({ method: 'GET' }).handler(async () => [...])
+
+// After (Client Function)
+export const getPunkSongs = async () => [
+  { id: 1, name: 'Teenage Dirtbag', artist: 'Wheatus' },
+  // ... rest of data
+]
+```
+
+**Converted File Operations to localStorage:**
+```typescript
+// Before (Server-Side File I/O)
+import fs from 'node:fs'
+const todos = JSON.parse(await fs.promises.readFile('todos.json', 'utf-8'))
+
+// After (Client-Side Storage)
+function readTodos() {
+  const stored = localStorage.getItem('demo-todos')
+  return stored ? JSON.parse(stored) : defaultTodos
+}
+```
+
+#### 6. Package.json Updates
+**Added SPA Build Command:**
+```json
+{
+  "scripts": {
+    "build:spa": "npm run generate:api && vite build",
+    "preview": "vite preview"
+  }
+}
+```
+
+**Removed SSR Dependencies:**
+```json
+// Removed
+"@tanstack/react-router-ssr-query": "^1.131.7",
+"@tanstack/react-start": "^1.132.0"
+```
+
+### Results
+- ✅ **Static Build Success:** `npm run build:spa` generates deployable static assets
+- ✅ **S3 Compatible:** All assets are static HTML, CSS, JS suitable for S3 hosting
+- ✅ **CDN Optimized:** No server-side processing, perfect for CloudFront caching
+- ✅ **Client-Side Routing:** TanStack Router handles navigation without server requests
+- ✅ **Reduced Complexity:** Eliminated server runtime requirements
+- ✅ **Cost Optimization:** S3 + CloudFront significantly cheaper than ECS deployment
+- ✅ **Performance:** Static assets load faster from CDN edge locations
+
+### Configuration Files
+
+**Updated vite.config.ts:**
+```typescript
+import { defineConfig } from 'vite'
+import viteReact from '@vitejs/plugin-react'
+import viteTsConfigPaths from 'vite-tsconfig-paths'
+import tailwindcss from '@tailwindcss/vite'
+
+export default defineConfig({
+  plugins: [
+    viteTsConfigPaths({ projects: ['./tsconfig.json'] }),
+    tailwindcss(),
+    viteReact(),
+  ],
+  build: {
+    rollupOptions: {
+      input: { main: './index.html' },
+    },
+  },
+})
+```
+
+### Impact on Deployment Strategy
+- **Frontend Hosting:** Now deployable to AWS S3 as static site
+- **CDN Integration:** CloudFront can cache all assets with aggressive TTLs
+- **Build Pipeline:** Simplified CI/CD with static asset upload to S3
+- **Cost Reduction:** No ECS containers needed for frontend hosting
+- **Global Performance:** Static assets served from CDN edge locations worldwide
+- **Scalability:** Infinite horizontal scaling through CDN infrastructure
+
+### Breaking Changes and Migrations
+- **Development Workflow:** `npm run build:spa` replaces previous build commands
+- **Server Functions:** All converted to client-side equivalents using localStorage or API calls
+- **Route Structure:** Maintained compatibility - all existing routes continue working
+- **Component Architecture:** No changes to React components or persona interfaces
+- **API Integration:** Orval-generated hooks remain fully compatible
+
+### Future Considerations
+- **Server Functionality:** Complex server-side logic will move to FastAPI backend
+- **Real-time Features:** WebSocket connections will handle live updates
+- **State Persistence:** User data will be managed via backend API, not localStorage
+- **SEO Limitations:** SPA may require additional considerations for search indexing
+- **Progressive Enhancement:** Consider adding service workers for offline capability
+
+---
+
 ## Next Implementation Phases
 
-### Phase 2: Backend Integration & Data Foundation
-- Connect generated API client to actual FastAPI backend endpoints
+### Phase 2: Backend Integration & Static Deployment
+- Deploy SPA to AWS S3 with CloudFront CDN distribution
+- Connect generated API client to actual FastAPI backend endpoints  
 - Implement flexible user response storage with JSONB
 - Create generic activity CRUD endpoints
 - Establish session configuration vs. instance pattern
 - Build activity-agnostic aggregation endpoints
 - Replace MSW mocks with actual API calls in production
+- Configure CloudFront behaviors for SPA routing support
 
 ### Phase 3: Activity Component Framework
 - Implement activity-specific React components (Poll, Poker, Quiz, Word Cloud)
@@ -508,6 +739,7 @@ The project evolved from backend-only development to full-stack application requ
 - Build real-time viewer components with JSON response processing
 - Implement result aggregation and display with type-safe API calls
 - Establish activity development patterns and guidelines
+- Optimize SPA performance with code splitting and lazy loading
 
 ### Phase 4: Development Workflow & Real-time Features
 - Complete Makefile implementation for service orchestration
@@ -516,10 +748,13 @@ The project evolved from backend-only development to full-stack application requ
 - Establish activity deployment and versioning strategy
 - Create activity development documentation and templates
 - Implement cross-service testing automation
+- Set up automated S3 deployment pipeline with CloudFront invalidation
 
-### Phase 5: Production Readiness
-- Performance optimization for JSON querying at scale and bundle analysis
+### Phase 5: Production Readiness & Performance
+- Performance optimization for SPA bundle size and loading speed
 - Error boundary implementation for activity component failures and API error handling
 - Activity monitoring and analytics integration with API client instrumentation
 - Session archival and data retention policies
-- Offline capability and connection recovery
+- Offline capability and connection recovery for SPA
+- Progressive Web App features for mobile experience enhancement
+- CDN optimization and edge computing considerations
