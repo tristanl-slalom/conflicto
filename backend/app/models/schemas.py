@@ -2,11 +2,15 @@
 Pydantic models for request/response validation.
 """
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from app.db.models import ActivityType, ParticipantRole, SessionStatus
+from app.db.models import ActivityStatus, ActivityType, ParticipantRole, SessionStatus
+
+if TYPE_CHECKING:
+    from app.models.jsonb_schemas.user_response import UserResponse
 
 
 # Base models
@@ -167,6 +171,35 @@ class ParticipantList(BaseModel):
 
     participants: List[ParticipantResponse]
     total: int
+
+
+# Status and polling models
+class SessionStatusResponse(BaseModel):
+    """Session status for real-time polling."""
+
+    session_id: int
+    status: SessionStatus
+    current_activity_id: Optional[UUID] = None
+    participant_count: int
+    last_updated: datetime
+
+
+class ActivityStatusResponse(BaseModel):
+    """Activity status for real-time polling."""
+
+    activity_id: UUID
+    status: ActivityStatus
+    response_count: int
+    last_response_at: Optional[datetime] = None
+    last_updated: datetime
+
+
+class IncrementalResponseList(BaseModel):
+    """Schema for incremental response updates since timestamp."""
+
+    items: List["UserResponse"] = []
+    since: datetime
+    count: int
 
 
 # Error models

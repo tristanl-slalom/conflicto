@@ -2,31 +2,49 @@
 Test configuration and fixtures.
 """
 import asyncio
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Generator
 
 import pytest
 from fastapi.testclient import TestClient
+from httpx import AsyncClient
+from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.settings import settings
 from app.db.database import Base, get_db
 from app.main import app
 
-# Test database URL (use in-memory SQLite for tests)
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+# Test database URLs
+TEST_DATABASE_URL = (
+    "postgresql+asyncpg://caja_user:caja_password@localhost:5432/caja_test_db"
+)
+SYNC_TEST_DATABASE_URL = (
+    "postgresql://caja_user:caja_password@localhost:5432/caja_test_db"
+)
 
-# Create test engine
+# Create test engines
 test_engine = create_async_engine(
     TEST_DATABASE_URL,
     echo=False,
     future=True,
 )
 
-# Create test session factory
+sync_test_engine = create_engine(
+    SYNC_TEST_DATABASE_URL,
+    echo=False,
+)
+
+# Create test session factories
 TestSessionLocal = sessionmaker(
     bind=test_engine,
     class_=AsyncSession,
+    expire_on_commit=False,
+)
+
+SyncTestSessionLocal = sessionmaker(
+    bind=sync_test_engine,
+    class_=Session,
     expire_on_commit=False,
 )
 
@@ -38,6 +56,15 @@ async def get_test_db() -> AsyncGenerator[AsyncSession, None]:
             yield session
         finally:
             await session.close()
+
+
+def get_sync_test_db() -> Generator[Session, None, None]:
+    """Get sync test database session."""
+    with SyncTestSessionLocal() as session:
+        try:
+            yield session
+        finally:
+            session.close()
 
 
 @pytest.fixture(scope="session")
@@ -65,9 +92,34 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 @pytest.fixture
-def client(db_session: AsyncSession) -> TestClient:
-    """Create test client with test database."""
+def sync_db_session() -> Generator[Session, None, None]:
+    """Create and cleanup sync test database."""
+    # Create all tables
+    Base.metadata.create_all(bind=sync_test_engine)
+
+    # Provide session
+    with SyncTestSessionLocal() as session:
+        yield session
+
+    # Drop all tables
+    Base.metadata.drop_all(bind=sync_test_engine)
+
+
+@pytest.fixture
+async def async_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+    """Create async HTTP client with test database."""
     app.dependency_overrides[get_db] = lambda: db_session
+
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        yield client
+
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def client(sync_db_session: Session) -> TestClient:
+    """Create test client with sync test database."""
+    app.dependency_overrides[get_db] = lambda: sync_db_session
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()

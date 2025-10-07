@@ -1,7 +1,7 @@
 """Pydantic schemas for Activity operations with JSONB support."""
-from typing import Dict, Any, Optional, List
-from uuid import UUID
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -10,18 +10,23 @@ from app.db.models import ActivityStatus
 
 class ActivityBase(BaseModel):
     """Base schema for Activity."""
+
     type: str = Field(..., description="Type of the activity")
-    config: Dict[str, Any] = Field(default_factory=dict, description="JSONB configuration data")
+    config: Dict[str, Any] = Field(
+        default_factory=dict, description="JSONB configuration data"
+    )
     order_index: int = Field(default=0, description="Order index for the activity")
 
 
 class ActivityCreate(ActivityBase):
     """Schema for creating a new Activity."""
+
     pass
 
 
 class ActivityUpdate(BaseModel):
     """Schema for updating an Activity."""
+
     type: Optional[str] = None
     config: Optional[Dict[str, Any]] = None
     order_index: Optional[int] = None
@@ -30,6 +35,7 @@ class ActivityUpdate(BaseModel):
 
 class Activity(ActivityBase):
     """Schema for Activity response."""
+
     id: UUID
     session_id: int
     status: ActivityStatus
@@ -42,5 +48,6 @@ class Activity(ActivityBase):
 
 class ActivityList(BaseModel):
     """Schema for list of activities."""
+
     activities: List[Activity]
     total: int

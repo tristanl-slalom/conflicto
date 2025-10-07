@@ -1,17 +1,18 @@
 """Service layer for Activity operations."""
-from typing import List
+from datetime import datetime
+from typing import Any, Dict, List
 from uuid import UUID
 
-from sqlalchemy import select, func, desc
+from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import Activity, ActivityStatus
+from app.db.models import Activity, ActivityStatus, UserResponse
 from app.models.jsonb_schemas.activity import ActivityCreate, ActivityUpdate
 
 
 class ActivityService:
     """Service class for Activity operations."""
-    
+
     @staticmethod
     async def create_activity(
         db: AsyncSession,
@@ -67,10 +68,12 @@ class ActivityService:
     ) -> tuple[List[Activity], int]:
         """Get all activities for a session with total count."""
         # Get total count
-        count_query = select(func.count(Activity.id)).where(Activity.session_id == session_id)
+        count_query = select(func.count(Activity.id)).where(
+            Activity.session_id == session_id
+        )
         count_result = await db.execute(count_query)
         total_count = count_result.scalar()
-        
+
         # Get activities
         query = (
             select(Activity)
@@ -81,7 +84,7 @@ class ActivityService:
         )
         result = await db.execute(query)
         activities = list(result.scalars().all())
-        
+
         return activities, total_count
 
     @staticmethod
@@ -94,10 +97,10 @@ class ActivityService:
         query = select(Activity).where(Activity.id == activity_id)
         result = await db.execute(query)
         db_activity = result.scalar_one_or_none()
-        
+
         if not db_activity:
             return None
-            
+
         # Update fields that are provided
         if activity_data.type is not None:
             db_activity.type = activity_data.type
@@ -107,7 +110,7 @@ class ActivityService:
             db_activity.order_index = activity_data.order_index
         if activity_data.status is not None:
             db_activity.status = activity_data.status
-            
+
         await db.commit()
         await db.refresh(db_activity)
         return db_activity
@@ -121,10 +124,10 @@ class ActivityService:
         query = select(Activity).where(Activity.id == activity_id)
         result = await db.execute(query)
         db_activity = result.scalar_one_or_none()
-        
+
         if not db_activity:
             return False
-            
+
         await db.delete(db_activity)
         await db.commit()
         return True
@@ -139,10 +142,10 @@ class ActivityService:
         query = select(Activity).where(Activity.id == activity_id)
         result = await db.execute(query)
         db_activity = result.scalar_one_or_none()
-        
+
         if not db_activity:
             return None
-            
+
         db_activity.status = status
         await db.commit()
         await db.refresh(db_activity)
@@ -158,10 +161,44 @@ class ActivityService:
             select(Activity)
             .where(
                 Activity.session_id == session_id,
-                Activity.status == ActivityStatus.IN_PROGRESS
+                Activity.status == ActivityStatus.ACTIVE,
             )
             .order_by(desc(Activity.updated_at))
             .limit(1)
         )
         result = await db.execute(query)
         return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_activity_status(
+        db: AsyncSession,
+        session_id: int,
+        activity_id: UUID,
+    ) -> Dict[str, Any]:
+        """Get activity status information for polling."""
+        # Get the activity
+        activity = await ActivityService.get_activity(db, activity_id)
+        if not activity or activity.session_id != session_id:
+            return None
+
+        # Count responses for this activity
+        response_count_query = select(func.count(UserResponse.id)).where(
+            UserResponse.activity_id == activity_id
+        )
+        response_count_result = await db.execute(response_count_query)
+        response_count = response_count_result.scalar() or 0
+
+        # Get last response time
+        last_response_query = select(func.max(UserResponse.created_at)).where(
+            UserResponse.activity_id == activity_id
+        )
+        last_response_result = await db.execute(last_response_query)
+        last_response_at = last_response_result.scalar()
+
+        return {
+            "activity_id": activity_id,
+            "status": activity.status,
+            "response_count": response_count,
+            "last_response_at": last_response_at,
+            "last_updated": activity.updated_at,
+        }
