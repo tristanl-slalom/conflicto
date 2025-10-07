@@ -1,10 +1,9 @@
 """
 SQLAlchemy models for the Caja application.
 """
-from datetime import datetime
 from enum import Enum
-from typing import Optional
 
+from app.db.database import Base
 from sqlalchemy import (
     JSON,
     Boolean,
@@ -17,8 +16,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-
-from app.db.database import Base
 
 
 class SessionStatus(str, Enum):

@@ -2,16 +2,14 @@
 Test configuration and fixtures.
 """
 import asyncio
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import pytest
+from app.db.database import Base, get_db
+from app.main import app
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-
-from app.core.settings import settings
-from app.db.database import Base, get_db
-from app.main import app
 
 # Test database URL (use in-memory SQLite for tests)
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"

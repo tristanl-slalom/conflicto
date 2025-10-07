@@ -54,6 +54,7 @@ ignore = [
     "E501",  # line too long, handled by black
     "B008",  # do not perform function calls in argument defaults
     "C901",  # too complex
+    "UP007", # Use X | Y for type annotations (suppress for Python 3.11 compatibility)
 ]
 exclude = [
     ".bzr",

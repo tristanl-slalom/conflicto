@@ -1,10 +1,6 @@
 """
 Session management API routes.
 """
-from typing import List
-
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
 from app.db.database import get_db
@@ -17,6 +13,8 @@ from app.models.schemas import (
     SessionUpdate,
 )
 from app.services.session_service import SessionService
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/sessions", tags=["sessions"])
@@ -60,7 +58,7 @@ async def create_session(
         logger.error("Failed to create session", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to create session"
-        )
+        ) from e
 
 
 @router.get("/", response_model=SessionList, responses={400: {"model": ErrorResponse}})
@@ -107,7 +105,7 @@ async def list_sessions(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Failed to retrieve sessions",
-        )
+        ) from e
 
 
 @router.get(

@@ -1,7 +1,6 @@
 """
 Core configuration settings for the Caja backend application.
 """
-from typing import List
 
 from pydantic import Field
 from pydantic_settings import BaseSettings
@@ -40,7 +39,7 @@ class Settings(BaseSettings):
     model_config = {"env_file": ".env", "case_sensitive": False, "extra": "ignore"}
 
     @property
-    def allowed_origins(self) -> List[str]:
+    def allowed_origins(self) -> list[str]:
         """Parse comma-separated allowed origins."""
         return [origin.strip() for origin in self.allowed_origins_str.split(",")]
 

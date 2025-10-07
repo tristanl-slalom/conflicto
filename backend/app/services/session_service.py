@@ -3,16 +3,15 @@ Session service layer for business logic.
 """
 import secrets
 import string
-from typing import List, Optional
-
-from sqlalchemy import func
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload
+from typing import Optional
 
 from app.core.logging import get_logger
 from app.db.models import Activity, Participant, Session, SessionStatus
 from app.models.schemas import SessionCreate, SessionUpdate
+from sqlalchemy import func
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 
 logger = get_logger(__name__)
 
@@ -91,7 +90,7 @@ class SessionService:
     @staticmethod
     async def list_sessions(
         db: AsyncSession, offset: int = 0, limit: int = 100
-    ) -> List[Session]:
+    ) -> list[Session]:
         """List sessions with pagination."""
         query = (
             select(Session)
