@@ -296,36 +296,36 @@ Closes #{issue-number}
 The AI should execute these GitHub MCP commands after implementation:
 
 1. **Create Pull Request:**
-   ```
-   mcp_github_create_pull_request(
-       owner="repository-owner",
-       repo="repository-name",
-       title="{issue-title} (#{issue-number})",
-       body="[Generated PR description using template above]",
-       head="feature/issue-{number}-{descriptive-slug}",
-       base="main"
-   )
-   ```
+	```
+	mcp_github_create_pull_request(
+		 owner="repository-owner",
+		 repo="repository-name",
+		 title="{issue-title} (#{issue-number})",
+		 body="[Generated PR description using template above]",
+		 head="feature/issue-{number}-{descriptive-slug}",
+		 base="main"
+	)
+	```
 
 2. **Update PR with Labels:**
-   ```
-   mcp_github_update_pull_request(
-       owner="repository-owner",
-       repo="repository-name",
-       pullNumber={pr-number},
-       labels=[...issue_labels, "auto-generated"]
-   )
-   ```
+	```
+	mcp_github_update_pull_request(
+		 owner="repository-owner",
+		 repo="repository-name",
+		 pullNumber={pr-number},
+		 labels=[...issue_labels, "auto-generated"]
+	)
+	```
 
 3. **Assign Reviewers (if applicable):**
-   ```
-   mcp_github_update_pull_request(
-       owner="repository-owner",
-       repo="repository-name",
-       pullNumber={pr-number},
-       reviewers=[...team_members_based_on_issue_type]
-   )
-   ```
+	```
+	mcp_github_update_pull_request(
+		 owner="repository-owner",
+		 repo="repository-name",
+		 pullNumber={pr-number},
+		 reviewers=[...team_members_based_on_issue_type]
+	)
+	```
 
 ### 9. Implementation Checklist
 Provide detailed validation checklist:
@@ -476,12 +476,12 @@ Next steps:
 5. **Debugging:** Easier to trace implementation decisions back to plans
 6. **Learning:** Developers can see AI's interpretation and planning process
 7. **Complete PR Template:** Automatically generates comprehensive pull requests with:
-   - Detailed implementation summary
-   - Complete acceptance criteria checklist
-   - Testing instructions and coverage info
-   - Quality assurance checklist
-   - Deployment notes and documentation updates
-   - Proper labeling and reviewer assignment
+	- Detailed implementation summary
+	- Complete acceptance criteria checklist
+	- Testing instructions and coverage info
+	- Quality assurance checklist
+	- Deployment notes and documentation updates
+	- Proper labeling and reviewer assignment
 8. **Zero Manual PR Setup:** Eliminates empty PR templates and manual description writing
 9. **Immediate Review Ready:** PRs are created in review-ready state with all necessary context
 
