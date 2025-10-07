@@ -1,0 +1,63 @@
+name: 'Setup Backend Environment'
+description: 'Set up Python, Poetry, and backend dependencies for CI/CD'
+
+inputs:
+  python-version:
+    description: 'Python version to use'
+    required: false
+    default: '3.12'
+  poetry-version:
+    description: 'Poetry version to use'
+    required: false
+    default: '1.6.1'
+  cache-key-suffix:
+    description: 'Additional suffix for cache key'
+    required: false
+    default: ''
+
+outputs:
+  cache-hit:
+    description: 'Whether cache was hit'
+    value: ${{ steps.cache.outputs.cache-hit }}
+  python-version:
+    description: 'Python version that was set up'
+    value: ${{ steps.setup-python.outputs.python-version }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      id: setup-python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: ${{ inputs.poetry-version }}
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: Cache Poetry dependencies
+      id: cache
+      uses: actions/cache@v3
+      with:
+        path: backend/.venv
+        key: poetry-${{ runner.os }}-${{ inputs.python-version }}-${{ hashFiles('backend/poetry.lock') }}${{ inputs.cache-key-suffix }}
+        restore-keys: |
+          poetry-${{ runner.os }}-${{ inputs.python-version }}-
+
+    - name: Install backend dependencies
+      shell: bash
+      working-directory: backend
+      run: |
+        poetry config virtualenvs.in-project true
+        poetry install --no-interaction --no-ansi
+
+    - name: Verify installation
+      shell: bash
+      working-directory: backend
+      run: |
+        poetry run python --version
+        poetry run pip list

@@ -1,0 +1,322 @@
+name: Main Branch CI
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.12'
+  NODE_VERSION: '18'
+  REGISTRY: ghcr.io
+  IMAGE_NAME_BACKEND: ${{ github.repository }}/backend
+  IMAGE_NAME_FRONTEND: ${{ github.repository }}/frontend
+
+jobs:
+  test:
+    name: Run Full Test Suite
+    runs-on: ubuntu-22.04
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: conflicto_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.6.1
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v3
+        with:
+          path: backend/.venv
+          key: poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('backend/poetry.lock') }}
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: poetry install --no-interaction
+
+      - name: Run backend tests with coverage
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/conflicto_test
+          REDIS_URL: redis://localhost:6379/0
+          ENVIRONMENT: test
+        run: |
+          poetry run alembic upgrade head
+          poetry run pytest --cov=app --cov-report=xml -v
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Run frontend tests
+        working-directory: frontend
+        run: npm run test:coverage
+
+      - name: Upload combined coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: backend/coverage.xml,frontend/coverage/coverage-final.json
+          flags: main-branch
+          name: main-branch-coverage
+
+  build-and-push:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-22.04
+    needs: test
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      backend-image: ${{ steps.backend-meta.outputs.tags }}
+      frontend-image: ${{ steps.frontend-meta.outputs.tags }}
+      backend-digest: ${{ steps.backend-build.outputs.digest }}
+      frontend-digest: ${{ steps.frontend-build.outputs.digest }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for backend
+        id: backend-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BACKEND }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Extract metadata for frontend
+        id: frontend-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FRONTEND }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push backend Docker image
+        id: backend-build
+        uses: docker/build-push-action@v5
+        with:
+          context: backend
+          file: backend/Dockerfile
+          push: true
+          tags: ${{ steps.backend-meta.outputs.tags }}
+          labels: ${{ steps.backend-meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Build and push frontend Docker image
+        id: frontend-build
+        uses: docker/build-push-action@v5
+        with:
+          context: frontend
+          file: frontend/Dockerfile
+          push: true
+          tags: ${{ steps.frontend-meta.outputs.tags }}
+          labels: ${{ steps.frontend-meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+  security-scan-images:
+    name: Security Scan Docker Images
+    runs-on: ubuntu-22.04
+    needs: build-and-push
+    permissions:
+      security-events: write
+
+    steps:
+      - name: Run Trivy vulnerability scanner on backend image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ needs.build-and-push.outputs.backend-image }}
+          format: 'sarif'
+          output: 'backend-trivy-results.sarif'
+
+      - name: Run Trivy vulnerability scanner on frontend image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ needs.build-and-push.outputs.frontend-image }}
+          format: 'sarif'
+          output: 'frontend-trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'backend-trivy-results.sarif'
+          category: 'backend-image'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'frontend-trivy-results.sarif'
+          category: 'frontend-image'
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-22.04
+    needs: build-and-push
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: conflicto_integration
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run backend integration tests
+        run: |
+          docker run --rm --network host \
+            -e DATABASE_URL=postgresql://postgres:postgres@localhost:5432/conflicto_integration \
+            -e REDIS_URL=redis://localhost:6379/0 \
+            -e ENVIRONMENT=integration \
+            ${{ needs.build-and-push.outputs.backend-image }} \
+            sh -c "alembic upgrade head && pytest tests/ -v -m 'integration'"
+
+      - name: Test frontend container with backend
+        run: |
+          # Start backend container
+          docker run -d --name integration-backend \
+            --network host \
+            -e DATABASE_URL=postgresql://postgres:postgres@localhost:5432/conflicto_integration \
+            -e REDIS_URL=redis://localhost:6379/0 \
+            ${{ needs.build-and-push.outputs.backend-image }}
+
+          # Wait for backend to be ready
+          sleep 15
+
+          # Test backend health
+          curl -f http://localhost:8000/health || exit 1
+
+          # Start frontend container
+          docker run -d --name integration-frontend \
+            --network host \
+            -e VITE_API_BASE_URL=http://localhost:8000 \
+            ${{ needs.build-and-push.outputs.frontend-image }}
+
+          # Wait for frontend to be ready
+          sleep 10
+
+          # Test frontend serving
+          curl -f http://localhost:3000 || exit 1
+
+          # Clean up
+          docker stop integration-backend integration-frontend
+          docker rm integration-backend integration-frontend
+
+  main-summary:
+    name: Main Branch Summary
+    runs-on: ubuntu-22.04
+    needs: [test, build-and-push, security-scan-images, integration-tests]
+    if: always()
+
+    steps:
+      - name: Generate Main Branch Summary
+        run: |
+          echo "## 🚀 Main Branch CI Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Tests | ${{ needs.test.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build & Push | ${{ needs.build-and-push.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Scan | ${{ needs.security-scan-images.result == 'success' && '✅ Passed' || '⚠️ Check Results' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Integration Tests | ${{ needs.integration-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ needs.test.result }}" == "success" && "${{ needs.build-and-push.result }}" == "success" && "${{ needs.integration-tests.result }}" == "success" ]]; then
+            echo "**🎉 All checks passed! Images ready for deployment.**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Built Images:**" >> $GITHUB_STEP_SUMMARY
+            echo "- Backend: \`${{ needs.build-and-push.outputs.backend-image }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- Frontend: \`${{ needs.build-and-push.outputs.frontend-image }}\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**❌ Some checks failed. Please review the results.**" >> $GITHUB_STEP_SUMMARY
+          fi
