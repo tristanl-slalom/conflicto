@@ -646,7 +646,7 @@ ci-docker:
 	cd $(BACKEND_DIR) && docker build -t conflicto-backend:ci-test .
 	@echo "⚛️ Building frontend Docker image..."
 	@if [ -f "$(FRONTEND_DIR)/Dockerfile" ]; then \
-		cd $(FRONTEND_DIR) && docker build -t conflicto-frontend:ci-test .; \
+		docker build -f $(FRONTEND_DIR)/Dockerfile -t conflicto-frontend:ci-test .; \
 	else \
 		echo "⚠️ Frontend Dockerfile not found - skipping frontend Docker build"; \
 	fi

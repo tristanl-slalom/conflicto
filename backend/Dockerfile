@@ -17,11 +17,14 @@ COPY pyproject.toml poetry.lock* ./
 # Configure poetry
 RUN poetry config virtualenvs.create false
 
-# Install dependencies
-RUN poetry install --without dev
+# Install only the dependencies (not the local package yet)
+RUN poetry install --without dev --no-root
 
 # Copy application code
 COPY . .
+
+# Install the local package only
+RUN poetry install --only-root
 
 # Expose port
 EXPOSE 8000
