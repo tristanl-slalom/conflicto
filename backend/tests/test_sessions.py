@@ -45,10 +45,10 @@ class TestSessionAPI:
         assert response.status_code == 422
     
     @pytest.mark.asyncio
-    async def test_get_session(self, client: TestClient, db_session: AsyncSession, sample_session_data):
+    async def test_get_session(self, client: TestClient, db_session: AsyncSession, sample_session_create):
         """Test getting a session by ID."""
         # Create session
-        session = await SessionService.create_session(db_session, sample_session_data)
+        session = await SessionService.create_session(db_session, sample_session_create)
         
         # Get session
         response = client.get(f"/api/v1/sessions/{session.id}")
@@ -72,14 +72,12 @@ class TestSessionAPI:
         """Test listing sessions."""
         # Create multiple sessions
         for i in range(3):
-            await SessionService.create_session(
-                db_session,
-                {
-                    "title": f"Test Session {i}",
-                    "description": f"Description {i}",
-                    "max_participants": 50 + i
-                }
+            session_create = SessionCreate(
+                title=f"Test Session {i}",
+                description=f"Description {i}",
+                max_participants=50 + i
             )
+            await SessionService.create_session(db_session, session_create)
         
         # List sessions
         response = client.get("/api/v1/sessions/")
@@ -93,10 +91,10 @@ class TestSessionAPI:
         assert data["limit"] == 100
     
     @pytest.mark.asyncio
-    async def test_update_session(self, client: TestClient, db_session: AsyncSession, sample_session_data):
+    async def test_update_session(self, client: TestClient, db_session: AsyncSession, sample_session_create):
         """Test updating a session."""
         # Create session
-        session = await SessionService.create_session(db_session, sample_session_data)
+        session = await SessionService.create_session(db_session, sample_session_create)
         
         # Update session
         update_data = {
@@ -119,10 +117,10 @@ class TestSessionAPI:
         assert response.status_code == 404
     
     @pytest.mark.asyncio
-    async def test_delete_session(self, client: TestClient, db_session: AsyncSession, sample_session_data):
+    async def test_delete_session(self, client: TestClient, db_session: AsyncSession, sample_session_create):
         """Test deleting a session."""
         # Create session
-        session = await SessionService.create_session(db_session, sample_session_data)
+        session = await SessionService.create_session(db_session, sample_session_create)
         
         # Delete session
         response = client.delete(f"/api/v1/sessions/{session.id}")
@@ -139,10 +137,10 @@ class TestSessionAPI:
         assert response.status_code == 404
     
     @pytest.mark.asyncio
-    async def test_get_session_by_code(self, client: TestClient, db_session: AsyncSession, sample_session_data):
+    async def test_get_session_by_code(self, client: TestClient, db_session: AsyncSession, sample_session_create):
         """Test getting a session by QR code."""
         # Create session
-        session = await SessionService.create_session(db_session, sample_session_data)
+        session = await SessionService.create_session(db_session, sample_session_create)
         
         # Get by QR code
         response = client.get(f"/api/v1/sessions/code/{session.qr_code}?code_type=qr")
