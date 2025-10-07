@@ -46,9 +46,12 @@ You are working on Caja, a modular platform for live event engagement at workpla
 
 ### Frontend
 - **Framework:** React with TypeScript for type safety
+- **Build System:** Vite for fast development and optimized builds
+- **Routing:** TanStack Router for file-based routing
+- **State Management:** TanStack Query for server state with polling
+- **UI Components:** shadcn/ui + Tailwind CSS for responsive design
 - **Hosting:** Amazon S3 with CloudFront CDN
-- **Styling:** Tailwind CSS for responsive design
-- **Testing:** Jest/RTL for component testing
+- **Testing:** Vitest (NOT Jest) for component testing with better Vite integration
 
 ### Data Persistence
 - **Primary Database:** Amazon RDS (PostgreSQL) for session data
@@ -211,11 +214,14 @@ All activities follow the same state machine:
 ### Frontend Development
 - Use React Context for session state management
 - Implement custom hooks for WebSocket connections
-- Use React Query for API state management
-- Implement proper error boundaries
-- Use Suspense for loading states
+- Use TanStack Query for API state management and polling
+- Implement proper error boundaries and Suspense for loading states
 - Optimize for CloudFront caching with proper headers
 - Implement responsive design for mobile-first approach
+- **Testing:** Use Vitest (not Jest) for better Vite integration
+- **Test Setup:** Configure jsdom environment with proper mocks in setup.ts
+- **Assertions:** Use native Vitest assertions (toBeDefined, textContent) not jest-dom matchers
+- **Mocking:** Use vi.fn() and vi.mock() syntax for all test mocking
 
 ### Real-time Communication
 - WebSocket connection per participant
@@ -235,11 +241,19 @@ All activities follow the same state machine:
 ### Testing Strategy
 - Unit tests for all business logic (Pytest for backend)
 - Integration tests for API endpoints with test database
-- Component tests for React components (Jest/RTL)
+- Component tests for React components (Vitest/RTL - NOT Jest)
 - End-to-end tests for critical user flows
 - Load testing for real-time capabilities
 - Infrastructure testing with Terraform validation
 - Container testing in CI/CD pipeline before ECS deployment
+
+**Frontend Testing Standards:**
+- Use Vitest for all React component testing (faster than Jest, better Vite integration)
+- Configure vitest.config.ts with jsdom environment and coverage thresholds
+- Mock external dependencies (TanStack Router/Query, Lucide icons) in setup.ts
+- Use native assertions: expect(element).toBeDefined() not toBeInTheDocument()
+- Test all three persona interfaces (admin, viewer, participant) separately
+- Mock session management with realistic data structures
 
 ### Security Standards
 - **Database:** Encrypted RDS instances with rotation
@@ -294,14 +308,24 @@ All activities follow the same state machine:
 
 ## Implementation Priorities
 
-### Sprint 0 - Project Scaffolding (Week 1)
+### Sprint 0 - Project Scaffolding (Week 1) ✅ **FRONTEND COMPLETE**
 Focus Copilot rules on:
-- Terraform AWS infrastructure setup (ECS, RDS, S3, CloudFront)
-- FastAPI application structure with health checks
-- React application setup with TanStack
-- GitHub Actions CI/CD pipeline
-- MCP integration for GitHub workflow
-- Database schema and migrations
+- Terraform AWS infrastructure setup (ECS, RDS, S3, CloudFront) ⏳
+- FastAPI application structure with health checks ⏳
+- React application setup with TanStack ✅ **DONE**
+- GitHub Actions CI/CD pipeline ⏳
+- MCP integration for GitHub workflow ✅ **DONE**
+- Database schema and migrations ⏳
+
+**Completed Frontend Tasks:**
+- ✅ React 18+ with TypeScript setup
+- ✅ TanStack Start (router) and Query (state) integration
+- ✅ Multi-persona interface system (admin/viewer/participant)
+- ✅ shadcn/ui + Tailwind CSS component system
+- ✅ Vitest testing framework (migrated from Jest)
+- ✅ Complete test coverage for all persona interfaces
+- ✅ Mock session management hooks ready for backend
+- ✅ Responsive design for mobile-first participant experience
 
 ### Phase 1 - MVP Core (Weeks 2-5)
 Focus Copilot rules on:
