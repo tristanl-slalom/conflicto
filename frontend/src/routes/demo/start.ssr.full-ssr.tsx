@@ -19,7 +19,7 @@ function RouteComponent() {
     >
       <div className="w-full max-w-2xl p-8 rounded-xl backdrop-blur-md bg-black/50 shadow-xl border-8 border-black/10">
         <h1 className="text-3xl font-bold mb-6 text-purple-400">
-          Full SSR - Punk Songs
+          Punk Songs - Client-Side
         </h1>
         <ul className="space-y-3">
           {punkSongs.map((song) => (
