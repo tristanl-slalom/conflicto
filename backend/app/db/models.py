@@ -4,6 +4,7 @@ SQLAlchemy models for the Caja application.
 from datetime import datetime
 from enum import Enum
 from typing import Optional
+from uuid import UUID, uuid4
 
 from sqlalchemy import (
     JSON,
@@ -14,9 +15,10 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    func,
 )
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
+from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
 
@@ -72,6 +74,12 @@ class Session(Base):
     participants = relationship(
         "Participant", back_populates="session", cascade="all, delete-orphan"
     )
+    new_activities = relationship(
+        "NewActivity", back_populates="session", cascade="all, delete-orphan"
+    )
+    user_responses = relationship(
+        "UserResponse", back_populates="session", cascade="all, delete-orphan"
+    )
 
 
 class Activity(Base):
@@ -119,6 +127,9 @@ class Participant(Base):
     responses = relationship(
         "ActivityResponse", back_populates="participant", cascade="all, delete-orphan"
     )
+    user_responses = relationship(
+        "UserResponse", back_populates="participant", cascade="all, delete-orphan"
+    )
 
 
 class ActivityResponse(Base):
@@ -138,3 +149,47 @@ class ActivityResponse(Base):
     # Relationships
     activity = relationship("Activity", back_populates="responses")
     participant = relationship("Participant", back_populates="responses")
+
+
+class ActivityStatus(str, Enum):
+    """Activity status enumeration for new activity framework."""
+    DRAFT = "draft"
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
+
+class NewActivity(Base):
+    """New Activity model with JSONB configuration storage."""
+    __tablename__ = "new_activities"
+    
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    session_id: Mapped[int] = mapped_column(Integer, ForeignKey("sessions.id", ondelete="CASCADE"))
+    type: Mapped[str] = mapped_column(String(50))
+    config: Mapped[dict] = mapped_column(JSONB, default=dict)
+    order_index: Mapped[int] = mapped_column(Integer)
+    status: Mapped[ActivityStatus] = mapped_column(String(20), default=ActivityStatus.DRAFT)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    session = relationship("Session", back_populates="new_activities")
+    user_responses = relationship("UserResponse", back_populates="new_activity", cascade="all, delete-orphan")
+
+
+class UserResponse(Base):
+    """User Response model with JSONB response data storage."""
+    __tablename__ = "user_responses"
+    
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    session_id: Mapped[int] = mapped_column(Integer, ForeignKey("sessions.id", ondelete="CASCADE"))
+    activity_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("new_activities.id", ondelete="CASCADE"))
+    participant_id: Mapped[int] = mapped_column(Integer, ForeignKey("participants.id", ondelete="CASCADE"))
+    response_data: Mapped[dict] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    session = relationship("Session", back_populates="user_responses")
+    new_activity = relationship("NewActivity", back_populates="user_responses")
+    participant = relationship("Participant", back_populates="user_responses")
