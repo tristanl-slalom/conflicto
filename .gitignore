@@ -135,3 +135,7 @@ pnp.js
 ## Temporary
 tmp/
 temp/
+
+## Development Process Management
+.dev-processes/
+*.pid
