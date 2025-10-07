@@ -13,8 +13,7 @@ export default defineConfig({
       'src/**/__tests__/**/*.{test,spec}.{ts,tsx}'
     ],
     exclude: [
-      '**/setup.ts',
-      '**/setup.js'
+      'src/**/__tests__/setup.{ts,js}'
     ],
     coverage: {
       provider: 'v8',
