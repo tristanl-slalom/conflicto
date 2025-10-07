@@ -39,8 +39,8 @@ Historical records of team discussions, requirements gathering sessions, and tec
 
 ## Integration with Development Workflow
 
-### Enhanced /conflictoIssue Command
-The enhanced conflictoIssue custom prompt now follows a two-phase approach:
+### Enhanced /implementIssue Command
+The enhanced implementIssue custom prompt now follows a two-phase approach:
 
 1. **Specification Phase:** Generates detailed technical specifications and implementation plans
 2. **Review Phase:** Allows developer review and approval before code generation
@@ -61,11 +61,11 @@ Issue #3 demonstrates the documentation format for completed work:
 - `issue-3_create-fastapi-backend-foundation.plan.md` - Implementation plan
 
 ### For New Issues
-Use the enhanced conflictoIssue command:
+Use the enhanced implementIssue command:
 ```
-/conflictoIssue 15                    # Full workflow with review
-/conflictoIssue 15 --spec-only        # Generate specification only
-/conflictoIssue 15 --implement        # Skip to implementation if spec exists
+/implementIssue 15                    # Full workflow with review
+/implementIssue 15 --spec-only        # Generate specification only
+/implementIssue 15 --implement        # Skip to implementation if spec exists
 ```
 
 ## Maintenance
