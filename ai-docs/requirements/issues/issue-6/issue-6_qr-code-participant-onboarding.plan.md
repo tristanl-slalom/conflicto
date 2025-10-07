@@ -293,7 +293,7 @@ MAX_PARTICIPANTS_PER_SESSION=50         # Participant limit
 ### Frontend Configuration
 ```bash
 # QR code settings handled client-side
-QR_CODE_BASE_URL=https://app.caja.live  # Production join URL base
+QR_CODE_BASE_URL=https://app.caja.dbash.dev  # Production join URL base
 ```
 
 ### Frontend Build Configuration

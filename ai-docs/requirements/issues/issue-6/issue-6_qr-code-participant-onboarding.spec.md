@@ -12,7 +12,7 @@ Participants currently lack an easy way to join interactive sessions without com
 ### QR Code Generation
 - Frontend-based QR code generation using session UUID directly
 - QR codes generated client-side for immediate display without server requests
-- QR code content contains join URL with session UUID: `https://app.caja.live/join/{session_uuid}`
+- QR code content contains join URL with session UUID: `https://app.caja.dbash.dev/join/{session_uuid}`
 - QR codes must be persistent and displayed throughout all session activities
 - QR codes should be optimized for scanning from various distances and screen sizes
 - No server-side QR generation or join tokens required
@@ -37,7 +37,7 @@ Participants currently lack an easy way to join interactive sessions without com
 
 #### Session Access (No QR endpoint needed)
 QR codes generated client-side using session UUID directly from session data.
-Join URL format: `https://app.caja.live/join/{session_uuid}`
+Join URL format: `https://app.caja.dbash.dev/join/{session_uuid}`
 
 #### Participant Join
 ```
