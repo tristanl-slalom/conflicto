@@ -81,7 +81,7 @@ app.add_middleware(
 )
 
 app.add_middleware(
-    TrustedHostMiddleware, 
+    TrustedHostMiddleware,
     allowed_hosts=settings.ALLOWED_HOSTS
 )
 
@@ -156,7 +156,7 @@ class SessionResponse(SessionBase):
     current_activity_id: Optional[UUID]
     created_at: datetime
     updated_at: datetime
-    
+
     class Config:
         orm_mode = True
 ```
@@ -231,7 +231,7 @@ class SessionService:
     async def create_session(self, db: Session, session_data: SessionCreate) -> SessionModel:
         # Generate QR code
         qr_code_url = self._generate_qr_code(session_data.name)
-        
+
         db_session = SessionModel(
             id=uuid4(),
             name=session_data.name,
@@ -242,26 +242,26 @@ class SessionService:
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
         )
-        
+
         db.add(db_session)
         db.commit()
         db.refresh(db_session)
-        
+
         return db_session
-    
+
     def _generate_qr_code(self, session_name: str) -> str:
         """Generate QR code for session joining"""
         join_url = f"{settings.FRONTEND_URL}/join/{session_name}"
-        
+
         qr = qrcode.QRCode(version=1, box_size=10, border=5)
         qr.add_data(join_url)
         qr.make(fit=True)
-        
+
         img = qr.make_image(fill_color="black", back_color="white")
         buffer = io.BytesIO()
         img.save(buffer, format='PNG')
         img_str = base64.b64encode(buffer.getvalue()).decode()
-        
+
         return f"data:image/png;base64,{img_str}"
 ```
 
@@ -315,7 +315,7 @@ interface PollingOptions {
 }
 
 export function usePolling<T>(
-  url: string, 
+  url: string,
   options: PollingOptions
 ): { data: T | null; error: Error | null; loading: boolean } {
   const [data, setData] = useState<T | null>(null);
@@ -331,15 +331,15 @@ export function usePolling<T>(
       try {
         setLoading(true);
         setError(null);
-        
+
         const params = new URLSearchParams();
         if (lastUpdateRef.current) {
           params.append('last_update', lastUpdateRef.current.toISOString());
         }
-        
+
         const response = await fetch(`${url}?${params}`);
         if (!response.ok) throw new Error('Polling request failed');
-        
+
         const newData = await response.json();
         if (newData) {
           setData(prevData => ({ ...prevData, ...newData }));
@@ -391,9 +391,9 @@ interface SessionProviderProps {
   children: ReactNode;
 }
 
-export const SessionProvider: React.FC<SessionProviderProps> = ({ 
-  sessionId, 
-  children 
+export const SessionProvider: React.FC<SessionProviderProps> = ({
+  sessionId,
+  children
 }) => {
   const { data: sessionData, loading, error } = usePolling<{
     session: Session;
@@ -524,7 +524,7 @@ resource "aws_ecs_service" "api" {
   }
 
   health_check_grace_period_seconds = 300
-  
+
   depends_on = [aws_lb_listener.api]
 }
 
@@ -541,7 +541,7 @@ resource "aws_ecs_task_definition" "api" {
     {
       name  = "api"
       image = "${var.api_image_uri}:${var.api_image_tag}"
-      
+
       portMappings = [
         {
           containerPort = 8000
@@ -603,7 +603,7 @@ from app.core.database import get_db, Base
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
 
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, 
+    SQLALCHEMY_DATABASE_URL,
     connect_args={"check_same_thread": False}
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -691,32 +691,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      
+
       - name: Install backend dependencies
         run: |
           cd backend
           pip install -r requirements.txt
-      
+
       - name: Run backend tests
         run: |
           cd backend
           pytest
-      
+
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
-      
+
       - name: Install frontend dependencies
         run: |
           cd frontend
           npm ci
-      
+
       - name: Run frontend tests
         run: |
           cd frontend
@@ -726,17 +726,17 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    
+
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
-      
+
       - name: Build and push Docker image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -746,21 +746,21 @@ jobs:
           cd backend
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-      
+
       - name: Deploy infrastructure
         run: |
           cd infrastructure/environments/prod
           terraform init
           terraform plan
           terraform apply -auto-approve
-      
+
       - name: Update ECS service
         run: |
           aws ecs update-service \
             --cluster caja-prod \
             --service caja-api \
             --force-new-deployment
-      
+
       - name: Deploy frontend to S3
         run: |
           cd frontend

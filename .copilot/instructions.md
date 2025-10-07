@@ -19,12 +19,12 @@ You are working on Caja, a modular platform for live event engagement at workpla
 ## Technology Stack
 
 ### Backend
-- **Framework:** Python with FastAPI 
+- **Framework:** Python with FastAPI
 - **Testing:** Pytest for comprehensive test coverage
 - **Deployment:** Amazon ECS (Elastic Container Service)
 - **Real-time:** Polling-based updates (every 2-3 seconds)
 
-### Frontend  
+### Frontend
 - **Framework:** React with TypeScript for type safety
 - **Hosting:** Amazon S3 with CloudFront CDN
 - **Styling:** Tailwind CSS for responsive design
@@ -165,7 +165,7 @@ When starting any development work:
 
 ## Team Structure
 - **Platform Engineering (Dom):** AWS infrastructure, Terraform, ECS deployment
-- **Backend Development (Mauricio):** FastAPI application, database design, API endpoints  
+- **Backend Development (Mauricio):** FastAPI application, database design, API endpoints
 - **Frontend Development (Joe):** React application, participant/viewer interfaces
 - **Development Tooling (Dom):** GitHub MCP integration, VS Code configuration
 

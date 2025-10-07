@@ -19,6 +19,93 @@ build/
 .mcp/logs/
 .mcp/cache/
 
+## Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
+
+## Testing & Coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+## Virtual Environments
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+## IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+## OS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+Thumbs.db
+ehthumbs.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+## Database
+*.db
+*.sqlite
+*.sqlite3
+
+## Logs
+logs/
+*.log
+
+## Temporary & Backup
+tmp/
+temp/
+*.bak
+*.backup
+*.orig
+
+## Generated scripts (created by setup)
+backend/start-dev.sh
+backend/stop-dev.sh
+backend/run-tests.sh
+backend/reset-db.sh
+
 ## macOS
 .DS_Store
 .AppleDouble
