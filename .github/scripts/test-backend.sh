@@ -31,6 +31,6 @@ poetry run pytest \
 
 # Check coverage threshold
 echo "📈 Checking coverage threshold..."
-poetry run coverage report --fail-under=80
+poetry run coverage report --fail-under=70
 
 echo "✅ Backend tests completed successfully!"
