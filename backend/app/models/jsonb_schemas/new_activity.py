@@ -48,6 +48,20 @@ class NewActivity(NewActivityBase):
         from_attributes = True
 
 
+class NewActivitySummary(BaseModel):
+    """Schema for New Activity summary statistics."""
+    total_activities: int
+    active_count: int
+    completed_count: int
+    last_updated: datetime | None
+
+
+class NewActivityList(BaseModel):
+    """Schema for paginated New Activity list with summary."""
+    activities: List[NewActivity]
+    summary: NewActivitySummary
+
+
 class NewActivityList(BaseModel):
     """Schema for paginated New Activity list."""
     activities: List[NewActivity]

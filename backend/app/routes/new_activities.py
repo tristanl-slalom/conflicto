@@ -7,11 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_db
 from app.db.models import ActivityStatus
-from app.models.schemas.new_activity import (
+from app.models.jsonb_schemas.new_activity import (
     NewActivity,
     NewActivityCreate,
     NewActivityUpdate,
     NewActivityList,
+    NewActivitySummary,
 )
 from app.services.new_activity_service import NewActivityService
 

@@ -6,7 +6,7 @@ from sqlalchemy import select, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import UserResponse
-from app.models.schemas.user_response import UserResponseCreate, UserResponseUpdate
+from app.models.jsonb_schemas.user_response import UserResponseCreate, UserResponseUpdate
 
 
 class UserResponseService:

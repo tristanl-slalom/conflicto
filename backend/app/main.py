@@ -37,8 +37,8 @@ app.add_middleware(
 # Include routers
 app.include_router(health.router, prefix=settings.api_v1_prefix)
 app.include_router(sessions.router, prefix=settings.api_v1_prefix)
-app.include_router(user_responses.router, prefix="")
-app.include_router(new_activities.router, prefix="")
+app.include_router(user_responses.router)
+app.include_router(new_activities.router)
 
 
 @app.on_event("startup")
