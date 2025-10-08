@@ -1,7 +1,6 @@
 """
 Tests for database models, enums, and utility functions.
 """
-import pytest
 from uuid import uuid4
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -439,11 +438,11 @@ class TestDatabaseEnums:
     def test_enum_membership(self):
         """Test enum membership checks."""
         valid_session_statuses = ["draft", "active", "completed"]
-        for status in SessionStatus:
+        for status in list(SessionStatus):
             assert status.value in valid_session_statuses
         
         valid_activity_types = ["poll", "word_cloud", "qa", "planning_poker"]
-        for activity_type in ActivityType:
+        for activity_type in list(ActivityType):
             assert activity_type.value in valid_activity_types
 
     def test_enum_iteration(self):
