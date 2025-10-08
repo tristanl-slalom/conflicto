@@ -139,3 +139,5 @@ temp/
 ## Development Process Management
 .dev-processes/
 *.pid
+.terraform/
+.terraform.lock.hcl
