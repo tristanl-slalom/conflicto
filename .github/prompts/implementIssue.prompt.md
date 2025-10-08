@@ -7,10 +7,10 @@ description: "Fetch GitHub issue via MCP and implement complete solution with co
 
 Implements a complete GitHub issue using the Model Context Protocol (MCP) server integration for the Caja live event engagement platform. Automatically assigns the issue to the current user to prevent conflicts with other team members.
 
-## Usage
+When something is unclear, the AI should ask clarifying questions before proceeding. When answers are given, update the implementation plan accordingly and continue.
 
-```
-implementIssue ### Phase 1: Specification Generation
+## Usage
+### Phase 1: Specification Generation
 ```
 🔍 Fetching issue #{number} via GitHub MCP...
 📋 Issue: "{issue-title}"
@@ -20,14 +20,14 @@ implementIssue ### Phase 1: Specification Generation
 📄 Generated specification: ai-docs/requirements/issue-{number}/issue-{number}_{title-slug}.spec.md
 📋 Generated plan: ai-docs/requirements/issue-{number}/issue-{number}_{title-slug}.plan.md
 
-📚 Specification and implementation plan generated!ber}
+📚 Specification and implementation plan generated!
 ```
 
 ## Examples
 
-- `implementIssue 5` - Implement session lifecycle management
-- `implementIssue 12` - Build word cloud generator activity
-- `implementIssue 2` - Setup AWS infrastructure with Terraform
+- `/implementIssue 5` - Implement session lifecycle management
+- `/implementIssue 12` - Build word cloud generator activity
+- `/implementIssue 2` - Setup AWS infrastructure with Terraform
 
 ## Enhanced Workflow Steps
 
@@ -38,6 +38,8 @@ implementIssue ### Phase 1: Specification Generation
 - Retrieve title, description, acceptance criteria, and labels
 - Get dependencies, related issues, and linked PRs
 - Analyze recent comments and implementation discussions
+- Analyze the architecture within ai-docs and look for deviations or novel approaches. For any approach that's novel in this architecture, ask clarifying questions before proceeding. If the user keeps the novel approach, update the architecture documentation to reflect the new approach, and that it was introduced while implementing this issue with a link to the issue in GitHub.
+- If the user aborts the workflow, stop and do not proceed to implementation. Revert any changes to docs within ai-docs and unassign the issue if it was assigned.
 
 #### Automatic Issue Assignment
 - **Prevents conflicts:** Assigns the issue to current user before starting work
