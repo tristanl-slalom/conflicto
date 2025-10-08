@@ -24,7 +24,10 @@ resource "aws_route53_zone" "root" {
 
 # Consolidate SANs list (filter any dupes)
 locals {
+  # SANs (exclude the primary which is the CN)
   certificate_sans = distinct(var.app_subdomains)
+  # All domains that will receive validation records (primary + SANs)
+  certificate_domains = distinct(concat([var.primary_app_domain], var.app_subdomains))
 }
 
 resource "aws_acm_certificate" "app" {
@@ -39,13 +42,48 @@ resource "aws_acm_certificate" "app" {
 }
 
 # Create validation records for each domain validation option
+##
+# Validation DNS records
+#
+# Previous implementation attempted to drive for_each directly from
+# aws_acm_certificate.app.domain_validation_options which are *unknown until after
+# the certificate resource is created*. That caused `terraform import` (and an
+# initial plan) to fail with: "Invalid for_each argument".
+#
+# Solution: make the for_each keys STATIC using the intended list of domains
+# (primary + SANs). The individual record attributes (name, type, value) are
+# then derived via list comprehensions that filter the eventual
+# domain_validation_options. Prior to the certificate being created those
+# expressions are simply unknown values, which Terraform can plan just fine.
+# Once the certificate exists, a subsequent apply (or even the same apply when
+# not importing) resolves them and creates the records.
+##
 resource "aws_route53_record" "cert_validation" {
-  for_each = { for dvo in aws_acm_certificate.app.domain_validation_options : dvo.domain_name => dvo }
-  zone_id  = aws_route53_zone.root.zone_id
-  name     = each.value.resource_record_name
-  type     = each.value.resource_record_type
-  ttl      = 300
-  records  = [each.value.resource_record_value]
+  for_each = { for d in local.certificate_domains : d => d }
+
+  zone_id = aws_route53_zone.root.zone_id
+
+  # Each of these list comprehensions will produce a single-element list once
+  # the certificate's validation options are known. Index [0] extracts it.
+  name = [
+    for dvo in aws_acm_certificate.app.domain_validation_options :
+    dvo.resource_record_name if dvo.domain_name == each.key
+  ][0]
+
+  type = [
+    for dvo in aws_acm_certificate.app.domain_validation_options :
+    dvo.resource_record_type if dvo.domain_name == each.key
+  ][0]
+
+  ttl = 300
+
+  records = [
+    [
+      for dvo in aws_acm_certificate.app.domain_validation_options :
+      dvo.resource_record_value if dvo.domain_name == each.key
+    ][0]
+  ]
+
   allow_overwrite = true
 }
 
