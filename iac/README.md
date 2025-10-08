@@ -128,6 +128,190 @@ Terraform needs a durable backend before you scale modules.
 
 > Strategy: Bootstrap these either manually once OR via an initial local backend run of a `bootstrap` Terraform stack, then migrate to remote backend.
 
+### Terraform Bootstrap Workflow (Detailed)
+
+The first apply must run with a **local backend** because the remote state bucket/table do not exist yet. After they are created you reconfigure Terraform to use them.
+
+#### 1. Create Bootstrap Directory
+
+```text
+iac/
+  bootstrap/
+    main.tf
+    providers.tf
+    versions.tf
+    backend.hcl          # (optional) separate backend config values
+    README.md (optional)
+```
+
+#### 2. Define Versions & Required Providers (`versions.tf`)
+
+```hcl
+terraform {
+  required_version = ">= 1.7.0"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+  # NO backend block yet (or keep it commented) for the first apply.
+}
+```
+
+#### 3. Configure Provider (`providers.tf`)
+
+```hcl
+provider "aws" {
+  region  = var_region
+  profile = var_profile
+}
+
+variable "var_region" {
+  type        = string
+  description = "AWS region for bootstrap resources"
+  default     = "us-east-1" # adjust
+}
+
+variable "var_profile" {
+  type        = string
+  description = "Local AWS CLI profile to use (SSO or static)"
+  default     = "genai-immersion-houston" # adjust
+}
+```
+
+#### 4. Create the Resources (`main.tf`)
+
+```hcl
+locals {
+  project_prefix = "conflicto"
+  environment    = "dev"
+  tags = {
+    Project = local.project_prefix
+    Env     = local.environment
+    Owner   = "<team>"
+  }
+}
+
+resource "aws_s3_bucket" "tf_state" {
+  bucket = "${local.project_prefix}-tfstate" # ensure globally unique; append env if needed
+  tags   = local.tags
+}
+
+resource "aws_s3_bucket_versioning" "tf_state" {
+  bucket = aws_s3_bucket.tf_state.id
+  versioning_configuration { status = "Enabled" }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "tf_state" {
+  bucket = aws_s3_bucket.tf_state.id
+  rule {
+    apply_server_side_encryption_by_default { sse_algorithm = "AES256" }
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "tf_state" {
+  bucket                  = aws_s3_bucket.tf_state.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_dynamodb_table" "tf_locks" {
+  name         = "${local.project_prefix}-terraform-locks"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "LockID"
+  attribute {
+    name = "LockID"
+    type = "S"
+  }
+  tags = local.tags
+}
+```
+
+Optional: add a `aws_kms_key` + bucket SSE-KMS if compliance requires a CMK.
+
+#### 5. (Optional) Backend Configuration File (`backend.hcl`)
+
+Prepare this now (but you will apply only after resources exist):
+
+```hcl
+bucket         = "conflicto-tfstate"
+dynamodb_table = "conflicto-terraform-locks"
+region         = "us-east-1"
+profile        = "genai-immersion-houston"
+encrypt        = true
+```
+
+#### 6. First Init & Apply (Local Backend)
+
+From inside `iac/bootstrap`:
+
+```bash
+terraform init
+terraform plan -out plan.bootstrap
+terraform apply plan.bootstrap
+```
+
+Validate resources:
+
+```bash
+aws s3 ls --profile genai-immersion-houston | grep tfstate || echo "Bucket not found"
+aws dynamodb describe-table --table-name conflicto-terraform-locks --profile genai-immersion-houston >/dev/null && echo "Lock table OK"
+```
+
+#### 7. Add Backend Block & Reconfigure
+
+Append to `versions.tf` (or create `backend.tf`):
+
+```hcl
+terraform {
+  backend "s3" {}
+}
+```
+
+Reinitialize pointing at backend file:
+
+```bash
+terraform init -migrate-state -backend-config=backend.hcl
+```
+
+Terraform will prompt to copy local state to the S3 backend; approve.
+
+#### 8. Sanity Check Remote State
+
+```bash
+aws s3 ls s3://conflicto-tfstate --profile genai-immersion-houston | grep terraform.tfstate
+```
+
+Optional: enable state file version listing:
+
+```bash
+aws s3api list-object-versions --bucket conflicto-tfstate --profile genai-immersion-houston | head
+```
+
+#### 9. Locking Test
+
+In a second terminal, run `terraform plan` while an `apply` is in progress. You should see a lock error referencing the DynamoDB table (confirms locking works).
+
+#### 10. Next Steps After Bootstrap
+
+* Create `envs/dev` stack with its own `backend "s3" {}` pointing to the same bucket/table (separate key path if desired: `key = "envs/dev/terraform.tfstate"`).
+* Consider adding bucket lifecycle rules (e.g. expire old versions after N days) once retention policy decided.
+* Replace placeholder tags and naming with finalized conventions from Section 5.
+
+#### Common Pitfalls
+
+| Issue | Symptom | Fix |
+|-------|---------|-----|
+| Wrong profile | AccessDenied or unexpected Account ID | Pass `-var var_profile=...` or export `AWS_PROFILE`. |
+| Bucket already exists | 409 Conflict on create | Choose a globally unique name (append account id / env). |
+| Backend reinit fails | State not found or mismatch | Ensure bucket/table exist and you ran first apply locally. |
+| Lock contention | Stale lock record | Manually delete item in DynamoDB table after verifying no active run. |
+
+---
+
 ---
 
 ## 8. Pre-Terraform Decision Checklist
