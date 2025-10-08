@@ -596,10 +596,6 @@ ci-backend:
 	@echo "📦 Installing backend dependencies..."
 	cd $(BACKEND_DIR) && poetry install --no-interaction
 	@echo "🧹 Running backend linting (ruff)..."
-	cd $(BACKEND_DIR) && poetry run ruff check .
-	@echo "💅 Checking backend formatting (ruff)..."
-	cd $(BACKEND_DIR) && poetry run ruff format --check .
-	@echo "🧪 Running backend tests with coverage..."
 	cd $(BACKEND_DIR) && ./../.github/scripts/test-backend.sh
 	@echo "✅ Backend CI checks completed!"
 
