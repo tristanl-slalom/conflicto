@@ -59,7 +59,7 @@ resource "aws_acm_certificate" "app" {
 # not importing) resolves them and creates the records.
 ##
 resource "aws_route53_record" "cert_validation" {
-  for_each = var.defer_cert_validation_records ? {} : { for d in local.certificate_domains : d => d }
+  for_each = { for d in local.certificate_domains : d => d }
 
   zone_id = aws_route53_zone.root.zone_id
 
