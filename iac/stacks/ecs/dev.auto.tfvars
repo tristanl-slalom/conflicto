@@ -9,3 +9,9 @@
 	"subnet-046edb33eb8d61e19"]
   hosted_zone_id="Z09637621T67AIVRHV1NJ"
   app_domain="conflicto.dbash.dev"
+  create_service=true 
+  enable_https=true
+  certificate_arn="arn:aws:acm:us-east-1:418389084763:certificate/0ab1276e-e8bd-4da7-ab1d-3c8d391ce507"
+  inject_db_secret=true 
+  db_secret_arn="arn:aws:secretsmanager:us-east-1:418389084763:secret:conflicto-dev/db-ujA3eF"
+  existing_task_execution_role_arn="arn:aws:iam::418389084763:role/conflicto-dev-ecs-exec"
