@@ -138,19 +138,15 @@ resource "aws_lb_listener" "http" {
   port              = 80
   protocol          = "HTTP"
   default_action {
-    type = var.enable_https && var.certificate_arn != "" ? "redirect" : "forward"
+    type            = var.enable_https && var.certificate_arn != "" ? "redirect" : "forward"
+    # target_group_arn only relevant when forwarding; null ignored when redirecting
+    target_group_arn = var.enable_https && var.certificate_arn != "" ? null : aws_lb_target_group.app[0].arn
     dynamic "redirect" {
       for_each = var.enable_https && var.certificate_arn != "" ? [1] : []
       content {
         port        = "443"
         protocol    = "HTTPS"
         status_code = "HTTP_301"
-      }
-    }
-    dynamic "forward" {
-      for_each = var.enable_https && var.certificate_arn != "" ? [] : [1]
-      content {
-        target_group_arn = aws_lb_target_group.app[0].arn
       }
     }
   }

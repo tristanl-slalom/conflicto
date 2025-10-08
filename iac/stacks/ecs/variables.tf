@@ -57,6 +57,28 @@ variable "certificate_arn" {
 	description = "ACM certificate ARN for the app domain (required if enable_https=true)."
 }
 
+variable "inject_db_secret" {
+	type        = bool
+	default     = false
+	description = "If true, inject RDS database secret values as container secrets (requires db_secret_arn)."
+}
+
+variable "db_secret_arn" {
+	type        = string
+	default     = ""
+	description = "Secrets Manager ARN containing JSON with keys username,password,host,port,db_name,url."
+}
+
+validation {
+  condition     = !(var.enable_https && var.certificate_arn == "")
+  error_message = "enable_https is true but certificate_arn is empty. Provide ACM cert ARN or set enable_https=false.";
+}
+
+validation {
+  condition     = !(var.inject_db_secret && var.db_secret_arn == "")
+  error_message = "inject_db_secret is true but db_secret_arn is empty. Provide secret ARN or disable inject_db_secret.";
+}
+
 variable "cpu" {
 	type    = number
 	default = 256
@@ -92,17 +114,6 @@ variable "enable_execute_command" {
 	default = true
 }
 
-variable "inject_db_secret" {
-	type        = bool
-	default     = false
-	description = "If true, inject RDS database secret values as container secrets (requires db_secret_arn)."
-}
-
-variable "db_secret_arn" {
-	type        = string
-	default     = ""
-	description = "Secrets Manager ARN containing JSON with keys username,password,host,port,db_name,url."
-}
 
 variable "app_domain" {
 	type        = string
