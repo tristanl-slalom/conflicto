@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { sessionCreateSchema, type SessionCreateFormData } from '../../lib/validations/sessionValidation';
+import { sessionCreateSchema } from '../../lib/validations/sessionValidation';
+import type { SessionCreateFormData } from '../../lib/validations/sessionValidation';
 import { useSessionManagement } from '../../hooks/useSessionManagement';
 import type { SessionCreateFormProps } from '../../types/admin';
 
-// Ensure FormErrors has the same keys as SessionCreateFormData
-type FormErrors = {
-  [K in keyof SessionCreateFormData]?: string;
-};
+// Form error type with explicit string keys
+interface FormErrors {
+  title?: string;
+  description?: string;
+}
 
 export const SessionCreateForm = ({ 
   onSuccess, 
@@ -22,7 +24,7 @@ export const SessionCreateForm = ({
   
   const [errors, setErrors] = useState<FormErrors>({});
 
-  const validateForm = () => {
+  const validateForm = (): boolean => {
     try {
       sessionCreateSchema.parse(formData);
       setErrors({});
@@ -31,8 +33,15 @@ export const SessionCreateForm = ({
       const fieldErrors: FormErrors = {};
       if (error.errors) {
         error.errors.forEach((err: any) => {
-          const field = err.path[0] as keyof FormErrors;
-          fieldErrors[field] = err.message;
+          const path = err.path;
+          if (Array.isArray(path) && path.length > 0) {
+            const field = path[0];
+            if (field === 'title') {
+              fieldErrors.title = err.message;
+            } else if (field === 'description') {
+              fieldErrors.description = err.message;
+            }
+          }
         });
       }
       setErrors(fieldErrors);
@@ -62,16 +71,24 @@ export const SessionCreateForm = ({
     }
   };
 
-  const handleFieldChange = (field: keyof SessionCreateFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleFieldChange = (field: 'title' | 'description', value: string) => {
+    setFormData((prev: SessionCreateFormData) => {
+      const updated = { ...prev };
+      updated[field] = value;
+      return updated;
+    });
     
     // Clear error when user starts typing
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
+      setErrors((prev: FormErrors) => {
+        const updated = { ...prev };
+        updated[field] = undefined;
+        return updated;
+      });
     }
   };
 
-  const handleFieldBlur = (field: keyof SessionCreateFormData) => {
+  const handleFieldBlur = (field: 'title' | 'description') => {
     // Validate individual field
     try {
       if (field === 'title') {
@@ -79,11 +96,17 @@ export const SessionCreateForm = ({
       } else if (field === 'description') {
         sessionCreateSchema.shape.description.parse(formData.description);
       }
-      setErrors(prev => ({ ...prev, [field]: undefined }));
+      setErrors((prev: FormErrors) => {
+        const updated = { ...prev };
+        updated[field] = undefined;
+        return updated;
+      });
     } catch (error: any) {
-      if (error.errors?.[0]) {
-        setErrors(prev => ({ ...prev, [field]: error.errors[0].message }));
-      }
+      setErrors((prev: FormErrors) => {
+        const updated = { ...prev };
+        updated[field] = error.message;
+        return updated;
+      });
     }
   };
 

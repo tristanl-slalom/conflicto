@@ -1,4 +1,5 @@
 import type { SessionDetail, SessionResponse } from '../api/generated';
+export type { SessionCreateFormData } from '../lib/validations/sessionValidation';
 
 /**
  * Form state for session creation
@@ -8,14 +9,6 @@ export interface SessionFormState {
   lastCreatedSession?: SessionDetail;
   error?: string;
   success?: string;
-}
-
-/**
- * Session creation form data (local form state)
- */
-export interface SessionCreateFormData {
-  title: string;
-  description?: string;
 }
 
 /**
