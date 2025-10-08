@@ -439,7 +439,7 @@ class TestDatabaseEnums:
     def test_enum_membership(self):
         """Test enum membership checks."""
         valid_session_statuses = ["draft", "active", "completed"]
-        for status in SessionStatus:
+        for status in list(SessionStatus):
             assert status.value in valid_session_statuses
         
         valid_activity_types = ["poll", "word_cloud", "qa", "planning_poker"]
