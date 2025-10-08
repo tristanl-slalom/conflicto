@@ -76,7 +76,7 @@ export default function PollingParticipant({
   };
 
   const canSubmitVote = canSubmit && selectedOptions.length > 0 && !isSubmitting;
-  const showSubmitButton = !hasSubmitted || (hasSubmitted && hasChanges);
+  const showSubmitButton = hasChanges;
 
   return (
     <div className="polling-participant min-h-screen bg-gray-50">

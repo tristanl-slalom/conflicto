@@ -148,7 +148,7 @@ export default function PollingViewer({
                   {config.allow_multiple_choice && (
                     <div>
                       <div className="text-2xl font-bold text-purple-600">
-                        {totalVotes > 0 ? (totalVotes / Math.max(Object.keys(optionResults).length, 1)).toFixed(1) : '0'}
+                        {(totalVotes / Math.max(Object.keys(optionResults).length, 1)).toFixed(1)}
                       </div>
                       <div className="text-sm text-gray-600">Avg per Option</div>
                     </div>

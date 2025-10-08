@@ -81,10 +81,10 @@ def _validate_registrations() -> None:
 
         for activity_type in registered_types.keys():
             # Test that we can get the activity class
-            activity_class = ActivityRegistry.get_activity_class(activity_type)
+            ActivityRegistry.get_activity_class(activity_type)
 
             # Test that we can get the schema
-            schema = ActivityRegistry.get_schema(activity_type)
+            ActivityRegistry.get_schema(activity_type)
 
             # Test that we can create an instance with empty config
             try:
@@ -173,7 +173,7 @@ def test_activity_type(activity_type: str) -> dict[str, Any]:
         instance = ActivityRegistry.create_activity(activity_type, None, {})
 
         # Test schema validation
-        schema_test = instance.get_schema()
+        instance.get_schema()
 
         return {
             "success": True,
