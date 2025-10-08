@@ -139,7 +139,7 @@ class Participant(Base):
 
     __tablename__ = "participants"
 
-    id = Column(UUIDType, primary_key=True, default=uuid4, index=True)
+    id = Column(Integer, primary_key=True, index=True)
     session_id = Column(Integer, ForeignKey("sessions.id", ondelete="CASCADE"), nullable=False)
     nickname = Column(String(50), nullable=False)  # For QR code onboarding feature
     display_name = Column(String(100), nullable=True)  # For main branch compatibility
@@ -185,8 +185,8 @@ class UserResponse(Base):
     activity_id: Mapped[UUID] = mapped_column(
         UUIDType, ForeignKey("activities.id", ondelete="CASCADE")
     )
-    participant_id: Mapped[UUID] = mapped_column(
-        UUIDType, ForeignKey("participants.id", ondelete="CASCADE")
+    participant_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("participants.id", ondelete="CASCADE")
     )
     response_data: Mapped[dict] = mapped_column(JSONBType)
     created_at: Mapped[datetime] = mapped_column(
