@@ -18,6 +18,9 @@ jobs:
     name: Deploy Infrastructure
     runs-on: ubuntu-latest
     environment: development
+    permissions:
+      id-token: write
+      contents: read
     outputs:
       backend_service_name: ${{ steps.terraform.outputs.backend_service_name }}
       frontend_service_name: ${{ steps.terraform.outputs.frontend_service_name }}
@@ -31,8 +34,8 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
+          role-session-name: GitHubActions-ConflictoDev-Infrastructure
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Setup Terraform
@@ -70,6 +73,9 @@ jobs:
     needs: deploy-infrastructure
     runs-on: ubuntu-latest
     environment: development
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
       - name: Checkout
@@ -83,8 +89,8 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: GitHubActions-ConflictoDev-Migrations
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Install Dependencies
@@ -106,6 +112,9 @@ jobs:
     needs: [deploy-infrastructure, run-migrations]
     runs-on: ubuntu-latest
     environment: development
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
       - name: Checkout
@@ -114,8 +123,8 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: GitHubActions-ConflictoDev-Deploy
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Update ECS Services

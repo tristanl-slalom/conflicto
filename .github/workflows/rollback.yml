@@ -44,6 +44,9 @@ jobs:
     needs: validate-rollback
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment == 'prod' && 'production' || 'development' }}
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
       - name: Production Rollback Approval
@@ -75,8 +78,8 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ github.event.inputs.environment == 'prod' && secrets.AWS_ROLE_TO_ASSUME_PROD || secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: GitHubActions-Conflicto-Rollback-${{ github.event.inputs.environment }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Get Current Service Configuration
