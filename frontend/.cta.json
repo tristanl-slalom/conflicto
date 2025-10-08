@@ -8,11 +8,5 @@
   "git": true,
   "version": 1,
   "framework": "react-cra",
-  "chosenAddOns": [
-    "start",
-    "form",
-    "tanstack-query",
-    "shadcn",
-    "t3env"
-  ]
+  "chosenAddOns": ["start", "form", "tanstack-query", "shadcn", "t3env"]
 }

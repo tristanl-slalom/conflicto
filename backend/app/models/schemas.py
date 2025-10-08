@@ -61,8 +61,8 @@ class SessionResponse(BaseResponse):
 class SessionDetail(SessionResponse):
     """Detailed session response with activities and participants."""
 
-    activities: List["ActivityResponse"] = []
-    participants: List["ParticipantResponse"] = []
+    activities: list["ActivityResponse"] = []
+    participants: list["ParticipantResponse"] = []
 
 
 # Activity models
@@ -72,7 +72,7 @@ class ActivityCreate(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
     activity_type: ActivityType
-    configuration: Dict[str, Any] = Field(default_factory=dict)
+    configuration: dict[str, Any] = Field(default_factory=dict)
     order_index: int = Field(default=0, ge=0)
 
 
@@ -81,7 +81,7 @@ class ActivityUpdate(BaseModel):
 
     title: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
-    configuration: Optional[Dict[str, Any]] = None
+    configuration: Optional[dict[str, Any]] = None
     order_index: Optional[int] = Field(None, ge=0)
     is_active: Optional[bool] = None
 
@@ -93,7 +93,7 @@ class ActivityResponse(BaseResponse):
     title: str
     description: Optional[str]
     activity_type: ActivityType
-    configuration: Dict[str, Any]
+    configuration: dict[str, Any]
     is_active: bool
     order_index: int
     started_at: Optional[datetime]
@@ -132,13 +132,13 @@ class ParticipantResponse(BaseResponse):
 class ActivityResponseCreate(BaseModel):
     """Activity response creation request model."""
 
-    response_data: Dict[str, Any]
+    response_data: dict[str, Any]
 
 
 class ActivityResponseUpdate(BaseModel):
     """Activity response update request model."""
 
-    response_data: Dict[str, Any]
+    response_data: dict[str, Any]
 
 
 class ActivityResponseResponse(BaseResponse):
@@ -146,14 +146,14 @@ class ActivityResponseResponse(BaseResponse):
 
     activity_id: int
     participant_id: int
-    response_data: Dict[str, Any]
+    response_data: dict[str, Any]
 
 
 # List response models
 class SessionList(BaseModel):
     """Session list response model."""
 
-    sessions: List[SessionResponse]
+    sessions: list[SessionResponse]
     total: int
     offset: int
     limit: int
@@ -162,14 +162,14 @@ class SessionList(BaseModel):
 class ActivityList(BaseModel):
     """Activity list response model."""
 
-    activities: List[ActivityResponse]
+    activities: list[ActivityResponse]
     total: int
 
 
 class ParticipantList(BaseModel):
     """Participant list response model."""
 
-    participants: List[ParticipantResponse]
+    participants: list[ParticipantResponse]
     total: int
 
 

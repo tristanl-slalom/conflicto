@@ -2,7 +2,8 @@
 Test configuration and fixtures.
 """
 import asyncio
-from typing import AsyncGenerator, Generator
+from collections.abc import AsyncGenerator
+from typing import Generator
 
 import pytest
 from fastapi.testclient import TestClient
@@ -11,7 +12,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.core.settings import settings
 from app.db.database import Base, get_db
 from app.main import app
 

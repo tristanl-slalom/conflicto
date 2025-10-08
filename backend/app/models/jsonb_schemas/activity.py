@@ -20,8 +20,8 @@ class ActivityBase(BaseModel):
 
 class ActivityCreate(ActivityBase):
     """Schema for creating a new Activity."""
-
-    pass
+    
+    status: Optional[ActivityStatus] = Field(default=ActivityStatus.DRAFT, description="Status of the activity")
 
 
 class ActivityUpdate(BaseModel):

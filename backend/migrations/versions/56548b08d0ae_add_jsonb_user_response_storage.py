@@ -17,9 +17,19 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Create new_activity_status enum (different from existing activity_status)
-    new_activity_status = postgresql.ENUM('draft', 'active', 'completed', 'cancelled', name='new_activity_status')
-    new_activity_status.create(op.get_bind(), checkfirst=True)
+    # Check if enum already exists and create it if it doesn't
+    connection = op.get_bind()
+    result = connection.execute(
+        sa.text("SELECT 1 FROM pg_type WHERE typname = 'new_activity_status'")
+    ).fetchone()
+    
+    if not result:
+        # Create new_activity_status enum (different from existing activity_status)
+        new_activity_status = postgresql.ENUM('draft', 'active', 'completed', 'cancelled', name='new_activity_status')
+        new_activity_status.create(connection)
+    
+    # Get the enum type for use in table definition
+    new_activity_status_type = postgresql.ENUM('draft', 'active', 'completed', 'cancelled', name='new_activity_status', create_type=False)
     
     # Create new_activities table (renamed to avoid conflicts)
     op.create_table('new_activities',
@@ -28,7 +38,7 @@ def upgrade() -> None:
         sa.Column('type', sa.String(length=50), nullable=False),
         sa.Column('config', postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default='{}'),
         sa.Column('order_index', sa.Integer(), nullable=False),
-        sa.Column('status', new_activity_status, nullable=False, server_default='draft'),
+        sa.Column('status', new_activity_status_type, nullable=False, server_default='draft'),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
         sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
         sa.ForeignKeyConstraint(['session_id'], ['sessions.id'], ondelete='CASCADE'),
@@ -79,5 +89,12 @@ def downgrade() -> None:
     op.drop_table('new_activities')
     
     # Drop enum
-    new_activity_status = postgresql.ENUM('draft', 'active', 'completed', 'cancelled', name='new_activity_status')
-    new_activity_status.drop(op.get_bind(), checkfirst=True)
+    try:
+        new_activity_status = postgresql.ENUM('draft', 'active', 'completed', 'cancelled', name='new_activity_status')
+        new_activity_status.drop(op.get_bind(), checkfirst=True)
+    except Exception as e:
+        # If enum doesn't exist, that's fine
+        if "does not exist" in str(e):
+            pass
+        else:
+            raise e

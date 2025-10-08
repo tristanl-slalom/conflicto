@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router';
 
 import {
   Settings,
@@ -7,11 +7,11 @@ import {
   Users,
   BarChart3,
   Zap,
-} from 'lucide-react'
+} from 'lucide-react';
 
 export const Route = createFileRoute('/')({
   component: HomePage,
-})
+});
 
 function HomePage() {
   const personas = [
@@ -21,7 +21,11 @@ function HomePage() {
       title: 'Admin Interface',
       description: 'Configure sessions, manage content, and control activities',
       link: '/admin',
-      features: ['Session Management', 'Content Configuration', 'Analytics Dashboard'],
+      features: [
+        'Session Management',
+        'Content Configuration',
+        'Analytics Dashboard',
+      ],
     },
     {
       id: 'viewer',
@@ -39,25 +43,28 @@ function HomePage() {
       link: '/participant',
       features: ['Quick Join', 'Touch Interactions', 'Real-time Feedback'],
     },
-  ]
+  ];
 
   const platformFeatures = [
     {
       icon: <Users className="w-12 h-12 text-cyan-400" />,
       title: 'Multi-Persona Design',
-      description: 'Tailored interfaces for admins, viewers, and participants with role-specific optimizations.',
+      description:
+        'Tailored interfaces for admins, viewers, and participants with role-specific optimizations.',
     },
     {
       icon: <BarChart3 className="w-12 h-12 text-cyan-400" />,
       title: 'Real-Time Engagement',
-      description: 'Live polling, instant feedback, and synchronized activities across all connected devices.',
+      description:
+        'Live polling, instant feedback, and synchronized activities across all connected devices.',
     },
     {
       icon: <Zap className="w-12 h-12 text-cyan-400" />,
       title: 'Session Management',
-      description: 'Complete lifecycle management from session creation to results analysis and reporting.',
+      description:
+        'Complete lifecycle management from session creation to results analysis and reporting.',
     },
-  ]
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
@@ -78,7 +85,8 @@ function HomePage() {
             Interactive Engagement Platform
           </p>
           <p className="text-lg text-gray-400 max-w-3xl mx-auto mb-12">
-            Transform your events with real-time polling, interactive activities, and seamless multi-device engagement.
+            Transform your events with real-time polling, interactive
+            activities, and seamless multi-device engagement.
           </p>
         </div>
       </section>
@@ -90,9 +98,9 @@ function HomePage() {
         <p className="text-gray-400 text-center mb-12 max-w-2xl mx-auto">
           Select the interface that matches your role in the session
         </p>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-          {personas.map((persona) => (
+          {personas.map(persona => (
             <Link
               key={persona.id}
               to={persona.link}
@@ -110,7 +118,10 @@ function HomePage() {
                 </p>
                 <div className="space-y-2">
                   {persona.features.map((feature, index) => (
-                    <div key={index} className="text-sm text-gray-500 bg-slate-700/50 rounded-full px-3 py-1 inline-block mr-2">
+                    <div
+                      key={index}
+                      className="text-sm text-gray-500 bg-slate-700/50 rounded-full px-3 py-1 inline-block mr-2"
+                    >
                       {feature}
                     </div>
                   ))}
@@ -125,7 +136,7 @@ function HomePage() {
         <h2 className="text-3xl md:text-4xl font-bold text-center text-white mb-12">
           Platform Features
         </h2>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {platformFeatures.map((feature, index) => (
             <div
@@ -144,5 +155,5 @@ function HomePage() {
         </div>
       </section>
     </div>
-  )
+  );
 }

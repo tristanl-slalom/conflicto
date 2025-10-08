@@ -1,10 +1,10 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router';
 
-import { useAppForm } from '@/hooks/demo.form'
+import { useAppForm } from '@/hooks/demo.form';
 
 export const Route = createFileRoute('/demo/form/address')({
   component: AddressForm,
-})
+});
 
 function AddressForm() {
   const form = useAppForm({
@@ -25,20 +25,20 @@ function AddressForm() {
         const errors = {
           fields: {},
         } as {
-          fields: Record<string, string>
-        }
+          fields: Record<string, string>;
+        };
         if (value.fullName.trim().length === 0) {
-          errors.fields.fullName = 'Full name is required'
+          errors.fields.fullName = 'Full name is required';
         }
-        return errors
+        return errors;
       },
     },
     onSubmit: ({ value }) => {
-      console.log(value)
+      console.log(value);
       // Show success message
-      alert('Form submitted successfully!')
+      alert('Form submitted successfully!');
     },
-  })
+  });
 
   return (
     <div
@@ -50,15 +50,15 @@ function AddressForm() {
     >
       <div className="w-full max-w-2xl p-8 rounded-xl backdrop-blur-md bg-black/50 shadow-xl border-8 border-black/10">
         <form
-          onSubmit={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
-            form.handleSubmit()
+          onSubmit={e => {
+            e.preventDefault();
+            e.stopPropagation();
+            form.handleSubmit();
           }}
           className="space-y-6"
         >
           <form.AppField name="fullName">
-            {(field) => <field.TextField label="Full Name" />}
+            {field => <field.TextField label="Full Name" />}
           </form.AppField>
 
           <form.AppField
@@ -66,16 +66,16 @@ function AddressForm() {
             validators={{
               onBlur: ({ value }) => {
                 if (!value || value.trim().length === 0) {
-                  return 'Email is required'
+                  return 'Email is required';
                 }
                 if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(value)) {
-                  return 'Invalid email address'
+                  return 'Invalid email address';
                 }
-                return undefined
+                return undefined;
               },
             }}
           >
-            {(field) => <field.TextField label="Email" />}
+            {field => <field.TextField label="Email" />}
           </form.AppField>
 
           <form.AppField
@@ -83,13 +83,13 @@ function AddressForm() {
             validators={{
               onBlur: ({ value }) => {
                 if (!value || value.trim().length === 0) {
-                  return 'Street address is required'
+                  return 'Street address is required';
                 }
-                return undefined
+                return undefined;
               },
             }}
           >
-            {(field) => <field.TextField label="Street Address" />}
+            {field => <field.TextField label="Street Address" />}
           </form.AppField>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -98,42 +98,42 @@ function AddressForm() {
               validators={{
                 onBlur: ({ value }) => {
                   if (!value || value.trim().length === 0) {
-                    return 'City is required'
+                    return 'City is required';
                   }
-                  return undefined
+                  return undefined;
                 },
               }}
             >
-              {(field) => <field.TextField label="City" />}
+              {field => <field.TextField label="City" />}
             </form.AppField>
             <form.AppField
               name="address.state"
               validators={{
                 onBlur: ({ value }) => {
                   if (!value || value.trim().length === 0) {
-                    return 'State is required'
+                    return 'State is required';
                   }
-                  return undefined
+                  return undefined;
                 },
               }}
             >
-              {(field) => <field.TextField label="State" />}
+              {field => <field.TextField label="State" />}
             </form.AppField>
             <form.AppField
               name="address.zipCode"
               validators={{
                 onBlur: ({ value }) => {
                   if (!value || value.trim().length === 0) {
-                    return 'Zip code is required'
+                    return 'Zip code is required';
                   }
                   if (!/^\d{5}(-\d{4})?$/.test(value)) {
-                    return 'Invalid zip code format'
+                    return 'Invalid zip code format';
                   }
-                  return undefined
+                  return undefined;
                 },
               }}
             >
-              {(field) => <field.TextField label="Zip Code" />}
+              {field => <field.TextField label="Zip Code" />}
             </form.AppField>
           </div>
 
@@ -142,13 +142,13 @@ function AddressForm() {
             validators={{
               onBlur: ({ value }) => {
                 if (!value || value.trim().length === 0) {
-                  return 'Country is required'
+                  return 'Country is required';
                 }
-                return undefined
+                return undefined;
               },
             }}
           >
-            {(field) => (
+            {field => (
               <field.Select
                 label="Country"
                 values={[
@@ -170,20 +170,20 @@ function AddressForm() {
             validators={{
               onBlur: ({ value }) => {
                 if (!value || value.trim().length === 0) {
-                  return 'Phone number is required'
+                  return 'Phone number is required';
                 }
                 if (
                   !/^(\+\d{1,3})?\s?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/.test(
-                    value,
+                    value
                   )
                 ) {
-                  return 'Invalid phone number format'
+                  return 'Invalid phone number format';
                 }
-                return undefined
+                return undefined;
               },
             }}
           >
-            {(field) => (
+            {field => (
               <field.TextField label="Phone" placeholder="123-456-7890" />
             )}
           </form.AppField>
@@ -196,5 +196,5 @@ function AddressForm() {
         </form>
       </div>
     </div>
-  )
+  );
 }

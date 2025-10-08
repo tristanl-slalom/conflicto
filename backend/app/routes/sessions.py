@@ -1,7 +1,6 @@
 """
 Session management API routes.
 """
-from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -61,7 +60,7 @@ async def create_session(
         logger.error("Failed to create session", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to create session"
-        )
+        ) from e
 
 
 @router.get("/", response_model=SessionList, responses={400: {"model": ErrorResponse}})
@@ -108,7 +107,7 @@ async def list_sessions(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Failed to retrieve sessions",
-        )
+        ) from e
 
 
 @router.get(

@@ -20,8 +20,52 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.types import TypeDecorator
 
 from app.db.database import Base
+
+
+class JSONBType(TypeDecorator):
+    """Database-agnostic JSONB type that works with both PostgreSQL and SQLite."""
+    impl = JSON
+    cache_ok = True
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == 'postgresql':
+            return dialect.type_descriptor(JSONB())
+        else:
+            return dialect.type_descriptor(JSON())
+
+
+class UUIDType(TypeDecorator):
+    """Database-agnostic UUID type that works with both PostgreSQL and SQLite."""
+    impl = String
+    cache_ok = True
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == 'postgresql':
+            return dialect.type_descriptor(PGUUID(as_uuid=True))
+        else:
+            return dialect.type_descriptor(String(36))
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+        if dialect.name == 'postgresql':
+            return value
+        else:
+            # Convert UUID to string for SQLite
+            return str(value)
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return value
+        if dialect.name == 'postgresql':
+            return value
+        else:
+            # Convert string back to UUID for SQLite
+            from uuid import UUID
+            return UUID(value)
 
 
 class SessionStatus(str, Enum):
@@ -95,13 +139,13 @@ class Activity(Base):
     __tablename__ = "activities"
 
     id: Mapped[UUID] = mapped_column(
-        PGUUID(as_uuid=True), primary_key=True, default=uuid4
+        UUIDType, primary_key=True, default=uuid4
     )
     session_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("sessions.id", ondelete="CASCADE")
     )
     type: Mapped[str] = mapped_column(String(50))
-    config: Mapped[dict] = mapped_column(JSONB, default=dict)
+    config: Mapped[dict] = mapped_column(JSONBType, default=dict)
     order_index: Mapped[int] = mapped_column(Integer)
     status: Mapped[ActivityStatus] = mapped_column(
         String(20), default=ActivityStatus.DRAFT
@@ -146,18 +190,18 @@ class UserResponse(Base):
     __tablename__ = "user_responses"
 
     id: Mapped[UUID] = mapped_column(
-        PGUUID(as_uuid=True), primary_key=True, default=uuid4
+        UUIDType, primary_key=True, default=uuid4
     )
     session_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("sessions.id", ondelete="CASCADE")
     )
     activity_id: Mapped[UUID] = mapped_column(
-        PGUUID(as_uuid=True), ForeignKey("activities.id", ondelete="CASCADE")
+        UUIDType, ForeignKey("activities.id", ondelete="CASCADE")
     )
     participant_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("participants.id", ondelete="CASCADE")
     )
-    response_data: Mapped[dict] = mapped_column(JSONB)
+    response_data: Mapped[dict] = mapped_column(JSONBType)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

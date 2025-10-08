@@ -1,5 +1,10 @@
 # 🎯 Conflicto - Caja Live Event Engagement Platform
 
+[![CI/CD Pipeline](https://github.com/tristanl-slalom/conflicto/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/tristanl-slalom/conflicto/actions/workflows/pr-checks.yml)
+[![Main Branch CI](https://github.com/tristanl-slalom/conflicto/actions/workflows/main-ci.yml/badge.svg)](https://github.com/tristanl-slalom/conflicto/actions/workflows/main-ci.yml)
+[![CodeQL](https://github.com/tristanl-slalom/conflicto/actions/workflows/codeql.yml/badge.svg)](https://github.com/tristanl-slalom/conflicto/actions/workflows/codeql.yml)
+[![codecov](https://codecov.io/gh/tristanl-slalom/conflicto/branch/main/graph/badge.svg)](https://codecov.io/gh/tristanl-slalom/conflicto)
+
 A powerful real-time event engagement platform for interactive presentations, Q&A sessions, and audience participation.
 
 ## 🚀 Quick Start
@@ -83,10 +88,20 @@ make format-frontend # Format TypeScript code with prettier
 ```bash
 make test-watch     # Run tests in watch mode (interactive)
 make test-coverage  # Generate comprehensive coverage reports
-make lint          # Run all linting (flake8 + eslint)
-make format        # Format all code (black + prettier)
+make lint          # Run all linting (ruff + eslint)
+make format        # Format all code (ruff + prettier)
 make type-check    # Run type checking (mypy + tsc)
 make quality       # Run all quality checks together
+```
+
+### 🚀 CI/CD & Deployment
+```bash
+make ci            # Run full CI pipeline locally
+make ci-backend    # Backend CI checks only
+make ci-frontend   # Frontend CI checks only
+make ci-security   # Security scanning
+make ci-build      # Build validation
+make ci-docker     # Docker build validation
 ```
 
 **💡 Pro tips:**
