@@ -11,9 +11,7 @@ Inputs:
 * `owner` (string, default `platform`)
 * `cost_center` (string, optional)
 * `additional_tags` (map(string), optional)
-* `aws_region` (string, default `us-east-1`)
-* `aws_profile` (string, default local profile)
-* `enable_provider` (bool, default false)
+* (Provider configuration is expected to be defined in the consuming stack; this module no longer declares a provider.)
 
 Outputs:
 
@@ -39,7 +37,7 @@ resource "aws_s3_bucket" "example" {
 
 * Centralizes naming/tag rules so a future change (e.g. add `DataClass`) occurs once.
 * Allows early stacks to stay DRY without jumping to Terragrunt.
-* Keeps provider enablement optional so root modules can own provider configuration.
+* Leaves provider ownership entirely to root/stack modules (no hidden provider side effects).
 
 ## Next Steps
 
