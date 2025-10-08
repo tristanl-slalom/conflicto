@@ -12,10 +12,8 @@ export const sessionCreateSchema = z.object({
   description: z
     .string()
     .max(1000, 'Description must be less than 1000 characters')
-    .trim()
     .optional()
-    .or(z.literal(''))
-    .transform((val: string | undefined) => val === '' ? undefined : val),
+    .default(''),
 });
 
 /**
