@@ -472,4 +472,49 @@ Once complete, you can proceed to author the core infrastructure modules confide
 Document updates here as architecture decisions evolve.
 
 ---
-Last updated: 2025-10-07
+Last updated: 2025-10-08
+
+## Appendix A. Issue 48 – Domain Nameserver Cutover Verification
+
+Before creating AWS Certificate Manager (ACM) certificates or DNS records in Route 53 (Issue 49 onward), you must ensure your domain is delegated to the Route 53 hosted zone nameservers. This is a one-time manual verification step.
+
+### 1. Create / Identify the Hosted Zone
+
+If not already created (will be handled in a forthcoming stack), manually create a public hosted zone in Route 53 for your root domain. Copy the four authoritative nameservers AWS assigns (they will look like `ns-123.awsdns-45.net`, etc.).
+
+### 2. Update Registrar
+
+In your domain registrar portal (e.g. Namecheap, GoDaddy):
+
+1. Locate the domain's nameserver settings.
+2. Replace existing nameservers with the four from Route 53 (remove any extras).
+3. Save / confirm; note that propagation can take minutes to hours (usually fast).
+
+### 3. Track Expected Nameservers
+
+Record the expected set locally (this repo includes an example template at `scripts/expected_ns.conf`). Adjust that file to match the actual values from your hosted zone (do NOT commit real production names if you consider them sensitive—generally safe to commit though).
+
+### 4. Verification Script
+
+Use the helper script to validate delegation consistency:
+
+```bash
+./scripts/check_nameservers.sh <yourdomain.com> ./scripts/expected_ns.conf
+```
+
+Exit codes:
+
+* 0 – Match
+* 6 – Mismatch
+* Other – Operational issue (missing dig, file not found, etc.)
+
+### 5. When to Proceed
+
+Only proceed to implement Issue 49 (ACM certificates & DNS module) once the script returns a match (or manual `dig NS <domain>` shows only the Route 53 set). A mismatch will cause DNS validation for certificates and records to fail or become flaky.
+
+### 6. Drift / Future Changes
+
+If AWS later instructs you to migrate a hosted zone (rare) or you recreate the zone, nameservers may change—re-run the script and update registrar again before applying new DNS-dependent infrastructure.
+
+---
+Last updated: 2025-10-08
