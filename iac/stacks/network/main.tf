@@ -175,7 +175,7 @@ resource "aws_cloudwatch_log_group" "flow" {
 }
 
 resource "aws_iam_role" "flow_logs" {
-  count = var.enable_flow_logs ? 1 : 0
+  count = var.enable_flow_logs && var.flow_logs_existing_role_arn == "" ? 1 : 0
   name  = "${module.shared.name_prefix}-vpc-flow-logs"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -189,7 +189,7 @@ resource "aws_iam_role" "flow_logs" {
 }
 
 resource "aws_iam_role_policy" "flow_logs" {
-  count = var.enable_flow_logs ? 1 : 0
+  count = var.enable_flow_logs && var.flow_logs_existing_role_arn == "" ? 1 : 0
   role  = aws_iam_role.flow_logs[0].id
   policy = jsonencode({
     Version = "2012-10-17"
@@ -205,7 +205,7 @@ resource "aws_flow_log" "vpc" {
   count                = var.enable_flow_logs ? 1 : 0
   log_destination_type = "cloud-watch-logs"
   log_destination      = aws_cloudwatch_log_group.flow[0].arn
-  iam_role_arn         = aws_iam_role.flow_logs[0].arn
+  iam_role_arn         = var.flow_logs_existing_role_arn != "" ? var.flow_logs_existing_role_arn : aws_iam_role.flow_logs[0].arn
   vpc_id               = aws_vpc.main.id
   traffic_type         = "ALL"
   tags                 = module.shared.tags

@@ -38,6 +38,12 @@ variable "enable_flow_logs" {
   default     = true
 }
 
+variable "flow_logs_existing_role_arn" {
+  type        = string
+  description = "Optional pre-existing IAM role ARN for VPC Flow Logs (use if caller lacks iam:CreateRole). If set, module will not create a role."
+  default     = ""
+}
+
 variable "flow_logs_retention_days" {
   type        = number
   description = "CloudWatch Log retention in days for flow logs"
