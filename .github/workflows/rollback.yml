@@ -1,0 +1,241 @@
+name: Emergency Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to rollback (dev/prod)'
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+      rollback_to_tag:
+        description: 'Image tag to rollback to (e.g., previous working commit SHA)'
+        required: true
+        type: string
+      confirm_rollback:
+        description: 'Type "ROLLBACK" to confirm'
+        required: true
+        type: string
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  validate-rollback:
+    name: Validate Rollback Input
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate Confirmation
+        if: ${{ github.event.inputs.confirm_rollback != 'ROLLBACK' }}
+        run: |
+          echo "❌ Rollback not confirmed. Please type 'ROLLBACK' in the confirmation field."
+          exit 1
+
+      - name: Validate Environment
+        run: |
+          echo "Rollback Environment: ${{ github.event.inputs.environment }}"
+          echo "Rollback to Tag: ${{ github.event.inputs.rollback_to_tag }}"
+          echo "Requested by: ${{ github.actor }}"
+
+  emergency-rollback:
+    name: Execute Rollback
+    needs: validate-rollback
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment == 'prod' && 'production' || 'development' }}
+
+    steps:
+      - name: Production Rollback Approval
+        if: ${{ github.event.inputs.environment == 'prod' }}
+        uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ github.TOKEN }}
+          approvers: tristanl-slalom
+          issue-title: "🚨 EMERGENCY PRODUCTION ROLLBACK"
+          issue-body: |
+            ## 🚨 Emergency Production Rollback Request
+
+            **Environment**: ${{ github.event.inputs.environment }}
+            **Rollback to Tag**: `${{ github.event.inputs.rollback_to_tag }}`
+            **Requested by**: @${{ github.actor }}
+            **Workflow**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            ### ⚠️ CRITICAL ROLLBACK
+            This is an emergency rollback request. Please approve only if:
+            - There is a critical production issue requiring immediate rollback
+            - The rollback target tag is known to be working
+            - You understand the potential data implications
+
+            **Approve this rollback immediately if it's an emergency.**
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get Current Service Configuration
+        id: current_config
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment }}"
+
+          # Get cluster and service names based on environment
+          if [ "$ENVIRONMENT" = "prod" ]; then
+            CLUSTER_NAME="conflicto-prod-cluster"
+            SERVICE_NAME="conflicto-prod-svc"
+          else
+            CLUSTER_NAME="conflicto-dev-cluster"
+            SERVICE_NAME="conflicto-dev-svc"
+          fi
+
+          echo "cluster_name=$CLUSTER_NAME" >> $GITHUB_OUTPUT
+          echo "service_name=$SERVICE_NAME" >> $GITHUB_OUTPUT
+
+          # Get current task definition
+          CURRENT_TASK_DEF=$(aws ecs describe-services \
+            --cluster $CLUSTER_NAME \
+            --services $SERVICE_NAME \
+            --query 'services[0].taskDefinition' \
+            --output text)
+
+          echo "current_task_definition=$CURRENT_TASK_DEF" >> $GITHUB_OUTPUT
+          echo "Current task definition: $CURRENT_TASK_DEF"
+
+      - name: Create Rollback Task Definition
+        id: rollback_task_def
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment }}"
+          ROLLBACK_TAG="${{ github.event.inputs.rollback_to_tag }}"
+
+          # Get the current task definition
+          CURRENT_TASK_DEF="${{ steps.current_config.outputs.current_task_definition }}"
+
+          # Create new task definition with rollback image
+          aws ecs describe-task-definition \
+            --task-definition $CURRENT_TASK_DEF \
+            --query 'taskDefinition' > current_task_def.json
+
+          # Update the image URI in the task definition
+          jq --arg image "ghcr.io/tristanl-slalom/conflicto/backend:$ROLLBACK_TAG" \
+             '.containerDefinitions[0].image = $image | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .placementConstraints, .compatibilities, .registeredAt, .registeredBy)' \
+             current_task_def.json > rollback_task_def.json
+
+          # Register the new task definition
+          NEW_TASK_DEF=$(aws ecs register-task-definition \
+            --cli-input-json file://rollback_task_def.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          echo "new_task_definition=$NEW_TASK_DEF" >> $GITHUB_OUTPUT
+          echo "New rollback task definition: $NEW_TASK_DEF"
+
+      - name: Execute Rollback
+        run: |
+          CLUSTER_NAME="${{ steps.current_config.outputs.cluster_name }}"
+          SERVICE_NAME="${{ steps.current_config.outputs.service_name }}"
+          NEW_TASK_DEF="${{ steps.rollback_task_def.outputs.new_task_definition }}"
+
+          echo "🚀 Starting rollback deployment..."
+          echo "Cluster: $CLUSTER_NAME"
+          echo "Service: $SERVICE_NAME"
+          echo "New Task Definition: $NEW_TASK_DEF"
+
+          # Update the service with the rollback task definition
+          aws ecs update-service \
+            --cluster $CLUSTER_NAME \
+            --service $SERVICE_NAME \
+            --task-definition $NEW_TASK_DEF \
+            --force-new-deployment
+
+          echo "⏳ Waiting for rollback deployment to complete..."
+
+          # Wait for the service to become stable
+          aws ecs wait services-stable \
+            --cluster $CLUSTER_NAME \
+            --services $SERVICE_NAME
+
+          echo "✅ Rollback deployment completed!"
+
+      - name: Verify Rollback
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment }}"
+
+          # Determine the health check URL
+          if [ "$ENVIRONMENT" = "prod" ]; then
+            HEALTH_URL="https://conflicto.app/api/v1/health/"
+          else
+            HEALTH_URL="https://dev.conflicto.app/api/v1/health/"
+          fi
+
+          echo "🔍 Verifying rollback health at: $HEALTH_URL"
+
+          # Install httpx for health check
+          pip install httpx
+
+          # Simple health check script
+          cat > verify_rollback.py << 'EOF'
+          import asyncio
+          import httpx
+          import sys
+          import os
+
+          async def verify_health():
+              health_url = os.getenv("HEALTH_URL")
+              print(f"Checking health at: {health_url}")
+
+              try:
+                  async with httpx.AsyncClient(timeout=30) as client:
+                      response = await client.get(health_url)
+
+                      if response.status_code == 200:
+                          data = response.json()
+                          print(f"✅ Health check passed: {data}")
+
+                          if data.get("status") == "healthy":
+                              print("🎉 Rollback verification successful!")
+                              return True
+                          else:
+                              print(f"❌ Service reports unhealthy: {data.get('status')}")
+                              return False
+                      else:
+                          print(f"❌ Health check failed: {response.status_code}")
+                          return False
+              except Exception as e:
+                  print(f"❌ Health check error: {e}")
+                  return False
+
+          if __name__ == "__main__":
+              result = asyncio.run(verify_health())
+              sys.exit(0 if result else 1)
+          EOF
+
+          HEALTH_URL=$HEALTH_URL python verify_rollback.py
+
+  notify-rollback:
+    name: Notify Rollback Status
+    needs: [validate-rollback, emergency-rollback]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Rollback Success
+        if: ${{ needs.emergency-rollback.result == 'success' }}
+        run: |
+          echo "🎉 Emergency rollback completed successfully!"
+          echo "Environment: ${{ github.event.inputs.environment }}"
+          echo "Rolled back to: ${{ github.event.inputs.rollback_to_tag }}"
+          echo "Executed by: ${{ github.actor }}"
+
+      - name: Rollback Failure
+        if: ${{ needs.emergency-rollback.result == 'failure' }}
+        run: |
+          echo "💥 Emergency rollback failed!"
+          echo "Environment: ${{ github.event.inputs.environment }}"
+          echo "Target tag: ${{ github.event.inputs.rollback_to_tag }}"
+          echo "URGENT: Manual intervention required!"
+          exit 1

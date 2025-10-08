@@ -28,10 +28,20 @@ async def health_check(db: AsyncSession = Depends(get_db)) -> HealthResponse:
         # Test database connection
         await db.execute(text("SELECT 1"))
 
-        return HealthResponse(status="healthy", version=settings.version)
+        return HealthResponse(
+            status="healthy",
+            version=settings.version,
+            environment=settings.environment,
+            app_version=settings.app_version,
+        )
     except Exception as e:
         logger.error("Health check failed", error=str(e))
-        return HealthResponse(status="unhealthy", version=settings.version)
+        return HealthResponse(
+            status="unhealthy",
+            version=settings.version,
+            environment=settings.environment,
+            app_version=settings.app_version,
+        )
 
 
 @router.get("/ready", response_model=HealthResponse)
