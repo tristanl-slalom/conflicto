@@ -9,9 +9,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field, ConfigDict
 
 from app.db.enums import ActivityStatus, SessionStatus, ActivityType, ParticipantRole
-
-if TYPE_CHECKING:
-    from app.models.jsonb_schemas.user_response import UserResponse
+from app.models.jsonb_schemas.user_response import UserResponse
 
 
 # Base models
@@ -267,7 +265,7 @@ class ActivityStatusResponse(BaseModel):
 class IncrementalResponseList(BaseModel):
     """Schema for incremental response updates since timestamp."""
 
-    items: List["UserResponse"] = []
+    items: List[UserResponse] = []
     since: datetime
     count: int
 
@@ -294,3 +292,4 @@ class HealthResponse(BaseModel):
 SessionDetail.model_rebuild()
 ActivityResponse.model_rebuild()
 ParticipantStatus.model_rebuild()
+IncrementalResponseList.model_rebuild()
