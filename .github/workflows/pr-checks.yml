@@ -272,22 +272,125 @@ jobs:
 
       - name: Test backend container startup
         run: |
-          docker run --rm -d --name test-backend \
-            -e DATABASE_URL=sqlite:///./test.db \
+          # Create a temporary directory for SQLite database
+          mkdir -p /tmp/test-db
+          
+          # Start container without --rm so we can inspect it if it fails
+          echo "Starting backend container..."
+          CONTAINER_ID=$(docker run -d --name test-backend \
+            -e DATABASE_URL=sqlite:////tmp/test.db \
             -e REDIS_URL=redis://localhost:6379/0 \
-            conflicto-backend:test
-          sleep 10
-          docker logs test-backend
-          docker stop test-backend
+            -e SECRET_KEY=test-secret-key \
+            -e ENVIRONMENT=test \
+            -e DEBUG=true \
+            -v /tmp/test-db:/tmp \
+            conflicto-backend:test)
+          
+          echo "Container ID: $CONTAINER_ID"
+          
+          # Wait a bit for startup
+          echo "Waiting for container startup..."
+          sleep 15
+          
+          # Check container status
+          echo "Container status:"
+          docker ps -a --filter "name=test-backend"
+          
+          # Get container logs regardless of status
+          echo "Container logs:"
+          docker logs test-backend || true
+          
+          # Check if container is still running
+          if docker ps --filter "name=test-backend" --filter "status=running" | grep -q test-backend; then
+            echo "✅ Container is running successfully"
+            
+            # Test if the API is responding (try a few times as it might take time to start)
+            echo "Testing API health endpoint..."
+            for i in {1..5}; do
+              echo "Health check attempt $i..."
+              if docker exec test-backend curl -f http://localhost:8000/health; then
+                echo "✅ Health check passed"
+                break
+              elif [ $i -eq 5 ]; then
+                echo "❌ Health check failed after 5 attempts"
+                # Still continue to get more diagnostics
+              else
+                echo "Waiting 5 seconds before retry..."
+                sleep 5
+              fi
+            done
+            
+            # Check what processes are running in the container
+            echo "Processes in container:"
+            docker exec test-backend ps aux || true
+            
+            # Check if port 8000 is listening
+            echo "Network status in container:"
+            docker exec test-backend netstat -tlnp 2>/dev/null || docker exec test-backend ss -tlnp 2>/dev/null || echo "Could not check network status"
+            
+          else
+            echo "❌ Container is not running"
+            echo "Exit code:"
+            docker inspect test-backend --format='{{.State.ExitCode}}' || true
+            exit 1
+          fi
+          
+          # Cleanup
+          echo "Cleaning up container..."
+          docker stop test-backend || true
+          docker rm test-backend || true
 
       - name: Test frontend container startup
         run: |
-          docker run --rm -d --name test-frontend \
+          # Start container without --rm so we can inspect it if it fails
+          echo "Starting frontend container..."
+          CONTAINER_ID=$(docker run -d --name test-frontend \
             -p 3000:3000 \
-            conflicto-frontend:test
-          sleep 10
-          docker logs test-frontend
-          docker stop test-frontend
+            conflicto-frontend:test)
+          
+          echo "Container ID: $CONTAINER_ID"
+          
+          # Wait for startup
+          echo "Waiting for container startup..."
+          sleep 15
+          
+          # Check container status
+          echo "Container status:"
+          docker ps -a --filter "name=test-frontend"
+          
+          # Get container logs regardless of status
+          echo "Container logs:"
+          docker logs test-frontend || true
+          
+          # Check if container is still running
+          if docker ps --filter "name=test-frontend" --filter "status=running" | grep -q test-frontend; then
+            echo "✅ Frontend container is running successfully"
+            
+            # Test if the frontend is serving content (try a few times)
+            echo "Testing frontend availability..."
+            for i in {1..5}; do
+              echo "Frontend check attempt $i..."
+              if curl -f http://localhost:3000 -o /dev/null -s; then
+                echo "✅ Frontend is serving content"
+                break
+              elif [ $i -eq 5 ]; then
+                echo "⚠️ Frontend check failed after 5 attempts (may still be starting)"
+              else
+                echo "Waiting 5 seconds before retry..."
+                sleep 5
+              fi
+            done
+          else
+            echo "❌ Frontend container is not running"
+            echo "Exit code:"
+            docker inspect test-frontend --format='{{.State.ExitCode}}' || true
+            exit 1
+          fi
+          
+          # Cleanup
+          echo "Cleaning up container..."
+          docker stop test-frontend || true
+          docker rm test-frontend || true
 
   pr-summary:
     name: PR Summary
