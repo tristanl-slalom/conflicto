@@ -225,8 +225,8 @@ resource "aws_ecs_task_definition" "app" {
     }, var.inject_db_secret && var.db_secret_arn != "" ? {
       secrets = [
         for key in ["username","password","host","port","db_name","url"] : {
-          name      = upper("DB_" .. replace(key, "url", "CONNECTION_URL"))
-          valueFrom = "${var.db_secret_arn}:$${key}::" # Secrets Manager key reference
+          name      = upper("DB_${key == "url" ? "CONNECTION_URL" : key}")
+          valueFrom = "${var.db_secret_arn}:${key}::" # arn:...:secret:...:json-key:: (default stage)
         }
       ]
     } : {})
