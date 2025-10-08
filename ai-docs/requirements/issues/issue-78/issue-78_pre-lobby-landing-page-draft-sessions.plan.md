@@ -166,8 +166,6 @@ frontend/src/components/lobby/
    - Apply Caja design system patterns and colors
    - Implement smooth loading states and transitions
    - Add appropriate spacing and typography
-   - Include accessibility features (ARIA labels, keyboard navigation)
-   - Test color contrast ratios for WCAG 2.1 AA compliance
 
 ### Step 6: Add Type Definitions and Testing
 **Files**: `types/lobby.ts`, test files
@@ -198,7 +196,6 @@ frontend/src/components/lobby/
    - Handle session status changes during pre-lobby display
    - Manage participant disconnections and reconnections
    - Handle API failures gracefully
-   - Test with various network conditions and latencies
 
 ## Testing Strategy
 

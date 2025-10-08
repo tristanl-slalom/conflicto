@@ -86,14 +86,17 @@ const SessionJoin: React.FC<SessionJoinProps> = ({ sessionId }) => {
         sessionStorage.setItem('session_id', sessionId);
         sessionStorage.setItem('nickname', nickname.trim());
         
-        // Show success message and redirect info
-        alert(`Successfully joined session! Participant ID: ${joinData.participant_id}`);
+        // Log the session state for debugging
+        console.log('Join successful:', joinData);
+        if ('session_state' in joinData) {
+          console.log('Session state:', joinData.session_state);
+        }
+        
+        // Reload the page to trigger the route's logic to show the appropriate interface
+        window.location.reload();
       } else {
         throw new Error('Failed to join session - unexpected response format');
       }
-      
-      // For now, just show success - in a real app this would redirect to the session
-      console.log('Join successful:', joinData);
       
     } catch (err) {
       console.error('Join error:', err);
