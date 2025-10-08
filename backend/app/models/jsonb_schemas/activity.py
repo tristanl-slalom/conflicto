@@ -3,9 +3,9 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
-from app.db.models import ActivityStatus
+from app.db.enums import ActivityStatus
 
 
 class ActivityBase(BaseModel):
@@ -16,6 +16,8 @@ class ActivityBase(BaseModel):
         default_factory=dict, description="JSONB configuration data"
     )
     order_index: int = Field(default=0, description="Order index for the activity")
+    
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class ActivityCreate(ActivityBase):
@@ -26,6 +28,7 @@ class ActivityCreate(ActivityBase):
 
 class ActivityUpdate(BaseModel):
     """Schema for updating an Activity."""
+    model_config = ConfigDict(use_enum_values=True)
 
     type: Optional[str] = None
     config: Optional[Dict[str, Any]] = None
@@ -42,8 +45,7 @@ class Activity(ActivityBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
 
 class ActivityList(BaseModel):

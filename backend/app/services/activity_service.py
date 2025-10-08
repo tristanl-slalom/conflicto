@@ -6,7 +6,8 @@ from uuid import UUID
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import Activity, ActivityStatus, UserResponse
+from app.db.models import Activity, UserResponse
+from app.db.enums import ActivityStatus
 from app.models.jsonb_schemas.activity import ActivityCreate, ActivityUpdate
 
 

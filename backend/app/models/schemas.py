@@ -5,9 +5,9 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
-from app.db.models import ActivityStatus, ActivityType, ParticipantRole, SessionStatus
+from app.db.enums import ActivityStatus, SessionStatus, ActivityType, ParticipantRole
 
 if TYPE_CHECKING:
     from app.models.jsonb_schemas.user_response import UserResponse
@@ -21,8 +21,7 @@ class BaseResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
 
 # Session models
@@ -41,6 +40,8 @@ class SessionUpdate(BaseModel):
     description: Optional[str] = None
     max_participants: Optional[int] = Field(None, ge=1, le=1000)
     status: Optional[SessionStatus] = None
+    
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class SessionResponse(BaseResponse):
@@ -68,6 +69,7 @@ class SessionDetail(SessionResponse):
 # Activity models
 class ActivityCreate(BaseModel):
     """Activity creation request model."""
+    model_config = ConfigDict(use_enum_values=True)
 
     title: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
@@ -104,6 +106,7 @@ class ActivityResponse(BaseResponse):
 # Participant models
 class ParticipantCreate(BaseModel):
     """Participant creation request model."""
+    model_config = ConfigDict(use_enum_values=True)
 
     display_name: str = Field(..., min_length=1, max_length=100)
     role: ParticipantRole = ParticipantRole.PARTICIPANT
@@ -111,6 +114,7 @@ class ParticipantCreate(BaseModel):
 
 class ParticipantUpdate(BaseModel):
     """Participant update request model."""
+    model_config = ConfigDict(use_enum_values=True)
 
     display_name: Optional[str] = Field(None, min_length=1, max_length=100)
     role: Optional[ParticipantRole] = None
@@ -182,6 +186,8 @@ class SessionStatusResponse(BaseModel):
     current_activity_id: Optional[UUID] = None
     participant_count: int
     last_updated: datetime
+    
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class ActivityStatusResponse(BaseModel):
@@ -192,6 +198,8 @@ class ActivityStatusResponse(BaseModel):
     response_count: int
     last_response_at: Optional[datetime] = None
     last_updated: datetime
+    
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class IncrementalResponseList(BaseModel):

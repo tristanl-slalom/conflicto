@@ -1,15 +1,15 @@
 """
 Tests for health check API endpoints.
 """
-from fastapi.testclient import TestClient
+from httpx import AsyncClient
 
 
 class TestHealthAPI:
     """Test health check API endpoints."""
 
-    def test_health_check(self, client: TestClient):
+    async def test_health_check(self, async_client: AsyncClient):
         """Test health check endpoint."""
-        response = client.get("/api/v1/health/")
+        response = await async_client.get("/api/v1/health/")
 
         assert response.status_code == 200
         data = response.json()
@@ -19,9 +19,9 @@ class TestHealthAPI:
         assert "version" in data
         assert data["version"] == "0.1.0"
 
-    def test_readiness_check(self, client: TestClient):
+    async def test_readiness_check(self, async_client: AsyncClient):
         """Test readiness check endpoint."""
-        response = client.get("/api/v1/health/ready")
+        response = await async_client.get("/api/v1/health/ready")
 
         assert response.status_code == 200
         data = response.json()
@@ -29,9 +29,9 @@ class TestHealthAPI:
         assert data["status"] == "ready"
         assert data["version"] == "0.1.0"
 
-    def test_liveness_check(self, client: TestClient):
+    async def test_liveness_check(self, async_client: AsyncClient):
         """Test liveness check endpoint."""
-        response = client.get("/api/v1/health/live")
+        response = await async_client.get("/api/v1/health/live")
 
         assert response.status_code == 200
         data = response.json()

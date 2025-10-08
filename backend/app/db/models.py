@@ -6,11 +6,14 @@ from enum import Enum
 from typing import Optional
 from uuid import UUID, uuid4
 
+from app.db.enums import ActivityStatus, SessionStatus, ActivityType, ParticipantRole
+
 from sqlalchemy import (
     JSON,
     Boolean,
     Column,
     DateTime,
+    Enum,
     ForeignKey,
     Integer,
     String,
@@ -66,40 +69,6 @@ class UUIDType(TypeDecorator):
             # Convert string back to UUID for SQLite
             from uuid import UUID
             return UUID(value)
-
-
-class SessionStatus(str, Enum):
-    """Session status enumeration."""
-
-    DRAFT = "draft"
-    ACTIVE = "active"
-    COMPLETED = "completed"
-
-
-class ActivityType(str, Enum):
-    """Activity type enumeration."""
-
-    POLL = "poll"
-    WORD_CLOUD = "word_cloud"
-    QA = "qa"
-    PLANNING_POKER = "planning_poker"
-
-
-class ParticipantRole(str, Enum):
-    """Participant role enumeration."""
-
-    ADMIN = "admin"
-    VIEWER = "viewer"
-    PARTICIPANT = "participant"
-
-
-class ActivityStatus(str, Enum):
-    """Activity status enumeration for activity framework."""
-
-    DRAFT = "draft"
-    ACTIVE = "active"
-    COMPLETED = "completed"
-    CANCELLED = "cancelled"
 
 
 class Session(Base):

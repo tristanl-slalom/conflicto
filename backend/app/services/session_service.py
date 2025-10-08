@@ -12,7 +12,8 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
 from app.core.logging import get_logger
-from app.db.models import Activity, Participant, Session, SessionStatus
+from app.db.models import Activity, Participant, Session
+from app.db.enums import SessionStatus
 from app.models.schemas import SessionCreate, SessionUpdate
 
 logger = get_logger(__name__)

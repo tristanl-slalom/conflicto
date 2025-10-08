@@ -2,26 +2,28 @@
 Test configuration and fixtures.
 """
 import asyncio
+import os
 from collections.abc import AsyncGenerator
 from typing import Generator
 
 import pytest
-from fastapi.testclient import TestClient
+# TestClient import removed - using only AsyncClient
 from httpx import AsyncClient
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.db.database import Base, get_db
-from app.main import app
+# Set test environment variables before importing the app
+os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+os.environ.setdefault("SECRET_KEY", "test-secret-key-for-testing-only")
+os.environ.setdefault("ENVIRONMENT", "testing")
+os.environ.setdefault("DEBUG", "true")
 
-# Test database URLs
-TEST_DATABASE_URL = (
-    "postgresql+asyncpg://caja_user:caja_password@localhost:5432/caja_test_db"
-)
-SYNC_TEST_DATABASE_URL = (
-    "postgresql://caja_user:caja_password@localhost:5432/caja_test_db"
-)
+from app.db.database import Base, get_db
+
+# Test database URLs - Use in-memory SQLite for testing
+TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+SYNC_TEST_DATABASE_URL = "sqlite:///:memory:"
 
 # Create test engines
 test_engine = create_async_engine(
@@ -75,54 +77,47 @@ def event_loop():
     loop.close()
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
-    """Create and cleanup test database."""
-    # Create all tables
+    """Create and cleanup test database for each test."""
+    # Create all tables once
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    # Provide session
+    # Provide clean session
     async with TestSessionLocal() as session:
-        yield session
+        try:
+            yield session
+        finally:
+            await session.rollback()
+            await session.close()
 
-    # Drop all tables
+    # Clean up tables after test  
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
 
-@pytest.fixture
-def sync_db_session() -> Generator[Session, None, None]:
-    """Create and cleanup sync test database."""
-    # Create all tables
-    Base.metadata.create_all(bind=sync_test_engine)
-
-    # Provide session
-    with SyncTestSessionLocal() as session:
-        yield session
-
-    # Drop all tables
-    Base.metadata.drop_all(bind=sync_test_engine)
+# Removed sync_db_session - using only async database now
 
 
 @pytest.fixture
 async def async_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
-    """Create async HTTP client with test database."""
-    app.dependency_overrides[get_db] = lambda: db_session
+    """Create async HTTP client with shared test database session."""
+    from app.main import app
+    
+    async def get_test_db_override():
+        yield db_session
+    
+    app.dependency_overrides[get_db] = get_test_db_override
 
     async with AsyncClient(app=app, base_url="http://test") as client:
         yield client
 
+    # Clean up dependency overrides
     app.dependency_overrides.clear()
 
 
-@pytest.fixture
-def client(sync_db_session: Session) -> TestClient:
-    """Create test client with sync test database."""
-    app.dependency_overrides[get_db] = lambda: sync_db_session
-    with TestClient(app) as test_client:
-        yield test_client
-    app.dependency_overrides.clear()
+# Removed sync client - using only async_client now
 
 
 @pytest.fixture

@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_db
-from app.db.models import ActivityStatus
+from app.db.enums import ActivityStatus
 from app.models.jsonb_schemas.activity import (
     Activity,
     ActivityCreate,
