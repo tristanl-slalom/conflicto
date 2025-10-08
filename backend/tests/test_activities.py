@@ -144,7 +144,7 @@ class TestActivityAPI:
         
         # Create activity
         create_response = await async_client.post(
-            f"/api/v1/sessions/{session_id}/activities/",
+            f"/api/v1/sessions/{session_id}/activities",
             json=sample_activity_data
         )
         activity_id = create_response.json()["id"]
@@ -173,7 +173,7 @@ class TestActivityAPI:
         
         # Create activity
         create_response = await async_client.post(
-            f"/api/v1/sessions/{session_id}/activities/",
+            f"/api/v1/sessions/{session_id}/activities",
             json=sample_activity_data
         )
         activity_id = create_response.json()["id"]
