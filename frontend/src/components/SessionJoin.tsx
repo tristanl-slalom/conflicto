@@ -42,14 +42,19 @@ const SessionJoin: React.FC<SessionJoinProps> = ({ sessionId }) => {
         const result = await validateNickname();
         const validation = result.data?.data;
         
-        if (validation?.available) {
-          setValidationMessage('✓ Nickname available');
+        // Type guard to check if validation is successful and has the expected properties
+        if (result.data?.status === 200 && validation && 'available' in validation) {
+          if (validation.available) {
+            setValidationMessage('✓ Nickname available');
+          } else {
+            setValidationMessage(
+              ('suggested_nickname' in validation && validation.suggested_nickname)
+                ? `❌ Taken. Try: ${validation.suggested_nickname}`
+                : '❌ Nickname not available'
+            );
+          }
         } else {
-          setValidationMessage(
-            validation?.suggested_nickname 
-              ? `❌ Taken. Try: ${validation.suggested_nickname}`
-              : '❌ Nickname not available'
-          );
+          setValidationMessage('Unable to check nickname');
         }
       } catch (err) {
         setValidationMessage('Unable to check nickname');
@@ -74,13 +79,18 @@ const SessionJoin: React.FC<SessionJoinProps> = ({ sessionId }) => {
       
       const joinData = result.data;
       
-      // Store participant data in sessionStorage for app use
-      sessionStorage.setItem('participant_id', joinData.participant_id);
-      sessionStorage.setItem('session_id', sessionId);
-      sessionStorage.setItem('nickname', nickname.trim());
-      
-      // Show success message and redirect info
-      alert(`Successfully joined session! Participant ID: ${joinData.participant_id}`);
+      // Type guard to ensure we have a successful response
+      if (result.status === 200 && 'participant_id' in joinData) {
+        // Store participant data in sessionStorage for app use
+        sessionStorage.setItem('participant_id', joinData.participant_id);
+        sessionStorage.setItem('session_id', sessionId);
+        sessionStorage.setItem('nickname', nickname.trim());
+        
+        // Show success message and redirect info
+        alert(`Successfully joined session! Participant ID: ${joinData.participant_id}`);
+      } else {
+        throw new Error('Failed to join session - unexpected response format');
+      }
       
       // For now, just show success - in a real app this would redirect to the session
       console.log('Join successful:', joinData);
@@ -144,7 +154,11 @@ const SessionJoin: React.FC<SessionJoinProps> = ({ sessionId }) => {
                 <svg className="w-5 h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
-                <span className="text-red-800 text-sm">{joinSessionMutation.error.message || 'Failed to join session'}</span>
+                <span className="text-red-800 text-sm">
+                  {('error' in joinSessionMutation.error && typeof joinSessionMutation.error.error === 'string') 
+                    ? joinSessionMutation.error.error 
+                    : 'Failed to join session'}
+                </span>
               </div>
             </div>
           )}
