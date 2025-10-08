@@ -3,26 +3,28 @@ output "oidc_provider_arn" {
   value       = aws_iam_openid_connect_provider.github_actions.arn
 }
 
+# Map of role ARNs by environment
 output "deployer_role_arns" {
-  description = "Map of environment to deployer role ARN"
+  description = "Map of deployer role ARNs by environment"
   value = {
     for env in var.environments :
     env => aws_iam_role.terraform_deployer[env].arn
   }
 }
 
+# Individual role outputs for easier reference
 output "deployer_role_arn_dev" {
-  description = "ARN of dev deployer role (for easy reference)"
+  description = "ARN of the dev deployer role"
   value       = aws_iam_role.terraform_deployer["dev"].arn
 }
 
 output "deployer_role_arn_staging" {
-  description = "ARN of staging deployer role (for easy reference)"
+  description = "ARN of the staging deployer role"
   value       = aws_iam_role.terraform_deployer["staging"].arn
 }
 
 output "deployer_role_arn_prod" {
-  description = "ARN of prod deployer role (for easy reference)"
+  description = "ARN of the prod deployer role"
   value       = aws_iam_role.terraform_deployer["prod"].arn
 }
 
