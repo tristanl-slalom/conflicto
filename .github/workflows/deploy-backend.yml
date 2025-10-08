@@ -148,6 +148,96 @@ jobs:
 
           echo "Task definition updated successfully"
 
+      # Run database migrations
+      - name: Run database migrations
+        env:
+          ENV: ${{ steps.vars.outputs.environment }}
+        run: |
+          echo "Running database migrations for ${ENV} environment..."
+
+          # Create a one-time task definition for migrations
+          MIGRATION_TASK_DEF=$(cat ${{ steps.task-def.outputs.task-definition }} | jq '.containerDefinitions[0].command = ["poetry", "run", "alembic", "upgrade", "head"]')
+
+          # Register the migration task definition
+          MIGRATION_TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --family "conflicto-${ENV}-migration" \
+            --cli-input-json "$MIGRATION_TASK_DEF" \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          echo "Registered migration task definition: $MIGRATION_TASK_DEF_ARN"
+
+          # Get a subnet for running the migration task
+          SUBNET_ID=$(aws ec2 describe-subnets \
+            --filters "Name=tag:Name,Values=conflicto-${ENV}-private*" \
+            --query 'Subnets[0].SubnetId' \
+            --output text)
+
+          if [ "$SUBNET_ID" = "None" ]; then
+            echo "Warning: Could not find private subnet, trying public subnets..."
+            SUBNET_ID=$(aws ec2 describe-subnets \
+              --filters "Name=tag:Name,Values=conflicto-${ENV}-public*" \
+              --query 'Subnets[0].SubnetId' \
+              --output text)
+          fi
+
+          # Get security group for the ECS service
+          SECURITY_GROUP_ID=$(aws ec2 describe-security-groups \
+            --filters "Name=group-name,Values=conflicto-${ENV}-app*" \
+            --query 'SecurityGroups[0].GroupId' \
+            --output text)
+
+          if [ "$SECURITY_GROUP_ID" = "None" ]; then
+            echo "Warning: Could not find app security group, using default..."
+            SECURITY_GROUP_ID=$(aws ec2 describe-security-groups \
+              --filters "Name=group-name,Values=default" \
+              --query 'SecurityGroups[0].GroupId' \
+              --output text)
+          fi
+
+          echo "Running migration task..."
+          echo "Subnet: $SUBNET_ID"
+          echo "Security Group: $SECURITY_GROUP_ID"
+
+          # Run the migration task
+          MIGRATION_TASK_ARN=$(aws ecs run-task \
+            --cluster conflicto-${ENV}-cluster \
+            --task-definition $MIGRATION_TASK_DEF_ARN \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_ID],securityGroups=[$SECURITY_GROUP_ID],assignPublicIp=ENABLED}" \
+            --query 'tasks[0].taskArn' \
+            --output text)
+
+          echo "Migration task ARN: $MIGRATION_TASK_ARN"
+
+          # Wait for migration to complete
+          echo "Waiting for migration to complete..."
+          aws ecs wait tasks-stopped \
+            --cluster conflicto-${ENV}-cluster \
+            --tasks $MIGRATION_TASK_ARN
+
+          # Check if migration succeeded
+          MIGRATION_EXIT_CODE=$(aws ecs describe-tasks \
+            --cluster conflicto-${ENV}-cluster \
+            --tasks $MIGRATION_TASK_ARN \
+            --query 'tasks[0].containers[0].exitCode' \
+            --output text)
+
+          if [ "$MIGRATION_EXIT_CODE" != "0" ]; then
+            echo "Migration failed with exit code: $MIGRATION_EXIT_CODE"
+
+            # Get migration logs for debugging
+            echo "Migration task logs:"
+            aws logs filter-log-events \
+              --log-group-name "/ecs/conflicto-${ENV}-task" \
+              --start-time $(date -d '5 minutes ago' +%s)000 \
+              --filter-pattern "migration" || true
+
+            exit 1
+          fi
+
+          echo "✅ Database migration completed successfully"
+
       # Deploy to ECS
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
