@@ -144,8 +144,8 @@ You'll need this for the trust policies in Part 2.
         "s3:ListBucket"
       ],
       "Resource": [
-        "arn:aws:s3:::conflicto-terraform-state-418389084763",
-        "arn:aws:s3:::conflicto-terraform-state-418389084763/*"
+        "arn:aws:s3:::conflicto-tfstate",
+        "arn:aws:s3:::conflicto-tfstate/*"
       ]
     },
     {

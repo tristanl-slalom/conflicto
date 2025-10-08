@@ -96,8 +96,8 @@ resource "aws_iam_role_policy" "terraform_deployer_policy" {
           "s3:ListBucket"
         ]
         Resource = [
-          "arn:aws:s3:::conflicto-terraform-state-${data.aws_caller_identity.current.account_id}",
-          "arn:aws:s3:::conflicto-terraform-state-${data.aws_caller_identity.current.account_id}/*"
+          "arn:aws:s3:::conflicto-tfstate",
+          "arn:aws:s3:::conflicto-tfstate/*"
         ]
       },
       {
