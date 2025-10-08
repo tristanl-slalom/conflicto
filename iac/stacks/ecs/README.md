@@ -9,7 +9,7 @@ Phase 4 baseline per Issue 52 originally focused on provisioning the container p
 - Conditional (when `create_service=true`):
   - CloudWatch Log Group
   - Task Execution Role & Task Definition
-  - Security Groups (ALB + app)
+  - Security Groups (ALB + app, includes conditional 443 ingress when HTTPS enabled)
   - Application Load Balancer, Target Group, HTTP(80) + optional HTTPS(443) listeners (HTTP redirects to HTTPS when `enable_https=true` & cert provided)
   - Route53 A record alias to ALB
   - Optional database secret injection (`inject_db_secret=true` & `db_secret_arn` provided)
@@ -77,6 +77,20 @@ DB_CONNECTION_URL
 ```
 
 These are sourced from JSON keys `username`, `password`, `host`, `port`, `db_name`, `url` stored in the secret created by the RDS stack (`<name_prefix>/db`).
+
+An inline IAM policy granting only `secretsmanager:GetSecretValue` on `db_secret_arn` is attached to the task execution role when secret injection is enabled.
+
+## Outputs
+
+| Output | Description |
+|--------|-------------|
+| `cluster_name` | ECS cluster name |
+| `cluster_arn` | ECS cluster ARN |
+| `ecr_repository_url` | ECR repo URL (if created) |
+| `service_name` | ECS service name (if created) |
+| `alb_dns_name` | ALB DNS name (if service created) |
+| `https_enabled` | Boolean indicating HTTPS listener active |
+| `https_listener_arn` | ARN of HTTPS listener (if enabled) |
 
 ## Remaining Future Enhancements
 

@@ -63,6 +63,17 @@ resource "aws_security_group_rule" "alb_http_in" {
   description       = "Allow HTTP"
 }
 
+resource "aws_security_group_rule" "alb_https_in" {
+  count            = var.create_service && var.enable_https && var.certificate_arn != "" ? 1 : 0
+  type              = "ingress"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.alb[0].id
+  description       = "Allow HTTPS"
+}
+
 resource "aws_security_group_rule" "alb_egress_all" {
   count            = var.create_service ? 1 : 0
   type              = "egress"
@@ -186,6 +197,23 @@ resource "aws_iam_role_policy_attachment" "task_exec_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+# Minimal Secrets Manager access when secret injection enabled
+resource "aws_iam_role_policy" "task_exec_secrets" {
+  count = var.create_service && var.inject_db_secret && var.db_secret_arn != "" ? 1 : 0
+  name  = "${local.name_prefix}-task-exec-secrets"
+  role  = aws_iam_role.task_exec[0].id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["secretsmanager:GetSecretValue"]
+        Resource = var.db_secret_arn
+      }
+    ]
+  })
+}
+
 # Task definition
 resource "aws_ecs_task_definition" "app" {
   count                    = var.create_service ? 1 : 0
@@ -274,4 +302,5 @@ output "ecr_repository_url" { value = var.create_ecr_repo ? aws_ecr_repository.a
 output "service_name" { value = var.create_service ? aws_ecs_service.app[0].name : "" }
 output "alb_dns_name" { value = var.create_service ? aws_lb.app[0].dns_name : "" }
 output "https_enabled" { value = var.create_service && var.enable_https && var.certificate_arn != "" }
+output "https_listener_arn" { value = var.create_service && var.enable_https && var.certificate_arn != "" ? aws_lb_listener.https[0].arn : "" }
 output "task_definition_family" { value = var.create_service ? aws_ecs_task_definition.app[0].family : "" }
