@@ -2,7 +2,6 @@
 Participant routes for QR code onboarding and session management.
 """
 
-from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query

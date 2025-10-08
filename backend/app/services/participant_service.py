@@ -2,12 +2,11 @@
 Participant service for handling session joining, heartbeat, and management operations.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 from uuid import UUID
 
 from sqlalchemy import and_, select, func, delete
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
 from app.db.models import Participant, Session as SessionModel, Activity

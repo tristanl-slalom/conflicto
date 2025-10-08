@@ -2,7 +2,6 @@
 Unit tests for ParticipantService.
 """
 
-import pytest
 from datetime import datetime, timezone, timedelta
 from uuid import uuid4
 
