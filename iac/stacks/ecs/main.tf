@@ -176,9 +176,9 @@ resource "aws_lb_listener" "https" {
   }
 }
 
-# IAM roles for task execution
+# IAM roles for task execution (optional creation)
 resource "aws_iam_role" "task_exec" {
-  count = var.create_service ? 1 : 0
+  count = var.create_service && var.existing_task_execution_role_arn == "" ? 1 : 0
   name = "${local.name_prefix}-task-exec"
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -192,14 +192,14 @@ resource "aws_iam_role" "task_exec" {
 }
 
 resource "aws_iam_role_policy_attachment" "task_exec_policy" {
-  count      = var.create_service ? 1 : 0
+  count      = var.create_service && var.existing_task_execution_role_arn == "" ? 1 : 0
   role       = aws_iam_role.task_exec[0].name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-# Minimal Secrets Manager access when secret injection enabled
+# Minimal Secrets Manager access when secret injection enabled (only if we created the role)
 resource "aws_iam_role_policy" "task_exec_secrets" {
-  count = var.create_service && var.inject_db_secret && var.db_secret_arn != "" ? 1 : 0
+  count = var.create_service && var.inject_db_secret && var.db_secret_arn != "" && var.existing_task_execution_role_arn == "" ? 1 : 0
   name  = "${local.name_prefix}-task-exec-secrets"
   role  = aws_iam_role.task_exec[0].id
   policy = jsonencode({
@@ -222,8 +222,8 @@ resource "aws_ecs_task_definition" "app" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = tostring(var.cpu)
   memory                   = tostring(var.memory)
-  execution_role_arn       = aws_iam_role.task_exec[0].arn
-  task_role_arn            = aws_iam_role.task_exec[0].arn
+  execution_role_arn       = var.existing_task_execution_role_arn != "" ? var.existing_task_execution_role_arn : aws_iam_role.task_exec[0].arn
+  task_role_arn            = var.existing_task_execution_role_arn != "" ? var.existing_task_execution_role_arn : aws_iam_role.task_exec[0].arn
   container_definitions = jsonencode([
     merge({
       name      = "app"

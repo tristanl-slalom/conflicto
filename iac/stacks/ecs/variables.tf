@@ -45,6 +45,12 @@ variable "create_service" {
 	description = "If true, create ALB, task definition, service, DNS record (future phase)."
 }
 
+variable "existing_task_execution_role_arn" {
+	type        = string
+	default     = ""
+	description = "If provided, reuse this IAM role ARN for ECS task execution/task role instead of creating one (must include AmazonECSTaskExecutionRolePolicy and any secrets permissions)."
+}
+
 variable "enable_https" {
 	type        = bool
 	default     = true
