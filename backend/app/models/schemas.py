@@ -3,7 +3,7 @@ Pydantic models for request/response validation.
 """
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field, ConfigDict
@@ -114,7 +114,7 @@ class ParticipantJoinResponse(BaseModel):
     """Session join response model."""
 
     participant_id: str  # UUID as string
-    session_state: Dict[str, Any]  # Current activity and state info
+    session_state: dict[str, Any]  # Current activity and state info
 
     class Config:
         from_attributes = True
@@ -151,14 +151,14 @@ class ParticipantResponse(BaseResponse):
 class ParticipantHeartbeatRequest(BaseModel):
     """Participant heartbeat request model."""
 
-    activity_context: Optional[Dict[str, Any]] = None
+    activity_context: Optional[dict[str, Any]] = None
 
 
 class ParticipantHeartbeatResponse(BaseModel):
     """Participant heartbeat response model."""
 
     status: str  # "online", "idle", "disconnected"
-    activity_context: Dict[str, Any]
+    activity_context: dict[str, Any]
     updated_at: datetime
 
     class Config:
@@ -188,7 +188,7 @@ class ParticipantStatus(BaseModel):
 class ParticipantListResponse(BaseModel):
     """Participant list response model."""
 
-    participants: List[ParticipantStatus]
+    participants: list[ParticipantStatus]
     total_count: int
 
 
@@ -233,7 +233,7 @@ class ActivityList(BaseModel):
 class ParticipantList(BaseModel):
     """Participant list response model."""
 
-    participants: List[ParticipantStatus]
+    participants: list[ParticipantStatus]
     total: int
 
 
@@ -265,7 +265,7 @@ class ActivityStatusResponse(BaseModel):
 class IncrementalResponseList(BaseModel):
     """Schema for incremental response updates since timestamp."""
 
-    items: List[UserResponse] = []
+    items: list[UserResponse] = []
     since: datetime
     count: int
 
@@ -286,6 +286,123 @@ class HealthResponse(BaseModel):
     status: str = "healthy"
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     version: str = "0.1.0"
+
+
+# Framework-Enhanced Models
+class ActivityTypeResponse(BaseModel):
+    """Activity type information response."""
+
+    id: str = Field(..., description="Unique activity type identifier")
+    name: str = Field(..., description="Human-readable name")
+    description: str = Field(..., description="Description of the activity type")
+    version: str = Field(..., description="Activity type version")
+
+
+class ActivityTypesListResponse(BaseModel):
+    """List of available activity types response."""
+
+    activity_types: list[ActivityTypeResponse]
+
+
+class ActivityTypeSchemaResponse(BaseModel):
+    """Activity type schema response."""
+
+    activity_type: str = Field(..., description="Activity type identifier")
+    schema: dict[str, Any] = Field(
+        ..., description="JSON schema for activity configuration"
+    )
+
+
+class FrameworkActivityCreate(BaseModel):
+    """Framework-enhanced activity creation request."""
+
+    activity_type: str = Field(..., description="Type of activity to create")
+    title: str = Field(..., min_length=1, max_length=500, description="Activity title")
+    description: Optional[str] = Field(
+        None, description="Optional activity description"
+    )
+    configuration: dict[str, Any] = Field(
+        default_factory=dict, description="Activity-specific configuration"
+    )
+    activity_metadata: Optional[dict[str, Any]] = Field(
+        None, description="Framework metadata"
+    )
+    order_index: int = Field(
+        default=0, ge=0, description="Order index for the activity"
+    )
+
+
+class ActivityTransitionRequest(BaseModel):
+    """Activity state transition request."""
+
+    target_state: str = Field(
+        ...,
+        pattern="^(draft|published|active|expired)$",
+        description="Target state to transition to",
+    )
+    reason: Optional[str] = Field(
+        None, max_length=500, description="Optional reason for the transition"
+    )
+    force: bool = Field(default=False, description="Force transition (skip validation)")
+
+
+class ActivityValidationRequest(BaseModel):
+    """Activity configuration validation request."""
+
+    activity_type: str = Field(..., description="Activity type identifier")
+    configuration: dict[str, Any] = Field(..., description="Configuration to validate")
+
+
+class ActivityValidationResponse(BaseModel):
+    """Activity configuration validation response."""
+
+    valid: bool = Field(..., description="Whether the configuration is valid")
+    errors: list[str] = Field(
+        default_factory=list, description="List of validation errors"
+    )
+    warnings: list[str] = Field(
+        default_factory=list, description="List of validation warnings"
+    )
+
+
+class ActivityResponseSubmissionRequest(BaseModel):
+    """Framework activity response submission request."""
+
+    response_data: dict[str, Any] = Field(
+        ..., description="Response data from participant"
+    )
+
+
+class ActivityResultsResponse(BaseModel):
+    """Activity results response."""
+
+    results: dict[str, Any] = Field(..., description="Calculated activity results")
+    last_updated: datetime = Field(..., description="When results were last calculated")
+
+
+class FrameworkActivityStatusResponse(BaseModel):
+    """Enhanced activity status response with framework information."""
+
+    activity_id: UUID = Field(..., description="Activity ID")
+    status: ActivityStatus = Field(..., description="Legacy activity status")
+    state: str = Field(..., description="Framework activity state")
+    response_count: int = Field(..., description="Number of responses")
+    expires_at: Optional[datetime] = Field(None, description="When activity expires")
+    activity_metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Activity metadata"
+    )
+    valid_transitions: list[str] = Field(
+        default_factory=list, description="Valid state transitions"
+    )
+    results: Optional[dict[str, Any]] = Field(
+        None, description="Calculated results if available"
+    )
+    last_response_at: Optional[datetime] = Field(
+        None, description="Last response timestamp"
+    )
+    last_updated: datetime = Field(..., description="Last update timestamp")
+
+    model_config = ConfigDict(use_enum_values=True)
 
 
 # Update forward references
