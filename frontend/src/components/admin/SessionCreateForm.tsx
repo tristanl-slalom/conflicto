@@ -1,7 +1,13 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { sessionCreateSchema } from '../../lib/validations/sessionValidation';
 import type { SessionCreateFormData } from '../../lib/validations/sessionValidation';
-import { useSessionManagement } from '../../hooks/useSessionManagement';
+import {
+  useCreateSessionApiV1SessionsPost,
+  getListSessionsApiV1SessionsGetQueryKey,
+  type SessionCreate,
+  type SessionDetail
+} from '../../api/generated';
 import type { SessionCreateFormProps } from '../../types/admin';
 
 // Form error type with explicit string keys
@@ -10,19 +16,23 @@ interface FormErrors {
   description?: string;
 }
 
-export const SessionCreateForm = ({ 
-  onSuccess, 
-  onError, 
-  className = '' 
+export const SessionCreateForm = ({
+  onSuccess,
+  onError,
+  className = ''
 }: SessionCreateFormProps) => {
-  const { createSession, isCreating, creationError, creationSuccess } = useSessionManagement();
-  
+  const queryClient = useQueryClient();
+  const createSessionMutation = useCreateSessionApiV1SessionsPost();
+
   const [formData, setFormData] = useState<SessionCreateFormData>({
     title: '',
     description: '',
   });
-  
+
   const [errors, setErrors] = useState<FormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | undefined>();
+  const [success, setSuccess] = useState<string | undefined>();
 
   const validateForm = (): boolean => {
     try {
@@ -51,23 +61,44 @@ export const SessionCreateForm = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
+    setIsSubmitting(true);
+    setError(undefined);
+    setSuccess(undefined);
+
     try {
-      const session = await createSession(formData);
-      
+      const sessionCreateData: SessionCreate = {
+        title: formData.title,
+        description: formData.description || undefined,
+      };
+
+      const response = await createSessionMutation.mutateAsync({
+        data: sessionCreateData
+      });
+
+      // Invalidate sessions cache to trigger refetch across all components
+      await queryClient.invalidateQueries({ queryKey: getListSessionsApiV1SessionsGetQueryKey() });
+
+      // Convert SessionResponse to SessionDetail (they're compatible types)
+      const sessionDetail = response.data as SessionDetail;
+
       // Reset form
       setFormData({ title: '', description: '' });
       setErrors({});
-      
+      setSuccess('Session created successfully!');
+
       // Call success callback
-      onSuccess?.(session);
+      onSuccess?.(sessionDetail);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to create session';
+      setError(errorMessage);
       onError?.(errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -77,7 +108,7 @@ export const SessionCreateForm = ({
       updated[field] = value;
       return updated;
     });
-    
+
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev: FormErrors) => {
@@ -119,16 +150,16 @@ export const SessionCreateForm = ({
       </h2>
 
       {/* Success Message */}
-      {creationSuccess && (
+      {success && (
         <div className="mb-4 p-3 bg-green-900/50 border border-green-700 rounded-md">
-          <p className="text-green-300 text-sm">{creationSuccess}</p>
+          <p className="text-green-300 text-sm">{success}</p>
         </div>
       )}
 
       {/* Error Message */}
-      {creationError && (
+      {error && (
         <div className="mb-4 p-3 bg-red-900/50 border border-red-700 rounded-md">
-          <p className="text-red-300 text-sm">{creationError}</p>
+          <p className="text-red-300 text-sm">{error}</p>
         </div>
       )}
 
@@ -147,12 +178,12 @@ export const SessionCreateForm = ({
             onChange={(e) => handleFieldChange('title', e.target.value)}
             onBlur={() => handleFieldBlur('title')}
             placeholder="Enter session title..."
-            disabled={isCreating}
+            disabled={isSubmitting}
             className={`w-full px-3 py-2 bg-slate-700 border rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
               errors.title
                 ? 'border-red-600'
                 : 'border-slate-600'
-            } ${isCreating ? 'opacity-50 cursor-not-allowed' : ''}`}
+            } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
           />
           {errors.title && (
             <p className="mt-1 text-sm text-red-400">
@@ -172,12 +203,12 @@ export const SessionCreateForm = ({
             onChange={(e) => handleFieldChange('description', e.target.value)}
             onBlur={() => handleFieldBlur('description')}
             placeholder="Enter session description (optional)..."
-            disabled={isCreating}
+            disabled={isSubmitting}
             className={`w-full px-3 py-2 bg-slate-700 border rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
               errors.description
                 ? 'border-red-600'
                 : 'border-slate-600'
-            } ${isCreating ? 'opacity-50 cursor-not-allowed' : ''}`}
+            } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
           />
           {errors.description && (
             <p className="mt-1 text-sm text-red-400">
@@ -190,14 +221,14 @@ export const SessionCreateForm = ({
         <div className="flex gap-3">
           <button
             type="submit"
-            disabled={!canSubmit || isCreating}
+            disabled={!canSubmit || isSubmitting}
             className={`flex-1 py-2 px-4 rounded-md font-medium transition-colors ${
-              canSubmit && !isCreating
+              canSubmit && !isSubmitting
                 ? 'bg-blue-600 hover:bg-blue-700 text-white'
                 : 'bg-slate-600 text-gray-400 cursor-not-allowed'
             }`}
           >
-            {isCreating ? (
+            {isSubmitting ? (
               <span className="flex items-center justify-center gap-2">
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 Creating...
@@ -213,9 +244,9 @@ export const SessionCreateForm = ({
               setFormData({ title: '', description: '' });
               setErrors({});
             }}
-            disabled={isCreating}
+            disabled={isSubmitting}
             className={`px-4 py-2 rounded-md transition-colors ${
-              isCreating
+              isSubmitting
                 ? 'bg-slate-600 text-gray-400 cursor-not-allowed'
                 : 'bg-slate-600 hover:bg-slate-500 text-white'
             }`}

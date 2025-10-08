@@ -1,6 +1,9 @@
 import ReactDOM from 'react-dom/client'
 import { RouterProvider } from '@tanstack/react-router'
 import { getRouter } from './router'
+import axios from 'axios'
+
+axios.defaults.baseURL = 'http://localhost:8000';
 
 // Create the router instance
 const router = getRouter()

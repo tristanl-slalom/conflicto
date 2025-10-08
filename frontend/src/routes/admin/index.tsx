@@ -1,7 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
-import { SessionCreateForm, SessionList, SessionStatusCard } from '../../components/admin';
-import { useSessionManagement } from '../../hooks/useSessionManagement';
+import { SessionCreateForm, SessionList, SessionStatusCard, SessionControls, ActivityManagement, ParticipantManagement } from '../../components/admin';
 import type { SessionDetail, SessionResponse } from '../../api/generated';
 
 export const Route = createFileRoute('/admin/')({
@@ -9,15 +8,10 @@ export const Route = createFileRoute('/admin/')({
 });
 
 function AdminLayout() {
-  const { lastCreatedSession, clearFormState } = useSessionManagement();
-  const [selectedSession, setSelectedSession] = useState<SessionDetail | undefined>(lastCreatedSession);
+  const [selectedSession, setSelectedSession] = useState<SessionDetail | undefined>();
 
   const handleSessionCreated = (session: SessionDetail) => {
     setSelectedSession(session);
-    // Clear any previous form state
-    setTimeout(() => {
-      clearFormState();
-    }, 3000); // Clear success message after 3 seconds
   };
 
   const handleSessionSelected = (session: SessionResponse) => {
@@ -74,10 +68,30 @@ function AdminLayout() {
               showActions={true}
               maxItems={5}
             />
+
+            {/* Activity Management */}
+            {selectedSession && (
+              <ActivityManagement
+                session={selectedSession}
+                onActivityChange={() => {
+                  console.log('Activity changed - refreshing session data...');
+                  // Could refresh session data here
+                }}
+              />
+            )}
           </div>
 
           {/* Session Status Sidebar */}
           <div className="space-y-6">
+            {/* Session Controls */}
+            <SessionControls
+              session={selectedSession}
+              onStatusChange={(newStatus) => {
+                console.log('Session status changed to:', newStatus);
+                // Could refresh session data here
+              }}
+            />
+
             {/* Current Session Status */}
             <SessionStatusCard
               session={selectedSession}
@@ -86,6 +100,13 @@ function AdminLayout() {
                 console.log('Refreshing session data...');
               }}
             />
+
+            {/* Participant Management */}
+            {selectedSession && (
+              <ParticipantManagement
+                session={selectedSession}
+              />
+            )}
 
             {/* Quick Actions Card */}
             <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">

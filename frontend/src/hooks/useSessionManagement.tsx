@@ -1,8 +1,10 @@
 import { useState, useCallback } from 'react';
-import { 
+import { useQueryClient } from '@tanstack/react-query';
+import {
   useCreateSessionApiV1SessionsPost,
   useListSessionsApiV1SessionsGet,
   useGetSessionApiV1SessionsSessionIdGet,
+  getListSessionsApiV1SessionsGetQueryKey,
   type SessionCreate,
   type SessionDetail
 } from '../api/generated';
@@ -16,13 +18,16 @@ export const useSessionManagement = () => {
     isSubmitting: false,
   });
 
+  // Query client for cache invalidation
+  const queryClient = useQueryClient();
+
   // API hooks
   const createSessionMutation = useCreateSessionApiV1SessionsPost();
-  const { 
-    data: sessionsData, 
+  const {
+    data: sessionsData,
     refetch: refetchSessions,
     isLoading: isLoadingSessions,
-    error: sessionsError 
+    error: sessionsError
   } = useListSessionsApiV1SessionsGet();
 
   /**
@@ -40,14 +45,14 @@ export const useSessionManagement = () => {
       console.log('🚀 Creating session with data:', sessionCreateData);
       console.log('🔗 API call about to be made...');
 
-      const response = await createSessionMutation.mutateAsync({ 
-        data: sessionCreateData 
+      const response = await createSessionMutation.mutateAsync({
+        data: sessionCreateData
       });
 
       console.log('✅ Session created successfully:', response.data);
 
-      // Refresh the sessions list
-      await refetchSessions();
+      // Invalidate sessions cache to trigger refetch across all components
+      await queryClient.invalidateQueries({ queryKey: getListSessionsApiV1SessionsGetQueryKey() });
 
       // Convert SessionResponse to SessionDetail (they're compatible types)
       const sessionDetail = response.data as SessionDetail;
@@ -68,15 +73,15 @@ export const useSessionManagement = () => {
         url: (error as any)?.config?.url,
       });
 
-      const errorMessage = error instanceof Error 
-        ? error.message 
+      const errorMessage = error instanceof Error
+        ? error.message
         : 'Failed to create session. Please try again.';
-      
+
       setFormState({
         isSubmitting: false,
         error: errorMessage,
       });
-      
+
       throw error;
     }
   }, [createSessionMutation, refetchSessions]);
@@ -95,11 +100,11 @@ export const useSessionManagement = () => {
    */
   const useSessionById = (sessionId: number | undefined) => {
     return useGetSessionApiV1SessionsSessionIdGet(
-      sessionId!, 
-      { 
-        query: { 
-          enabled: !!sessionId 
-        } 
+      sessionId!,
+      {
+        query: {
+          enabled: !!sessionId
+        }
       }
     );
   };
@@ -109,21 +114,21 @@ export const useSessionManagement = () => {
     createSession,
     formState,
     clearFormState,
-    
+
     // Session list
-    sessions: (sessionsData?.status === 200 && 'sessions' in sessionsData.data) 
-      ? sessionsData.data.sessions 
+    sessions: (sessionsData?.status === 200 && 'sessions' in sessionsData.data)
+      ? sessionsData.data.sessions
       : [],
-    totalSessions: (sessionsData?.status === 200 && 'total' in sessionsData.data) 
-      ? sessionsData.data.total 
+    totalSessions: (sessionsData?.status === 200 && 'total' in sessionsData.data)
+      ? sessionsData.data.total
       : 0,
     isLoadingSessions,
     sessionsError,
     refetchSessions,
-    
+
     // Utilities
     useSessionById,
-    
+
     // Computed states
     isCreating: formState.isSubmitting,
     creationError: formState.error,
