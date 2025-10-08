@@ -204,9 +204,9 @@ resource "aws_iam_role_policy" "flow_logs" {
 resource "aws_flow_log" "vpc" {
   count                = var.enable_flow_logs ? 1 : 0
   log_destination_type = "cloud-watch-logs"
-  log_group_name       = aws_cloudwatch_log_group.flow[0].name
+  log_destination      = aws_cloudwatch_log_group.flow[0].arn
   iam_role_arn         = aws_iam_role.flow_logs[0].arn
-  resource_id          = aws_vpc.main.id
+  vpc_id               = aws_vpc.main.id
   traffic_type         = "ALL"
   tags                 = module.shared.tags
 }
