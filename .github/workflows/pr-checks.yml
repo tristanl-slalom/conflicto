@@ -308,7 +308,7 @@ jobs:
             echo "Testing API health endpoint..."
             for i in {1..5}; do
               echo "Health check attempt $i..."
-              if docker exec test-backend curl -f http://localhost:8000/health; then
+              if docker exec test-backend curl -f http://localhost:8000/api/v1/health/; then
                 echo "✅ Health check passed"
                 break
               elif [ $i -eq 5 ]; then
