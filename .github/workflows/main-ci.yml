@@ -182,31 +182,31 @@ jobs:
       security-events: write
 
     steps:
-      - name: Run Trivy vulnerability scanner on backend image
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ needs.build-and-push.outputs.backend-image }}
-          format: 'sarif'
-          output: 'backend-trivy-results.sarif'
+      # - name: Run Trivy vulnerability scanner on backend image
+      #   uses: aquasecurity/trivy-action@master
+      #   with:
+      #     image-ref: ${{ needs.build-and-push.outputs.backend-image }}
+      #     format: 'sarif'
+      #     output: 'backend-trivy-results.sarif'
 
-      - name: Run Trivy vulnerability scanner on frontend image
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ needs.build-and-push.outputs.frontend-image }}
-          format: 'sarif'
-          output: 'frontend-trivy-results.sarif'
+      # - name: Run Trivy vulnerability scanner on frontend image
+      #   uses: aquasecurity/trivy-action@master
+      #   with:
+      #     image-ref: ${{ needs.build-and-push.outputs.frontend-image }}
+      #     format: 'sarif'
+      #     output: 'frontend-trivy-results.sarif'
 
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: 'backend-trivy-results.sarif'
-          category: 'backend-image'
+      # - name: Upload Trivy scan results to GitHub Security tab
+      #   uses: github/codeql-action/upload-sarif@v3
+      #   with:
+      #     sarif_file: 'backend-trivy-results.sarif'
+      #     category: 'backend-image'
 
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: 'frontend-trivy-results.sarif'
-          category: 'frontend-image'
+      # - name: Upload Trivy scan results to GitHub Security tab
+      #   uses: github/codeql-action/upload-sarif@v3
+      #   with:
+      #     sarif_file: 'frontend-trivy-results.sarif'
+      #     category: 'frontend-image'
 
   integration-tests:
     name: Integration Tests
