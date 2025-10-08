@@ -120,7 +120,7 @@ export interface ActivityComponentProps {
  */
 export class ActivityComponentWrapper extends React.Component<ActivityComponentProps> {
   render() {
-    const { activity, persona, ...props } = this.props;
+    const { activity } = this.props;
 
     if (!activity) {
       return <div className="activity-error">No activity provided</div>;
