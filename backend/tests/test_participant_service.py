@@ -2,7 +2,7 @@
 Unit tests for ParticipantService.
 """
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, UTC
 from uuid import uuid4
 
 from app.services.participant_service import ParticipantService
@@ -14,21 +14,21 @@ class TestParticipantStatusComputation:
     def test_compute_status_online(self):
         """Test status computation for online participant."""
         service = ParticipantService(None)
-        recent_time = datetime.now(timezone.utc) - timedelta(seconds=15)
+        recent_time = datetime.now(UTC) - timedelta(seconds=15)
         status = service._compute_participant_status(recent_time)
         assert status == "online"
 
     def test_compute_status_idle(self):
         """Test status computation for idle participant."""
         service = ParticipantService(None)
-        idle_time = datetime.now(timezone.utc) - timedelta(seconds=60)
+        idle_time = datetime.now(UTC) - timedelta(seconds=60)
         status = service._compute_participant_status(idle_time)
         assert status == "idle"
 
     def test_compute_status_disconnected(self):
         """Test status computation for disconnected participant."""
         service = ParticipantService(None)
-        old_time = datetime.now(timezone.utc) - timedelta(seconds=300)
+        old_time = datetime.now(UTC) - timedelta(seconds=300)
         status = service._compute_participant_status(old_time)
         assert status == "disconnected"
 
@@ -37,7 +37,7 @@ class TestParticipantStatusComputation:
         service = ParticipantService(None)
         # Create a naive datetime that's 15 seconds ago in UTC terms
         # The method will add UTC timezone to naive datetimes
-        utc_now = datetime.now(timezone.utc)
+        utc_now = datetime.now(UTC)
         naive_time = (utc_now - timedelta(seconds=15)).replace(tzinfo=None)
         status = service._compute_participant_status(naive_time)
         assert status == "online"

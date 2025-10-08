@@ -2,8 +2,8 @@
 Participant service for handling session joining, heartbeat, and management operations.
 """
 
-from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional
+from datetime import datetime, UTC
+from typing import Any, Optional
 from uuid import UUID
 
 from sqlalchemy import and_, select, func, delete
@@ -144,7 +144,7 @@ class ParticipantService:
             raise ValueError("Participant not found")
 
         # Update last_seen and connection_data
-        participant.last_seen = datetime.now(timezone.utc)
+        participant.last_seen = datetime.now(UTC)
         if heartbeat_request.activity_context:
             participant.connection_data = heartbeat_request.activity_context
 
@@ -164,7 +164,7 @@ class ParticipantService:
 
     async def get_session_participants(
         self, session_id: int
-    ) -> List[ParticipantStatus]:
+    ) -> list[ParticipantStatus]:
         """
         Get all participants for a session with computed status.
 
@@ -235,10 +235,12 @@ class ParticipantService:
         Returns:
             Status string: "online", "idle", or "disconnected"
         """
-        now = datetime.now(timezone.utc)
-        # Ensure last_seen has timezone info
+        # Ensure both timestamps are timezone-aware for proper comparison
         if last_seen.tzinfo is None:
-            last_seen = last_seen.replace(tzinfo=timezone.utc)
+            # For naive datetime, assume it's in UTC (consistent with our database storage)
+            last_seen = last_seen.replace(tzinfo=UTC)
+
+        now = datetime.now(UTC)
         seconds_since_seen = (now - last_seen).total_seconds()
 
         if seconds_since_seen < self.ONLINE_THRESHOLD:
@@ -248,7 +250,7 @@ class ParticipantService:
         else:
             return "disconnected"
 
-    async def _get_session_state(self, session_id: int) -> Dict[str, Any]:
+    async def _get_session_state(self, session_id: int) -> dict[str, Any]:
         """
         Get current session state including active activity and configuration.
 
@@ -291,7 +293,7 @@ class ParticipantService:
             "participant_count": participant_count,
         }
 
-    async def _get_activity_context(self, session_id: int) -> Dict[str, Any]:
+    async def _get_activity_context(self, session_id: int) -> dict[str, Any]:
         """
         Get current activity context for heartbeat responses.
 

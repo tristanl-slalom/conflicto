@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.logging import configure_logging, get_logger
 from app.core.settings import settings
 from app.routes import health, sessions, user_responses, activities, participants
+from app.services.activity_framework.registration import register_activity_types
 
 # Configure logging
 configure_logging()
@@ -47,6 +48,14 @@ app.include_router(activities.router)
 async def startup_event():
     """Application startup event handler."""
     logger.info("Starting Caja backend application", version=settings.version)
+
+    # Register activity types with the framework
+    try:
+        register_activity_types()
+        logger.info("Activity framework initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize activity framework: {e}")
+        raise
 
 
 @app.on_event("shutdown")

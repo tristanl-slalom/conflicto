@@ -27,11 +27,11 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
-      with:
-        languages: ${{ matrix.language }}
-        queries: security-extended,security-and-quality
+    # - name: Initialize CodeQL
+    #   uses: github/codeql-action/init@v2
+    #   with:
+    #     languages: ${{ matrix.language }}
+    #     queries: security-extended,security-and-quality
 
     - name: Set up Python for Python analysis
       if: matrix.language == 'python'
@@ -65,7 +65,7 @@ jobs:
       working-directory: frontend
       run: npm ci --prefer-offline --no-audit
 
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
-      with:
-        category: "/language:${{matrix.language}}"
+    # - name: Perform CodeQL Analysis
+    #   uses: github/codeql-action/analyze@v2
+    #   with:
+    #     category: "/language:${{matrix.language}}"

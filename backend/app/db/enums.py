@@ -12,6 +12,15 @@ class ActivityStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
+class ActivityState(str, Enum):
+    """Enhanced activity state enumeration for framework."""
+
+    DRAFT = "draft"
+    PUBLISHED = "published"
+    ACTIVE = "active"
+    EXPIRED = "expired"
+
+
 class SessionStatus(str, Enum):
     """Session status enumeration."""
 
