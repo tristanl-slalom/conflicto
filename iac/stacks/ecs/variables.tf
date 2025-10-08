@@ -45,6 +45,18 @@ variable "create_service" {
 	description = "If true, create ALB, task definition, service, DNS record (future phase)."
 }
 
+variable "enable_https" {
+	type        = bool
+	default     = true
+	description = "If true and a certificate_arn is provided, create an HTTPS listener on 443 and redirect HTTP->HTTPS."
+}
+
+variable "certificate_arn" {
+	type        = string
+	default     = ""
+	description = "ACM certificate ARN for the app domain (required if enable_https=true)."
+}
+
 variable "cpu" {
 	type    = number
 	default = 256
@@ -78,6 +90,18 @@ variable "alb_idle_timeout" {
 variable "enable_execute_command" {
 	type    = bool
 	default = true
+}
+
+variable "inject_db_secret" {
+	type        = bool
+	default     = false
+	description = "If true, inject RDS database secret values as container secrets (requires db_secret_arn)."
+}
+
+variable "db_secret_arn" {
+	type        = string
+	default     = ""
+	description = "Secrets Manager ARN containing JSON with keys username,password,host,port,db_name,url."
 }
 
 variable "app_domain" {

@@ -138,6 +138,32 @@ resource "aws_lb_listener" "http" {
   port              = 80
   protocol          = "HTTP"
   default_action {
+    type = var.enable_https && var.certificate_arn != "" ? "redirect" : "forward"
+    dynamic "redirect" {
+      for_each = var.enable_https && var.certificate_arn != "" ? [1] : []
+      content {
+        port        = "443"
+        protocol    = "HTTPS"
+        status_code = "HTTP_301"
+      }
+    }
+    dynamic "forward" {
+      for_each = var.enable_https && var.certificate_arn != "" ? [] : [1]
+      content {
+        target_group_arn = aws_lb_target_group.app[0].arn
+      }
+    }
+  }
+}
+
+resource "aws_lb_listener" "https" {
+  count             = var.create_service && var.enable_https && var.certificate_arn != "" ? 1 : 0
+  load_balancer_arn = aws_lb.app[0].arn
+  port              = 443
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  certificate_arn   = var.certificate_arn
+  default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.app[0].arn
   }
@@ -175,7 +201,7 @@ resource "aws_ecs_task_definition" "app" {
   execution_role_arn       = aws_iam_role.task_exec[0].arn
   task_role_arn            = aws_iam_role.task_exec[0].arn
   container_definitions = jsonencode([
-    {
+    merge({
       name      = "app"
       image     = local.effective_image
       essential = true
@@ -196,7 +222,14 @@ resource "aws_ecs_task_definition" "app" {
         retries     = 3
         startPeriod = 10
       }
-    }
+    }, var.inject_db_secret && var.db_secret_arn != "" ? {
+      secrets = [
+        for key in ["username","password","host","port","db_name","url"] : {
+          name      = upper("DB_" .. replace(key, "url", "CONNECTION_URL"))
+          valueFrom = "${var.db_secret_arn}:$${key}::" # Secrets Manager key reference
+        }
+      ]
+    } : {})
   ])
   tags = module.shared.tags
 }
@@ -222,7 +255,7 @@ resource "aws_ecs_service" "app" {
   }
   deployment_minimum_healthy_percent = 50
   deployment_maximum_percent         = 200
-  depends_on = [aws_lb_listener.http]
+  depends_on = [aws_lb_listener.http, aws_lb_listener.https]
   tags = module.shared.tags
 }
 
@@ -244,4 +277,5 @@ output "cluster_arn" { value = aws_ecs_cluster.this.arn }
 output "ecr_repository_url" { value = var.create_ecr_repo ? aws_ecr_repository.app[0].repository_url : "" }
 output "service_name" { value = var.create_service ? aws_ecs_service.app[0].name : "" }
 output "alb_dns_name" { value = var.create_service ? aws_lb.app[0].dns_name : "" }
+output "https_enabled" { value = var.create_service && var.enable_https && var.certificate_arn != "" }
 output "task_definition_family" { value = var.create_service ? aws_ecs_task_definition.app[0].family : "" }

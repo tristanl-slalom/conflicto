@@ -1,6 +1,6 @@
 # ECS Stack (Issue 52)
 
-Phase 4 baseline per Issue 52 focuses on provisioning the container platform primitives (ECS Cluster + optional ECR). A toggle (`create_service`) allows progressing into service + ALB resources when ready, but defaults off to keep scope aligned with the issue.
+Phase 4 baseline per Issue 52 originally focused on provisioning the container platform primitives (ECS Cluster + optional ECR). This branch now completes the service enablement with ALB, optional HTTPS, and optional database secret injection.
 
 ## Resources (controlled by flags)
 
@@ -10,8 +10,9 @@ Phase 4 baseline per Issue 52 focuses on provisioning the container platform pri
   - CloudWatch Log Group
   - Task Execution Role & Task Definition
   - Security Groups (ALB + app)
-  - Application Load Balancer, Target Group, Listener (HTTP 80 now; 443 later)
+  - Application Load Balancer, Target Group, HTTP(80) + optional HTTPS(443) listeners (HTTP redirects to HTTPS when `enable_https=true` & cert provided)
   - Route53 A record alias to ALB
+  - Optional database secret injection (`inject_db_secret=true` & `db_secret_arn` provided)
 
 ## Assumptions / Simplifications
 
@@ -53,12 +54,34 @@ Push container image (if using created repo):
 ECR_URI=$(terraform output -raw alb_dns_name | sed 's/.*/$local_image_placeholder/') # placeholder; adjust after repo creation
 ```
 
-## Future Enhancements
+## Variables Added
 
-- Add HTTPS listener + ACM cert ARN (already provisioned in dns stack) via `aws_lb_listener` on 443.
+| Name | Purpose |
+|------|---------|
+| `enable_https` | Toggle creation of 443 listener & HTTP->HTTPS redirect. |
+| `certificate_arn` | ACM cert for domain; required if `enable_https=true`. |
+| `inject_db_secret` | Whether to expose DB secret JSON keys as container secrets. |
+| `db_secret_arn` | ARN of Secrets Manager secret created by RDS stack. |
+
+## Secret Injection
+
+When `inject_db_secret=true` and `db_secret_arn` is passed, the container receives the following secret-based environment variables (ECS secrets):
+
+```bash
+DB_USERNAME
+DB_PASSWORD
+DB_HOST
+DB_PORT
+DB_DB_NAME
+DB_CONNECTION_URL
+```
+
+These are sourced from JSON keys `username`, `password`, `host`, `port`, `db_name`, `url` stored in the secret created by the RDS stack (`<name_prefix>/db`).
+
+## Remaining Future Enhancements
+
 - WAFv2 WebACL association.
 - Autoscaling policies (CPU/RequestCount) and target tracking.
-- RDS secret injection via task definition environment or AWS Secrets Manager integration.
 - Service discovery / private namespace.
 - Blue/Green or canary deployments (CodeDeploy or ECS deployment circuit breaker).
 - Add ECS Exec conditional IAM permissions if enable_execute_command=true.
