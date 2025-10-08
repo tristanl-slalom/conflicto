@@ -1,13 +1,15 @@
 # Implementation Plan: Build Extensible Activity Framework
 
-**GitHub Issue:** [#7](https://github.com/tristanl-slalom/conflicto/issues/7)  
-**Generated:** 2025-10-08T15:45:00Z  
-**Labels:** feature:activity-framework, priority:critical, phase:mvp  
+**GitHub Issue:** [#7](https://github.com/tristanl-slalom/conflicto/issues/7)
+**Generated:** 2025-10-08T15:45:00Z
+**Labels:** feature:activity-framework, priority:critical, phase:mvp
 **Assignee:** josephc-slalom
 
 ## Overview
 
 This plan implements a static, extensible activity framework that allows easy addition of new activity types without core system modifications. All activities support universal personas (admin/viewer/participant) with activity-centric component organization.
+
+**Field Naming Note:** The activity metadata field is named `activity_metadata` (instead of `metadata`) to avoid conflicts with SQLAlchemy's built-in `metadata` attribute used for table metadata management.
 
 ## Phase 1: Backend Framework Foundation
 
@@ -21,7 +23,7 @@ Update the existing Activity model to support the framework:
 class ActivityState(str, Enum):
     """Enhanced activity state enumeration."""
     DRAFT = "draft"
-    PUBLISHED = "published" 
+    PUBLISHED = "published"
     ACTIVE = "active"
     EXPIRED = "expired"
 
@@ -30,14 +32,14 @@ class Activity(Base):
     # Update existing fields
     title: Mapped[str] = mapped_column(String(500))  # Increase from current length
     state: Mapped[str] = mapped_column(String(20), default="draft")  # Use ActivityState enum values
-    metadata: Mapped[dict] = mapped_column(JSONBType, default=dict)  # New field for framework metadata
+    activity_metadata: Mapped[dict] = mapped_column(JSONBType, default=dict)  # New field for framework metadata
     expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))  # New field
 ```
 
 Create migration for schema updates:
 ```sql
 -- Add new columns to activities table
-ALTER TABLE activities ADD COLUMN metadata JSONB DEFAULT '{}';
+ALTER TABLE activities ADD COLUMN activity_metadata JSONB DEFAULT '{}';
 ALTER TABLE activities ADD COLUMN expires_at TIMESTAMP WITH TIME ZONE;
 ALTER TABLE activities ALTER COLUMN title TYPE VARCHAR(500);
 ```
@@ -60,26 +62,26 @@ from pydantic import BaseModel
 
 class BaseActivity(ABC):
     """Abstract base class for all activity types."""
-    
+
     def __init__(self, activity_id: UUID, config: Dict[str, Any]):
         self.activity_id = activity_id
         self.config = config
-    
+
     @abstractmethod
     def validate_config(self, config: Dict[str, Any]) -> bool:
         """Validate activity configuration."""
         pass
-    
+
     @abstractmethod
     def get_schema(self) -> Dict[str, Any]:
         """Return JSON schema for activity configuration."""
         pass
-    
+
     @abstractmethod
     def can_transition_to(self, target_state: str) -> bool:
         """Check if activity can transition to target state."""
         pass
-    
+
     @abstractmethod
     def process_response(self, participant_id: int, response_data: Dict[str, Any]) -> Dict[str, Any]:
         """Process and validate participant response."""
@@ -91,9 +93,9 @@ from .base import BaseActivity
 
 class ActivityRegistry:
     """Registry for activity types."""
-    
+
     _registry: Dict[str, Dict[str, Any]] = {}
-    
+
     @classmethod
     def register(cls, activity_type: str, activity_class: Type[BaseActivity], schema: Dict[str, Any]):
         """Register an activity type."""
@@ -102,14 +104,14 @@ class ActivityRegistry:
             'schema': schema,
             'name': activity_type.replace('_', ' ').title()
         }
-    
+
     @classmethod
     def get_activity_class(cls, activity_type: str) -> Type[BaseActivity]:
         """Get activity class for type."""
         if activity_type not in cls._registry:
             raise ValueError(f"Unknown activity type: {activity_type}")
         return cls._registry[activity_type]['class']
-    
+
     @classmethod
     def get_all_types(cls) -> Dict[str, Dict[str, Any]]:
         """Get all registered activity types."""
@@ -126,7 +128,7 @@ from datetime import datetime
 
 class ActivityStateMachine:
     """Manages activity state transitions."""
-    
+
     # Valid state transitions
     TRANSITIONS = {
         'draft': ['published'],
@@ -134,26 +136,26 @@ class ActivityStateMachine:
         'active': ['expired'],
         'expired': []  # Terminal state
     }
-    
+
     @classmethod
     def can_transition(cls, current_state: str, target_state: str) -> bool:
         """Check if transition is valid."""
         return target_state in cls.TRANSITIONS.get(current_state, [])
-    
+
     @classmethod
     def transition(cls, activity, target_state: str, reason: Optional[str] = None) -> bool:
         """Perform state transition."""
         if not cls.can_transition(activity.state, target_state):
             return False
-        
+
         activity.state = target_state
         activity.updated_at = datetime.utcnow()
-        
+
         # Set expires_at when activating
-        if target_state == 'active' and activity.metadata.get('duration_seconds'):
-            duration = activity.metadata['duration_seconds']
+        if target_state == 'active' and activity.activity_metadata.get('duration_seconds'):
+            duration = activity.activity_metadata['duration_seconds']
             activity.expires_at = datetime.utcnow() + timedelta(seconds=duration)
-        
+
         return True
 ```
 
@@ -168,20 +170,20 @@ from app.services.activity_framework import ActivityRegistry, ActivityStateMachi
 
 class ActivityService:
     # Add to existing methods
-    
+
     async def create_activity(self, session_id: int, activity_data: ActivityCreate) -> Activity:
         """Create activity using framework."""
         # Validate activity type is registered
         if activity_data.activity_type not in ActivityRegistry.get_all_types():
             raise ValueError(f"Unknown activity type: {activity_data.activity_type}")
-        
+
         # Get activity class and validate configuration
         activity_class = ActivityRegistry.get_activity_class(activity_data.activity_type)
         activity_instance = activity_class(None, activity_data.configuration)
-        
+
         if not activity_instance.validate_config(activity_data.configuration):
             raise ValueError("Invalid activity configuration")
-        
+
         # Create database record (enhance existing create method)
         db_activity = Activity(
             session_id=session_id,
@@ -190,28 +192,28 @@ class ActivityService:
             description=activity_data.description,
             config=activity_data.configuration,
             order_index=activity_data.order_index,
-            metadata=getattr(activity_data, 'metadata', {}),
+            activity_metadata=getattr(activity_data, 'activity_metadata', {}),
             state='draft'
         )
-        
+
         # Use existing database operations
         self.db.add(db_activity)
         await self.db.commit()
         await self.db.refresh(db_activity)
-        
+
         return db_activity
-    
+
     async def transition_activity_state(self, activity_id: UUID, target_state: str, reason: Optional[str] = None) -> Activity:
         """Transition activity state using state machine."""
         activity = await self.get_activity(activity_id)
-        
+
         if not ActivityStateMachine.can_transition(activity.state, target_state):
             raise ValueError(f"Cannot transition from {activity.state} to {target_state}")
-        
+
         if ActivityStateMachine.transition(activity, target_state, reason):
             await self.db.commit()
             await self.db.refresh(activity)
-        
+
         return activity
 ```
 
@@ -233,7 +235,7 @@ import json
 
 class PollingActivity(BaseActivity):
     """Polling/Survey activity implementation."""
-    
+
     SCHEMA = {
         "type": "object",
         "properties": {
@@ -249,39 +251,39 @@ class PollingActivity(BaseActivity):
         },
         "required": ["question", "options"]
     }
-    
+
     def validate_config(self, config: Dict[str, Any]) -> bool:
         """Validate polling configuration."""
         try:
             # Basic validation - in production use jsonschema library
             return (
-                'question' in config and 
-                'options' in config and 
+                'question' in config and
+                'options' in config and
                 len(config['options']) >= 2
             )
         except Exception:
             return False
-    
+
     def get_schema(self) -> Dict[str, Any]:
         """Return JSON schema."""
         return self.SCHEMA
-    
+
     def can_transition_to(self, target_state: str) -> bool:
         """Check state transition validity."""
         # Polling activities can use default transitions
         return True
-    
+
     def process_response(self, participant_id: int, response_data: Dict[str, Any]) -> Dict[str, Any]:
         """Process polling response."""
         selected_options = response_data.get('selected_options', [])
-        
+
         # Validate response
         if not isinstance(selected_options, list):
             raise ValueError("Invalid response format")
-        
+
         if not self.config.get('allow_multiple_choice') and len(selected_options) > 1:
             raise ValueError("Multiple choices not allowed")
-        
+
         return {
             'participant_id': participant_id,
             'selected_options': selected_options,
@@ -295,9 +297,9 @@ class PollingActivity(BaseActivity):
 ```python
 class QnaActivity(BaseActivity):
     """Q&A activity implementation."""
-    
+
     SCHEMA = {
-        "type": "object", 
+        "type": "object",
         "properties": {
             "topic": {"type": "string", "minLength": 1, "maxLength": 200},
             "allow_anonymous": {"type": "boolean", "default": True},
@@ -306,15 +308,15 @@ class QnaActivity(BaseActivity):
         },
         "required": ["topic"]
     }
-    
+
     def validate_config(self, config: Dict[str, Any]) -> bool:
         """Validate Q&A configuration."""
         return 'topic' in config and len(config['topic'].strip()) > 0
-    
+
     def process_response(self, participant_id: int, response_data: Dict[str, Any]) -> Dict[str, Any]:
         """Process Q&A response (question submission or vote)."""
         response_type = response_data.get('type')
-        
+
         if response_type == 'question':
             return {
                 'type': 'question',
@@ -324,7 +326,7 @@ class QnaActivity(BaseActivity):
             }
         elif response_type == 'vote':
             return {
-                'type': 'vote', 
+                'type': 'vote',
                 'participant_id': participant_id,
                 'question_id': response_data.get('question_id'),
                 'timestamp': datetime.utcnow().isoformat()
@@ -387,7 +389,7 @@ async def get_activity_schema(activity_type: str):
     """Get JSON schema for activity type."""
     if activity_type not in ActivityRegistry.get_all_types():
         raise HTTPException(status_code=404, detail="Activity type not found")
-    
+
     activity_class = ActivityRegistry.get_activity_class(activity_type)
     return activity_class.SCHEMA
 
@@ -400,7 +402,7 @@ async def transition_activity_state(
     """Transition activity state."""
     try:
         activity = await activity_service.transition_activity_state(
-            activity_id, 
+            activity_id,
             transition_request.target_state,
             transition_request.reason
         )
@@ -432,7 +434,7 @@ class ActivityWithStateResponse(ActivityResponse):
     """Activity response with enhanced state info."""
     state: str
     expires_at: Optional[datetime]
-    metadata: Dict[str, Any] = {}
+    activity_metadata: Dict[str, Any] = {}
 ```
 
 ## Phase 4: Frontend Framework
@@ -468,7 +470,7 @@ export interface ParticipantActivityProps extends BaseActivityProps {
 // frontend/src/components/activities/base/BaseActivity.tsx
 export abstract class BaseActivityComponent<TConfig = Record<string, unknown>> {
   abstract renderAdmin(props: AdminActivityProps): React.ReactElement;
-  abstract renderViewer(props: ViewerActivityProps): React.ReactElement; 
+  abstract renderViewer(props: ViewerActivityProps): React.ReactElement;
   abstract renderParticipant(props: ParticipantActivityProps): React.ReactElement;
 }
 ```
@@ -490,15 +492,15 @@ export interface ActivityTypeDefinition {
 
 class ActivityRegistry {
   private registry = new Map<string, ActivityTypeDefinition>();
-  
+
   register(id: string, name: string, component: typeof BaseActivityComponent) {
     this.registry.set(id, { id, name, component });
   }
-  
+
   get(activityType: string): ActivityTypeDefinition | undefined {
     return this.registry.get(activityType);
   }
-  
+
   getAll(): ActivityTypeDefinition[] {
     return Array.from(this.registry.values());
   }
@@ -530,11 +532,11 @@ export default class PollingActivity extends BaseActivityComponent {
   renderAdmin(props: AdminActivityProps) {
     return <PollingAdmin {...props} />;
   }
-  
+
   renderViewer(props: ViewerActivityProps) {
     return <PollingViewer {...props} />;
   }
-  
+
   renderParticipant(props: ParticipantActivityProps) {
     return <PollingParticipant {...props} />;
   }
@@ -549,12 +551,12 @@ export default function PollingAdmin({
 }: AdminActivityProps) {
   const [question, setQuestion] = useState(configuration.question || '');
   const [options, setOptions] = useState(configuration.options || ['', '']);
-  
+
   const handleSave = () => {
     onConfigUpdate({ question, options });
     onSave();
   };
-  
+
   return (
     <div className="polling-admin">
       <h3>Configure Polling Activity</h3>
@@ -590,7 +592,7 @@ export default function PollingAdmin({
   );
 }
 
-// frontend/src/components/activities/PollingActivity/PollingViewer.tsx  
+// frontend/src/components/activities/PollingActivity/PollingViewer.tsx
 export default function PollingViewer({
   activity,
   configuration,
@@ -606,7 +608,7 @@ export default function PollingViewer({
     });
     return tallies;
   }, [responses]);
-  
+
   return (
     <div className="polling-viewer">
       <h2>{configuration.question}</h2>
@@ -633,11 +635,11 @@ export default function PollingParticipant({
   hasSubmitted
 }: ParticipantActivityProps) {
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
-  
+
   const handleSubmit = () => {
     onSubmitResponse({ selected_options: selectedOptions });
   };
-  
+
   return (
     <div className="polling-participant">
       <h3>{configuration.question}</h3>
@@ -651,8 +653,8 @@ export default function PollingParticipant({
               checked={selectedOptions.includes(option)}
               onChange={(e) => {
                 if (configuration.allow_multiple_choice) {
-                  setSelectedOptions(prev => 
-                    e.target.checked 
+                  setSelectedOptions(prev =>
+                    e.target.checked
                       ? [...prev, option]
                       : prev.filter(o => o !== option)
                   );
@@ -665,7 +667,7 @@ export default function PollingParticipant({
           </label>
         ))}
       </div>
-      <button 
+      <button
         onClick={handleSubmit}
         disabled={!canSubmit || selectedOptions.length === 0}
       >
@@ -700,14 +702,14 @@ export default function ActivityRenderer({
 }: ActivityRendererProps) {
   const { responses, isLoading } = useActivityData(activity.id);
   const activityType = activityRegistry.get(activity.type);
-  
+
   if (!activityType) {
     return <div>Unknown activity type: {activity.type}</div>;
   }
-  
+
   const ActivityComponent = activityType.component;
   const instance = new ActivityComponent();
-  
+
   const baseProps = {
     activity,
     configuration: activity.configuration,
@@ -715,7 +717,7 @@ export default function ActivityRenderer({
       // Handle state changes via API
     }
   };
-  
+
   switch (persona) {
     case 'admin':
       return instance.renderAdmin({
@@ -725,14 +727,14 @@ export default function ActivityRenderer({
           // Save activity configuration
         }
       });
-      
+
     case 'viewer':
       return instance.renderViewer({
         ...baseProps,
         responses: responses || [],
         liveResults: true
       });
-      
+
     case 'participant':
       return instance.renderParticipant({
         ...baseProps,
@@ -740,7 +742,7 @@ export default function ActivityRenderer({
         canSubmit: activity.state === 'active',
         hasSubmitted: false // Check if user has submitted
       });
-      
+
     default:
       return <div>Invalid persona: {persona}</div>;
   }
@@ -759,13 +761,13 @@ export default function ActivityManagement() {
   const { data: activityTypes } = useActivityTypes();
   const [selectedType, setSelectedType] = useState<string>('');
   const [activities, setActivities] = useState<Activity[]>([]);
-  
+
   return (
     <div className="activity-management">
       <div className="activity-type-selector">
         <h3>Create New Activity</h3>
-        <select 
-          value={selectedType} 
+        <select
+          value={selectedType}
           onChange={(e) => setSelectedType(e.target.value)}
         >
           <option value="">Select Activity Type</option>
@@ -774,13 +776,13 @@ export default function ActivityManagement() {
           ))}
         </select>
       </div>
-      
+
       <div className="activity-list">
         <h3>Session Activities</h3>
         {activities.map(activity => (
           <div key={activity.id} className="activity-card">
             <h4>{activity.title}</h4>
-            <ActivityRenderer 
+            <ActivityRenderer
               activity={activity}
               persona="admin"
               onConfigUpdate={(config) => {
@@ -809,22 +811,22 @@ class TestActivityFramework:
         """Test activity type registration."""
         ActivityRegistry.register('test', PollingActivity, PollingActivity.SCHEMA)
         assert 'test' in ActivityRegistry.get_all_types()
-        
+
     def test_state_machine_transitions(self):
         """Test activity state transitions."""
         assert ActivityStateMachine.can_transition('draft', 'published')
         assert not ActivityStateMachine.can_transition('expired', 'active')
-        
+
     def test_polling_activity_validation(self):
         """Test polling activity configuration validation."""
         activity = PollingActivity(None, {})
-        
+
         valid_config = {
             'question': 'Test question?',
             'options': ['Option 1', 'Option 2']
         }
         assert activity.validate_config(valid_config)
-        
+
         invalid_config = {'question': 'Test?'}  # Missing options
         assert not activity.validate_config(invalid_config)
 
@@ -836,25 +838,25 @@ import { mockActivity } from './fixtures';
 describe('ActivityFramework', () => {
   test('renders admin interface for polling activity', () => {
     render(
-      <ActivityRenderer 
+      <ActivityRenderer
         activity={mockActivity}
         persona="admin"
         onConfigUpdate={jest.fn()}
       />
     );
-    
+
     expect(screen.getByText('Configure Polling Activity')).toBeInTheDocument();
   });
-  
+
   test('renders participant interface for polling activity', () => {
     render(
       <ActivityRenderer
         activity={mockActivity}
-        persona="participant" 
+        persona="participant"
         onSubmitResponse={jest.fn()}
       />
     );
-    
+
     expect(screen.getByRole('button', { name: /submit response/i })).toBeInTheDocument();
   });
 });
@@ -881,16 +883,16 @@ export const useActivityTransition = () => {
       activityId: string;
       targetState: string;
       reason?: string;
-    }) => api.activities.transitionActivityState(activityId, { 
+    }) => api.activities.transitionActivityState(activityId, {
       target_state: targetState,
-      reason 
+      reason
     })
   });
 };
 
 export const useCreateActivity = () => {
   return useMutation({
-    mutationFn: (activityData: CreateActivityRequest) => 
+    mutationFn: (activityData: CreateActivityRequest) =>
       api.activities.createActivity(activityData)
   });
 };
@@ -909,7 +911,7 @@ export const useCreateActivity = () => {
 2. Implement required methods: `validate_config`, `get_schema`, `process_response`
 3. Register in `registration.py`
 
-### Frontend Implementation  
+### Frontend Implementation
 1. Create activity directory: `frontend/src/components/activities/YourActivity/`
 2. Implement three persona components: `Admin.tsx`, `Viewer.tsx`, `Participant.tsx`
 3. Create main activity class extending `BaseActivityComponent`
@@ -926,7 +928,7 @@ export const useCreateActivity = () => {
 
 ### Framework Validation Checklist
 - [ ] Activity types register successfully at startup
-- [ ] State transitions work correctly for all activity types  
+- [ ] State transitions work correctly for all activity types
 - [ ] Configuration validation prevents invalid activities
 - [ ] All three persona interfaces render for each activity type
 - [ ] API endpoints handle framework operations correctly
@@ -941,7 +943,7 @@ export const useCreateActivity = () => {
 - [ ] Configuration validation under 50ms
 - [ ] Support 50+ concurrent participants per activity
 
-### Integration Testing  
+### Integration Testing
 - [ ] Activities integrate with existing session management
 - [ ] Participant responses save correctly
 - [ ] Real-time polling updates activity states
@@ -952,7 +954,7 @@ export const useCreateActivity = () => {
 
 Upon completion:
 1. ✅ **Extensible Foundation:** New activity types added by creating classes and registering
-2. ✅ **Universal Personas:** All activities support admin/viewer/participant interfaces  
+2. ✅ **Universal Personas:** All activities support admin/viewer/participant interfaces
 3. ✅ **Static Registration:** Activity types discovered at compile time with validation
 4. ✅ **Type Safety:** Full TypeScript support for activity configurations and components
 5. ✅ **State Management:** Robust state machine handling activity lifecycles

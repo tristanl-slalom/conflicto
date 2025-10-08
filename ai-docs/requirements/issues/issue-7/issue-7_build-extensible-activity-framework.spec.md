@@ -11,10 +11,13 @@ The Caja live event engagement platform needs a flexible, extensible framework f
 
 ## Technical Requirements
 
+### Field Naming Considerations
+- **Metadata Field Naming:** The activity metadata field is named `activity_metadata` in the database schema and SQLAlchemy models to avoid conflicts with SQLAlchemy's own `metadata` attribute, which is used internally by the ORM for table metadata management.
+
 ### Universal Persona Support
 - **All activities MUST support three personas:** admin, viewer, and participant
 - **Admin:** Full control - create, configure, start/stop activities
-- **Viewer:** Read-only display - see real-time results and visualizations  
+- **Viewer:** Read-only display - see real-time results and visualizations
 - **Participant:** Interactive engagement - submit responses and see feedback
 
 ### Core Framework Components
@@ -50,7 +53,7 @@ Activity Framework
 │   └── Configuration Manager
 ├── Activity Types (Backend)
 │   ├── PollingActivity
-│   ├── QnaActivity  
+│   ├── QnaActivity
 │   ├── WordCloudActivity
 │   └── [Future Activity Classes]
 └── Activity Components (Frontend)
@@ -82,7 +85,7 @@ Response: Activity
 
 // Update activity configuration
 PUT /api/activities/{activityId}
-Body: UpdateActivityRequest  
+Body: UpdateActivityRequest
 Response: Activity
 
 // Transition activity state
@@ -122,7 +125,7 @@ interface Activity {
   description?: string;
   state: ActivityState;
   configuration: Record<string, unknown>;
-  metadata: ActivityMetadata;
+  activity_metadata: ActivityMetadata;
   created_at: string;
   updated_at: string;
   expires_at?: string;
@@ -180,13 +183,13 @@ CREATE TABLE activities (
     description TEXT,
     state activity_state_enum NOT NULL DEFAULT 'draft',
     configuration JSONB NOT NULL DEFAULT '{}',
-    metadata JSONB NOT NULL DEFAULT '{}',
+    activity_metadata JSONB NOT NULL DEFAULT '{}',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     expires_at TIMESTAMP WITH TIME ZONE,
-    
+
     CONSTRAINT valid_configuration CHECK (jsonb_typeof(configuration) = 'object'),
-    CONSTRAINT valid_metadata CHECK (jsonb_typeof(metadata) = 'object')
+    CONSTRAINT valid_activity_metadata CHECK (jsonb_typeof(activity_metadata) = 'object')
 );
 
 CREATE TYPE activity_state_enum AS ENUM ('draft', 'published', 'active', 'expired');
@@ -201,7 +204,7 @@ CREATE TABLE activity_responses (
     session_participant_id UUID REFERENCES session_participants(id),
     response_data JSONB NOT NULL,
     submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     CONSTRAINT valid_response_data CHECK (jsonb_typeof(response_data) = 'object')
 );
 ```
@@ -212,7 +215,7 @@ Located in `/backend/app/db/models.py`:
 ```python
 class Activity(Base):
     __tablename__ = "activities"
-    
+
     id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     session_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("sessions.id"))
     type: Mapped[str] = mapped_column(String(100))
@@ -220,9 +223,9 @@ class Activity(Base):
     description: Mapped[Optional[str]] = mapped_column(Text)
     state: Mapped[ActivityState] = mapped_column(Enum(ActivityState), default=ActivityState.DRAFT)
     configuration: Mapped[dict] = mapped_column(JSONB, default=dict)
-    metadata: Mapped[dict] = mapped_column(JSONB, default=dict)
+    activity_metadata: Mapped[dict] = mapped_column(JSONB, default=dict)
     expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
-    
+
     # Relationships
     session: Mapped["Session"] = relationship("Session", back_populates="activities")
     responses: Mapped[list["ActivityResponse"]] = relationship("ActivityResponse", back_populates="activity")
@@ -237,7 +240,7 @@ class Activity(Base):
 
 #### Admin Interface Requirements (Required for ALL activities)
 - **Activity Configuration:** Form-based configuration using plugin schemas
-- **State Management:** Controls to transition activity states  
+- **State Management:** Controls to transition activity states
 - **Live Monitoring:** Real-time activity status and participant engagement
 - **Content Management:** Text editing for activity content
 
@@ -249,7 +252,7 @@ class Activity(Base):
 
 #### Participant Interface Requirements (Required for ALL activities)
 - **Mobile-First Design:** Optimized for smartphones and tablets
-- **Touch-Friendly Controls:** Large buttons and intuitive gestures  
+- **Touch-Friendly Controls:** Large buttons and intuitive gestures
 - **Cross-Browser:** Support for iOS Safari, Android Chrome
 
 ### Component Architecture
@@ -283,13 +286,13 @@ interface ParticipantActivityComponent<TConfig = unknown> extends BaseActivityCo
 
 ### Session Integration
 - **Session Context:** Activities inherit session permissions and settings
-- **Session Lifecycle:** Activities are bound to session lifecycle 
+- **Session Lifecycle:** Activities are bound to session lifecycle
 - **Participant Management:** Leverage existing session participant system
 - **Real-time Polling:** Use existing 2-3 second polling mechanism
 
 ### Authentication & Authorization
 - **Admin Access:** Session organizers can manage activities
-- **Viewer Access:** Public access for viewer displays  
+- **Viewer Access:** Public access for viewer displays
 - **Participant Access:** Anonymous participant access
 
 ### External Services
