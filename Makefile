@@ -35,6 +35,8 @@ $(shell mkdir -p $(PROCESS_DIR))
 .PHONY: test-backend test-frontend test-all test-watch test-coverage
 .PHONY: install install-backend install-frontend lint-backend lint-frontend
 .PHONY: format-backend format-frontend quality
+.PHONY: update-api generate-api
+.PHONY: ci ci-backend ci-frontend ci-security ci-build ci-validate ci-full
 
 # Default target - show help
 help:
@@ -61,7 +63,11 @@ help:
 	@echo "  make restart          🔄 Alias for 'restart-all'"
 	@echo "  make logs             📋 Show application logs"
 	@echo ""
-	@echo "🗄️  Database:"
+	@echo "� API Generation:"
+	@echo "  make update-api       🔄 Download OpenAPI spec and regenerate client"
+	@echo "  make generate-api     ⚡ Generate frontend API client from existing spec"
+	@echo ""
+	@echo "�🗄️  Database:"
 	@echo "  make migrate          ⬆️  Run database migrations"
 	@echo "  make migration        ✨ Create new migration (requires MESSAGE='description')"
 	@echo "  make reset-db         💥 Reset database (DESTRUCTIVE)"
@@ -190,8 +196,10 @@ start-backend:
 	fi
 	$(call check_port,$(BACKEND_PORT))
 	@cd $(BACKEND_DIR) && \
+	{ \
 		poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port $(BACKEND_PORT) & \
-		echo $$! > ../$(PROCESS_DIR)/backend.pid
+		echo $$! > ../$(PROCESS_DIR)/backend.pid; \
+	}
 	@echo "✅ Backend server started"
 	@echo "   📍 URL: http://localhost:$(BACKEND_PORT)"
 	@echo "   📍 API Docs: http://localhost:$(BACKEND_PORT)/docs"
@@ -304,6 +312,46 @@ db-shell:
 	cd backend && docker-compose exec postgres psql -U caja_user -d caja_db
 
 # =============================================================================
+# API GENERATION & SYNCHRONIZATION
+# =============================================================================
+
+# Download OpenAPI spec from running server and regenerate frontend API client
+update-api:
+	@echo "🔄 Updating OpenAPI specification from running server..."
+	@if ! curl -f -s http://localhost:$(BACKEND_PORT)/openapi.json >/dev/null 2>&1; then \
+		echo "❌ Error: Backend server is not running or not accessible at http://localhost:$(BACKEND_PORT)"; \
+		echo "💡 Make sure to start the backend server first: make start-backend"; \
+		exit 1; \
+	fi
+	@echo "📥 Downloading OpenAPI specification..."
+	curl -f -s http://localhost:$(BACKEND_PORT)/openapi.json > openapi.json
+	@if [ $$? -ne 0 ]; then \
+		echo "❌ Error: Failed to download OpenAPI specification"; \
+		exit 1; \
+	fi
+	@echo "📋 Copying to frontend directory..."
+	cp openapi.json $(FRONTEND_DIR)/openapi.json
+	@echo "⚡ Generating frontend API client..."
+	cd $(FRONTEND_DIR) && npm run generate:api
+	@echo "✅ OpenAPI specification updated and frontend client regenerated!"
+	@echo "📁 Files updated:"
+	@echo "   - ./openapi.json (root)"
+	@echo "   - $(FRONTEND_DIR)/openapi.json"
+	@echo "   - $(FRONTEND_DIR)/src/api/generated.ts"
+
+# Generate frontend API client from existing OpenAPI specification
+generate-api:
+	@echo "⚡ Generating frontend API client from existing OpenAPI specification..."
+	@if [ ! -f "$(FRONTEND_DIR)/openapi.json" ]; then \
+		echo "❌ Error: OpenAPI specification not found at $(FRONTEND_DIR)/openapi.json"; \
+		echo "💡 Run 'make update-api' to download from the server first"; \
+		exit 1; \
+	fi
+	cd $(FRONTEND_DIR) && npm run generate:api
+	@echo "✅ Frontend API client generated successfully!"
+	@echo "📁 Generated: $(FRONTEND_DIR)/src/api/generated.ts"
+
+# =============================================================================
 # TESTING & QUALITY ASSURANCE
 # =============================================================================
 
@@ -375,7 +423,6 @@ format-backend:
 		exit 1; \
 	fi
 	cd $(BACKEND_DIR) && poetry run black app tests
-	cd $(BACKEND_DIR) && poetry run isort app tests
 	@echo "✅ Backend code formatted!"
 
 # Format frontend code only
@@ -576,3 +623,85 @@ pre-commit-install:
 pre-commit-run:
 	@echo "🪝 Running pre-commit on all files..."
 	cd backend && poetry run pre-commit run --all-files
+
+# =============================================================================
+# CI/CD OPERATIONS
+# =============================================================================
+
+# Run full CI pipeline locally
+ci: ci-backend ci-frontend ci-security ci-build
+	@echo "🎉 Full CI pipeline completed successfully!"
+
+# Backend CI checks
+ci-backend:
+	@echo "🐍 Running backend CI checks..."
+	@if [ ! -d "$(BACKEND_DIR)" ]; then \
+		echo "❌ Backend directory '$(BACKEND_DIR)' not found"; \
+		exit 1; \
+	fi
+	@echo "📦 Installing backend dependencies..."
+	cd $(BACKEND_DIR) && poetry install --no-interaction
+	@echo "🧹 Running backend linting (ruff)..."
+	cd $(BACKEND_DIR) && ./../.github/scripts/test-backend.sh
+	@echo "✅ Backend CI checks completed!"
+
+# Frontend CI checks
+ci-frontend:
+	@echo "⚛️ Running frontend CI checks..."
+	@if [ ! -d "$(FRONTEND_DIR)" ]; then \
+		echo "❌ Frontend directory '$(FRONTEND_DIR)' not found"; \
+		exit 1; \
+	fi
+	@echo "📦 Installing frontend dependencies..."
+	cd $(FRONTEND_DIR) && npm ci --prefer-offline --no-audit
+	@echo "🧪 Running frontend tests and checks..."
+	cd $(FRONTEND_DIR) && ./../.github/scripts/test-frontend.sh
+	@echo "✅ Frontend CI checks completed!"
+
+# Security scanning
+ci-security:
+	@echo "🔒 Running security scanning..."
+	@echo "🔍 Filesystem vulnerability scan..."
+	@if command -v trivy >/dev/null 2>&1; then \
+		trivy fs --severity HIGH,CRITICAL .; \
+	else \
+		echo "⚠️ Trivy not found - skipping vulnerability scan"; \
+		echo "   Install: curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin"; \
+	fi
+	@echo "✅ Security scanning completed!"
+
+# Build validation
+ci-build:
+	@echo "🔨 Running build validation..."
+	@echo "🐍 Building backend..."
+	cd $(BACKEND_DIR) && poetry build
+	@echo "⚛️ Building frontend..."
+	cd $(FRONTEND_DIR) && npm run build
+	@echo "✅ Build validation completed!"
+
+# Docker build validation
+ci-docker:
+	@echo "🐳 Running Docker build validation..."
+	@echo "🐍 Building backend Docker image..."
+	cd $(BACKEND_DIR) && docker build -t conflicto-backend:ci-test .
+	@echo "⚛️ Building frontend Docker image..."
+	@if [ -f "$(FRONTEND_DIR)/Dockerfile" ]; then \
+		docker build -f $(FRONTEND_DIR)/Dockerfile -t conflicto-frontend:ci-test .; \
+	else \
+		echo "⚠️ Frontend Dockerfile not found - skipping frontend Docker build"; \
+	fi
+	@echo "🧪 Testing container startup..."
+	@docker run --rm -d --name ci-backend-test conflicto-backend:ci-test || true
+	@sleep 5
+	@docker stop ci-backend-test 2>/dev/null || true
+	@docker rm ci-backend-test 2>/dev/null || true
+	@echo "✅ Docker build validation completed!"
+
+# Full CI validation (everything except Docker)
+ci-validate: ci-backend ci-frontend ci-security ci-build
+	@echo "🎯 Running final validation..."
+	@echo "✅ All CI validations passed!"
+
+# Complete CI pipeline with Docker
+ci-full: ci-validate ci-docker
+	@echo "🏆 Complete CI pipeline finished successfully!"

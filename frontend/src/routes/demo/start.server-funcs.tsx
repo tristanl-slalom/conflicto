@@ -13,7 +13,7 @@ function readTodos() {
   } catch (e) {
     console.error('Failed to read todos from localStorage:', e)
   }
-  
+
   return [
     { id: 1, name: 'Get groceries' },
     { id: 2, name: 'Buy a new phone' },
@@ -41,7 +41,7 @@ function Home() {
     setTodos(initialTodos)
   }, [])
 
-  const [todo, setTodo] = useState('')
+  const [todo, setTodo] = useState('');
 
   const addTodoHandler = useCallback((todoText: string) => {
     const newTodo = { id: todos.length + 1, name: todoText }
@@ -81,10 +81,10 @@ function Home() {
           <input
             type="text"
             value={todo}
-            onChange={(e) => setTodo(e.target.value)}
-            onKeyDown={(e) => {
+            onChange={e => setTodo(e.target.value)}
+            onKeyDown={e => {
               if (e.key === 'Enter') {
-                submitTodo()
+                submitTodo();
               }
             }}
             placeholder="Enter a new todo..."
@@ -100,5 +100,5 @@ function Home() {
         </div>
       </div>
     </div>
-  )
+  );
 }

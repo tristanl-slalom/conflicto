@@ -17,10 +17,20 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Create new_activity_status enum (different from existing activity_status)
-    new_activity_status = postgresql.ENUM('draft', 'active', 'completed', 'cancelled', name='new_activity_status')
-    new_activity_status.create(op.get_bind(), checkfirst=True)
-    
+    # Check if enum already exists and create it if it doesn't
+    connection = op.get_bind()
+    result = connection.execute(
+        sa.text("SELECT 1 FROM pg_type WHERE typname = 'new_activity_status'")
+    ).fetchone()
+
+    if not result:
+        # Create new_activity_status enum (different from existing activity_status)
+        new_activity_status = postgresql.ENUM('draft', 'active', 'completed', 'cancelled', name='new_activity_status')
+        new_activity_status.create(connection)
+
+    # Get the enum type for use in table definition
+    new_activity_status_type = postgresql.ENUM('draft', 'active', 'completed', 'cancelled', name='new_activity_status', create_type=False)
+
     # Create new_activities table (renamed to avoid conflicts)
     op.create_table('new_activities',
         sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False, default=sa.text('gen_random_uuid()')),
@@ -28,13 +38,13 @@ def upgrade() -> None:
         sa.Column('type', sa.String(length=50), nullable=False),
         sa.Column('config', postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default='{}'),
         sa.Column('order_index', sa.Integer(), nullable=False),
-        sa.Column('status', new_activity_status, nullable=False, server_default='draft'),
+        sa.Column('status', new_activity_status_type, nullable=False, server_default='draft'),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
         sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
         sa.ForeignKeyConstraint(['session_id'], ['sessions.id'], ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('id')
     )
-    
+
     # Create user_responses table
     op.create_table('user_responses',
         sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False, default=sa.text('gen_random_uuid()')),
@@ -49,13 +59,13 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(['session_id'], ['sessions.id'], ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('id')
     )
-    
+
     # Create indexes for optimal performance
     op.create_index('idx_new_activities_session_order', 'new_activities', ['session_id', 'order_index'])
     op.create_index('idx_new_activities_status', 'new_activities', ['status'])
     op.create_index('idx_new_activities_type', 'new_activities', ['type'])
     op.create_index('idx_new_activities_config_gin', 'new_activities', ['config'], postgresql_using='gin')
-    
+
     op.create_index('idx_user_responses_session_activity', 'user_responses', ['session_id', 'activity_id'])
     op.create_index('idx_user_responses_created_at', 'user_responses', ['created_at'])
     op.create_index('idx_user_responses_participant', 'user_responses', ['participant_id'])
@@ -68,16 +78,23 @@ def downgrade() -> None:
     op.drop_index('idx_user_responses_participant', table_name='user_responses')
     op.drop_index('idx_user_responses_created_at', table_name='user_responses')
     op.drop_index('idx_user_responses_session_activity', table_name='user_responses')
-    
+
     op.drop_index('idx_new_activities_config_gin', table_name='new_activities')
     op.drop_index('idx_new_activities_type', table_name='new_activities')
     op.drop_index('idx_new_activities_status', table_name='new_activities')
     op.drop_index('idx_new_activities_session_order', table_name='new_activities')
-    
+
     # Drop tables
     op.drop_table('user_responses')
     op.drop_table('new_activities')
-    
+
     # Drop enum
-    new_activity_status = postgresql.ENUM('draft', 'active', 'completed', 'cancelled', name='new_activity_status')
-    new_activity_status.drop(op.get_bind(), checkfirst=True)
+    try:
+        new_activity_status = postgresql.ENUM('draft', 'active', 'completed', 'cancelled', name='new_activity_status')
+        new_activity_status.drop(op.get_bind(), checkfirst=True)
+    except Exception as e:
+        # If enum doesn't exist, that's fine
+        if "does not exist" in str(e):
+            pass
+        else:
+            raise e

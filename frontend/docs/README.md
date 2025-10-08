@@ -2,7 +2,10 @@
 
 ## Overview
 
-The Caja frontend is a React-based interactive engagement platform built with TanStack Start, designed to support three distinct persona interfaces: Admin, Viewer, and Participant. Each interface is optimized for specific use cases and device types within the live event engagement ecosystem.
+The Caja frontend is a React-based interactive engagement platform built with TanStack Start,
+designed to support three distinct persona interfaces: Admin, Viewer, and Participant. Each
+interface is optimized for specific use cases and device types within the live event engagement
+ecosystem.
 
 ## Architecture
 
@@ -106,11 +109,11 @@ Provides consistent layout structure across all personas with customizable:
 
 ```tsx
 interface PersonaLayoutProps {
-  persona: 'admin' | 'viewer' | 'participant'
-  title: string
-  subtitle?: string
-  children: React.ReactNode
-  className?: string
+  persona: 'admin' | 'viewer' | 'participant';
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+  className?: string;
 }
 ```
 
@@ -129,14 +132,14 @@ Handles all session-related state and API interactions:
 
 ```tsx
 // Session data fetching
-const { data: session, isLoading, error } = useSession(sessionId)
+const { data: session, isLoading, error } = useSession(sessionId);
 
 // Session creation and updates
-const createSession = useCreateSession()
-const updateSession = useUpdateSession()
+const createSession = useCreateSession();
+const updateSession = useUpdateSession();
 
 // Real-time response polling
-const { data: responses } = useSessionResponses(sessionId, enabled)
+const { data: responses } = useSessionResponses(sessionId, enabled);
 ```
 
 ### Participant Management Hook
@@ -144,12 +147,7 @@ const { data: responses } = useSessionResponses(sessionId, enabled)
 Manages participant state and local storage:
 
 ```tsx
-const { 
-  participantId, 
-  currentSessionId, 
-  joinSession, 
-  leaveSession 
-} = useParticipantSession()
+const { participantId, currentSessionId, joinSession, leaveSession } = useParticipantSession();
 ```
 
 ### Polling-Based Synchronization
@@ -320,22 +318,24 @@ GET /api/sessions/:id/poll - Polling endpoint for updates
 
 ```typescript
 interface Session {
-  id: string
-  name: string
-  type: 'poll' | 'quiz' | 'poker' | 'wordcloud'
-  status: 'draft' | 'active' | 'completed'
-  question: string
-  options: string[]
-  participantCount: number
-  createdAt: string
-  updatedAt: string
+  id: string;
+  name: string;
+  type: 'poll' | 'quiz' | 'poker' | 'wordcloud';
+  status: 'draft' | 'active' | 'completed';
+  question: string;
+  options: string[];
+  participantCount: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface SessionResponse {
-  optionIndex: number
-  count: number
-  percentage: number
+  optionIndex: number;
+  count: number;
+  percentage: number;
 }
 ```
 
-This frontend implementation provides a solid foundation for the Caja interactive engagement platform, with scalable architecture, comprehensive testing, and clear separation of concerns across the multi-persona interface system.
+This frontend implementation provides a solid foundation for the Caja interactive engagement
+platform, with scalable architecture, comprehensive testing, and clear separation of concerns across
+the multi-persona interface system.

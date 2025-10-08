@@ -1,9 +1,9 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { QrCode, Users, BarChart3, Maximize } from 'lucide-react'
+import { createFileRoute } from '@tanstack/react-router';
+import { QrCode, Users, BarChart3, Maximize } from 'lucide-react';
 
 export const Route = createFileRoute('/viewer/')({
   component: ViewerDisplay,
-})
+});
 
 function ViewerDisplay() {
   // Mock data for demonstration
@@ -17,7 +17,7 @@ function ViewerDisplay() {
       { option: 'Smooth deployment', count: 3, percentage: 25 },
       { option: 'Good communication', count: 1, percentage: 8 },
     ],
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
@@ -37,7 +37,9 @@ function ViewerDisplay() {
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2 text-green-400">
                 <Users className="w-5 h-5" />
-                <span className="font-mono text-xl">{sessionData.participantCount}</span>
+                <span className="font-mono text-xl">
+                  {sessionData.participantCount}
+                </span>
                 <span className="text-gray-400">participants</span>
               </div>
               <button className="p-2 hover:bg-slate-700 rounded-lg transition-colors">
@@ -53,15 +55,16 @@ function ViewerDisplay() {
           {/* QR Code Section */}
           <div className="lg:col-span-1 flex flex-col">
             <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-8 flex-1 flex flex-col items-center justify-center">
-              <h2 className="text-2xl font-bold mb-6 text-center">Join the Session</h2>
-              
+              <h2 className="text-2xl font-bold mb-6 text-center">
+                Join the Session
+              </h2>
+
               {/* QR Code Placeholder */}
               <div className="bg-white p-6 rounded-xl mb-6">
                 <div className="w-48 h-48 bg-black rounded-lg flex items-center justify-center">
                   <QrCode className="w-32 h-32 text-white" />
                 </div>
               </div>
-              
               <div className="text-center">
                 <p className="text-gray-300 mb-2">Scan QR code or visit:</p>
                 <p className="text-2xl font-mono font-bold text-cyan-400 mb-4">
@@ -82,21 +85,25 @@ function ViewerDisplay() {
                 <BarChart3 className="w-8 h-8 text-cyan-400" />
                 <h2 className="text-3xl font-bold">Live Results</h2>
               </div>
-              
               <div className="mb-8">
                 <h3 className="text-2xl font-semibold mb-6 text-center bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
                   {sessionData.question}
                 </h3>
               </div>
-              
               <div className="space-y-6">
                 {sessionData.responses.map((response, index) => (
                   <div key={index} className="bg-slate-700/50 rounded-lg p-6">
                     <div className="flex justify-between items-center mb-3">
-                      <span className="text-lg font-medium">{response.option}</span>
+                      <span className="text-lg font-medium">
+                        {response.option}
+                      </span>
                       <div className="flex items-center gap-3">
-                        <span className="text-2xl font-bold text-cyan-400">{response.count}</span>
-                        <span className="text-lg text-gray-400">({response.percentage}%)</span>
+                        <span className="text-2xl font-bold text-cyan-400">
+                          {response.count}
+                        </span>
+                        <span className="text-lg text-gray-400">
+                          ({response.percentage}%)
+                        </span>
                       </div>
                     </div>
                     <div className="w-full bg-slate-600 rounded-full h-3">
@@ -108,7 +115,6 @@ function ViewerDisplay() {
                   </div>
                 ))}
               </div>
-              
               <div className="mt-8 text-center">
                 <p className="text-gray-400 text-lg">
                   Results update in real-time as participants vote
@@ -119,5 +125,5 @@ function ViewerDisplay() {
         </div>
       </div>
     </div>
-  )
+  );
 }

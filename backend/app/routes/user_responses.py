@@ -1,18 +1,20 @@
 """API routes for User Response operations."""
-from typing import List
+
+from datetime import datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_db
 from app.models.jsonb_schemas.user_response import (
     UserResponse,
     UserResponseCreate,
-    UserResponseUpdate,
     UserResponseList,
     UserResponseSummary,
+    UserResponseUpdate,
 )
+from app.models.schemas import IncrementalResponseList
 from app.services.user_response_service import UserResponseService
 
 router = APIRouter(prefix="/api/v1", tags=["user-responses"])
@@ -21,7 +23,7 @@ router = APIRouter(prefix="/api/v1", tags=["user-responses"])
 @router.post(
     "/sessions/{session_id}/activities/{activity_id}/responses",
     response_model=UserResponse,
-    status_code=status.HTTP_201_CREATED
+    status_code=status.HTTP_201_CREATED,
 )
 async def create_response(
     session_id: int,
@@ -49,7 +51,7 @@ async def create_response(
 
 @router.get(
     "/sessions/{session_id}/activities/{activity_id}/responses",
-    response_model=UserResponseList
+    response_model=UserResponseList,
 )
 async def get_activity_responses(
     session_id: int,
@@ -73,7 +75,6 @@ async def get_activity_responses(
             activity_id=activity_id,
         )
         summary = UserResponseSummary(**summary_data)
-        
         return UserResponseList(responses=responses, summary=summary)
     except Exception as e:
         raise HTTPException(
@@ -84,7 +85,7 @@ async def get_activity_responses(
 
 @router.get(
     "/sessions/{session_id}/activities/{activity_id}/responses/{participant_id}",
-    response_model=UserResponse | None
+    response_model=UserResponse | None,
 )
 async def get_participant_response(
     session_id: int,
@@ -108,10 +109,7 @@ async def get_participant_response(
         )
 
 
-@router.put(
-    "/responses/{response_id}",
-    response_model=UserResponse
-)
+@router.put("/responses/{response_id}", response_model=UserResponse)
 async def update_response(
     response_id: UUID,
     response_data: UserResponseUpdate,
@@ -139,10 +137,7 @@ async def update_response(
         )
 
 
-@router.delete(
-    "/responses/{response_id}",
-    status_code=status.HTTP_204_NO_CONTENT
-)
+@router.delete("/responses/{response_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_response(
     response_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -169,7 +164,7 @@ async def delete_response(
 
 @router.get(
     "/sessions/{session_id}/participants/{participant_id}/responses",
-    response_model=List[UserResponse]
+    response_model=list[UserResponse],
 )
 async def get_participant_responses(
     session_id: int,
@@ -177,7 +172,7 @@ async def get_participant_responses(
     offset: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     db: AsyncSession = Depends(get_db),
-) -> List[UserResponse]:
+) -> list[UserResponse]:
     """Get all responses by a specific participant in a session."""
     try:
         responses = await UserResponseService.get_responses_by_participant(
@@ -192,4 +187,41 @@ async def get_participant_responses(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Failed to get participant responses: {str(e)}",
+        )
+
+
+@router.get(
+    "/sessions/{session_id}/activities/{activity_id}/responses/since/{timestamp}",
+    response_model=IncrementalResponseList,
+)
+async def get_responses_since(
+    session_id: int,
+    activity_id: UUID,
+    timestamp: str,  # ISO format timestamp
+    limit: int = Query(1000, ge=1, le=10000),
+    db: AsyncSession = Depends(get_db),
+) -> IncrementalResponseList:
+    """Get responses created since a specific timestamp for incremental updates."""
+    try:
+        # Parse the timestamp
+        since_datetime = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+
+        response_data = await UserResponseService.get_responses_since(
+            db=db,
+            session_id=session_id,
+            activity_id=activity_id,
+            since=since_datetime,
+            limit=limit,
+        )
+
+        return IncrementalResponseList(**response_data)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid timestamp format: {str(e)}",
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to get incremental responses: {str(e)}",
         )

@@ -208,9 +208,9 @@ The frontend foundation is now ready for:
 
 ## Orval API Client Generation Implementation
 
-**Date:** October 7, 2025  
-**Issue:** GitHub Issue #32 - Add Orval for automatic API client generation  
-**Decision:** Implement automatic TypeScript API client generation from OpenAPI spec  
+**Date:** October 7, 2025
+**Issue:** GitHub Issue #32 - Add Orval for automatic API client generation
+**Decision:** Implement automatic TypeScript API client generation from OpenAPI spec
 
 ### Background
 The frontend needed a reliable way to consume backend APIs with type safety and minimal manual maintenance. Previously, API integration would require manually creating API clients, TypeScript types, and mock implementations for testing.
@@ -269,7 +269,7 @@ export default defineConfig({
   },
   "dependencies": {
     "axios": "^1.x.x",
-    "@faker-js/faker": "^8.x.x", 
+    "@faker-js/faker": "^8.x.x",
     "msw": "^2.x.x"
   }
 }
@@ -291,10 +291,10 @@ import { useListSessionsApiV1SessionsGet } from '../api/generated'
 
 function SessionsList() {
   const { data, isLoading, error } = useListSessionsApiV1SessionsGet()
-  
+
   if (isLoading) return <div>Loading...</div>
   if (error) return <div>Error: {error.message}</div>
-  
+
   return (
     <div>
       {data?.data.sessions.map(session => (
@@ -311,7 +311,7 @@ import { useCreateSessionApiV1SessionsPost } from '../api/generated'
 
 function CreateSession() {
   const mutation = useCreateSessionApiV1SessionsPost()
-  
+
   const handleCreate = () => {
     mutation.mutate({
       data: {
@@ -321,7 +321,7 @@ function CreateSession() {
       }
     })
   }
-  
+
   return (
     <button onClick={handleCreate} disabled={mutation.isPending}>
       {mutation.isPending ? 'Creating...' : 'Create Session'}
@@ -493,9 +493,9 @@ The project evolved from backend-only development to full-stack application requ
 
 ## Frontend Architecture Migration: SSR → SPA
 
-**Date:** October 7, 2025  
-**Issue:** GitHub Issue #44 - Implement Static Site Generation and S3 Deployment  
-**Decision:** Migrate from TanStack Start SSR to Single Page Application (SPA) for static hosting  
+**Date:** October 7, 2025
+**Issue:** GitHub Issue #44 - Implement Static Site Generation and S3 Deployment
+**Decision:** Migrate from TanStack Start SSR to Single Page Application (SPA) for static hosting
 
 ### Background
 The frontend was initially implemented using TanStack Start, which provides server-side rendering capabilities. However, for deployment to AWS S3 with CloudFront CDN, a static site generation approach was needed to eliminate server runtime requirements.
@@ -516,7 +516,7 @@ The frontend was initially implemented using TanStack Start, which provides serv
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 plugins: [tanstackStart(), viteReact(), ...]
 
-// After  
+// After
 plugins: [viteReact(), viteTsConfigPaths(), tailwindcss()]
 ```
 
@@ -720,11 +720,260 @@ export default defineConfig({
 
 ---
 
+## QR Code Participant Onboarding System Implementation
+
+**Date:** October 7, 2025
+**Issue:** GitHub Issue #6 - QR Code Participant Onboarding System
+**Decision:** Complete end-to-end implementation of QR code-based participant joining with real-time status tracking
+
+### Background
+The platform needed a seamless way for participants to join active sessions using QR codes displayed on shared screens, with real-time participant status tracking and nickname management.
+
+### Problem Details
+- **Session Access:** Participants needed frictionless joining without manual URL entry
+- **Identity Management:** Unique nickname validation within session scope
+- **Status Tracking:** Real-time participant connection status (online/idle/disconnected)
+- **Mobile Experience:** Optimized interface for QR scanning and session joining
+- **Admin Visibility:** Real-time participant list with management capabilities
+
+### Solution Implemented
+
+#### 1. Backend Database Schema & Models
+**Added Participants Table Migration:**
+```sql
+-- migrations/versions/82b55c1f3822_update_participants_for_qr_code_.py
+participants (
+    id UUID PRIMARY KEY,
+    session_id UUID REFERENCES sessions(id),
+    nickname VARCHAR(50) NOT NULL,
+    joined_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    last_heartbeat TIMESTAMP WITH TIME ZONE NOT NULL,
+    UNIQUE(session_id, nickname)
+)
+```
+
+**Participant Model with Status Computation:**
+```python
+# app/db/models.py
+class Participant(Base):
+    __tablename__ = "participants"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    session_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("sessions.id"))
+    nickname: Mapped[str] = mapped_column(String(50), nullable=False)
+    joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    last_heartbeat: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    @property
+    def status(self) -> str:
+        now = datetime.now(timezone.utc)
+        seconds_since_heartbeat = (now - self.last_heartbeat).total_seconds()
+
+        if seconds_since_heartbeat < 30:
+            return "online"
+        elif seconds_since_heartbeat < 120:
+            return "idle"
+        else:
+            return "disconnected"
+```
+
+#### 2. FastAPI Async Service Implementation
+**Complete Async SQLAlchemy Operations:**
+```python
+# app/services/participant_service.py
+class ParticipantService:
+    async def join_session(self, session_id: UUID, nickname: str) -> Participant:
+        async with self.db.begin():
+            # Check session exists
+            session_result = await self.db.execute(
+                select(Session).where(Session.id == session_id)
+            )
+            session = session_result.scalar_one_or_none()
+            if not session:
+                raise HTTPException(status_code=404, detail="Session not found")
+
+            # Validate nickname uniqueness
+            existing_result = await self.db.execute(
+                select(Participant).where(
+                    Participant.session_id == session_id,
+                    Participant.nickname == nickname
+                )
+            )
+            if existing_result.scalar_one_or_none():
+                raise HTTPException(status_code=409, detail="Nickname already taken")
+
+            # Create participant
+            participant = Participant(
+                session_id=session_id,
+                nickname=nickname,
+                joined_at=datetime.now(timezone.utc),
+                last_heartbeat=datetime.now(timezone.utc)
+            )
+            self.db.add(participant)
+            await self.db.flush()
+            await self.db.refresh(participant)
+            return participant
+
+    async def validate_nickname(self, session_id: UUID, nickname: str) -> dict:
+        """Validate nickname and suggest alternatives if taken"""
+        # Comprehensive validation logic with suggestions
+
+    async def update_heartbeat(self, participant_id: UUID) -> Participant:
+        """Update participant heartbeat for status computation"""
+
+    async def get_session_participants(self, session_id: UUID) -> List[Participant]:
+        """Get all participants with computed status"""
+```
+
+#### 3. REST API Endpoints
+**Complete Participant Management API:**
+```python
+# app/routes/participants.py
+@router.post("/sessions/{session_id}/join", response_model=ParticipantResponse)
+async def join_session(session_id: UUID, request: JoinSessionRequest, service: ParticipantService = Depends())
+
+@router.get("/sessions/{session_id}/nicknames/validate")
+async def validate_nickname(session_id: UUID, nickname: str, service: ParticipantService = Depends())
+
+@router.post("/participants/{participant_id}/heartbeat", response_model=ParticipantResponse)
+async def update_heartbeat(participant_id: UUID, service: ParticipantService = Depends())
+
+@router.get("/sessions/{session_id}/participants", response_model=List[ParticipantResponse])
+async def get_session_participants(session_id: UUID, service: ParticipantService = Depends())
+
+@router.delete("/participants/{participant_id}")
+async def remove_participant(participant_id: UUID, service: ParticipantService = Depends())
+```
+
+#### 4. Frontend QR Code & Joining Components
+**QRCodeDisplay Component:**
+```typescript
+// src/components/QRCodeDisplay.tsx
+import { QRCodeStyling } from 'qr-code-styling'
+
+export function QRCodeDisplay({ sessionId, className }: QRCodeDisplayProps) {
+  const joinUrl = `${window.location.origin}/join/${sessionId}`
+
+  // QR code generation with custom styling
+  // Responsive sizing and styling options
+}
+```
+
+**Mobile-Optimized SessionJoin Interface:**
+```typescript
+// src/components/SessionJoin.tsx
+import { useJoinSessionApiV1SessionsSessionIdJoinPost, useValidateNicknameApiV1SessionsSessionIdNicknamesValidateGet } from '../api/generated'
+
+export function SessionJoin({ sessionId }: SessionJoinProps) {
+  const joinMutation = useJoinSessionApiV1SessionsSessionIdJoinPost()
+  const { data: validation } = useValidateNicknameApiV1SessionsSessionIdNicknamesValidateGet(
+    { sessionId, nickname }, { enabled: !!nickname }
+  )
+
+  // Form handling, validation, error states
+  // Mobile-optimized UI with loading states
+}
+```
+
+**Real-time ParticipantList with Polling:**
+```typescript
+// src/components/ParticipantList.tsx
+import { useGetSessionParticipantsApiV1SessionsSessionIdParticipantsGet } from '../api/generated'
+
+export function ParticipantList({ sessionId }: ParticipantListProps) {
+  const { data, isLoading, error } = useGetSessionParticipantsApiV1SessionsSessionIdParticipantsGet(
+    { sessionId },
+    { refetchInterval: 10000, refetchIntervalInBackground: true }
+  )
+
+  // Real-time status display with 10-second polling
+  // Status indicators: online (green), idle (yellow), disconnected (red)
+}
+```
+
+#### 5. Orval React Query Integration
+**Migration from Manual Fetch to Generated Hooks:**
+```typescript
+// Before (Manual fetch)
+const response = await fetch(`/api/v1/sessions/${sessionId}/join`, {
+  method: 'POST',
+  body: JSON.stringify({ nickname })
+})
+
+// After (Generated React Query hook)
+const joinMutation = useJoinSessionApiV1SessionsSessionIdJoinPost()
+joinMutation.mutate({ sessionId, data: { nickname } })
+```
+
+**Generated API Client Features:**
+- **Type-Safe Hooks:** All endpoints with proper TypeScript interfaces
+- **Automatic Caching:** TanStack Query integration with optimized cache invalidation
+- **Error Handling:** Built-in error states and retry logic
+- **Loading States:** Proper loading indicators for all operations
+- **Real-time Polling:** Configurable refetch intervals for live updates
+
+#### 6. Join Route Implementation
+**QR Code Scanning Workflow:**
+```typescript
+// src/routes/join/$sessionId.tsx
+import { createFileRoute } from '@tanstack/react-router'
+
+export const Route = createFileRoute('/join/$sessionId')({
+  component: () => {
+    const { sessionId } = Route.useParams()
+    return <SessionJoin sessionId={sessionId} />
+  }
+})
+```
+
+### Results
+- ✅ **Complete Participant Lifecycle:** Join, validate, track, remove with proper async operations
+- ✅ **Real-time Status Tracking:** Heartbeat-based status computation (online/idle/disconnected)
+- ✅ **Mobile-Optimized Experience:** QR scanning workflow with responsive design
+- ✅ **Type-Safe API Integration:** Orval-generated hooks with full TypeScript support
+- ✅ **Comprehensive Error Handling:** Validation, conflicts, network errors properly managed
+- ✅ **Admin Management:** Real-time participant list with removal capabilities
+- ✅ **Scalable Architecture:** Async SQLAlchemy patterns ready for high concurrency
+
+### API Endpoints Summary
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| POST | `/api/v1/sessions/{id}/join` | Join session with nickname |
+| GET | `/api/v1/sessions/{id}/nicknames/validate` | Validate nickname availability |
+| POST | `/api/v1/participants/{id}/heartbeat` | Update participant heartbeat |
+| GET | `/api/v1/sessions/{id}/participants` | List session participants |
+| DELETE | `/api/v1/participants/{id}` | Remove participant |
+
+### Technical Improvements Implemented
+- **Async SQLAlchemy Patterns:** Proper `async with db.begin()` transaction handling
+- **Timezone-Aware Datetime:** UTC timezone handling for consistent status computation
+- **React Query Migration:** Complete migration from manual fetch to generated hooks
+- **Component Architecture:** Reusable components with proper prop interfaces
+- **Real-time Polling:** 10-second intervals with background refetching
+- **Error Boundaries:** Comprehensive error handling at component and service levels
+
+### Impact on Development Workflow
+- **Frontend-Backend Integration:** Seamless type-safe API consumption via generated hooks
+- **Real-time Features:** Polling framework established for live participant tracking
+- **Mobile Experience:** QR code workflow optimized for event participant onboarding
+- **Testing Infrastructure:** All components tested with MSW mocks and realistic data
+- **Production Ready:** Complete implementation ready for deployment and scaling
+
+### Recommendations for Future Development
+1. **WebSocket Migration:** Consider replacing polling with WebSocket for real-time updates
+2. **Participant Analytics:** Add session engagement metrics and participation tracking
+3. **Connection Recovery:** Implement automatic reconnection for dropped participants
+4. **Nickname Suggestions:** Enhance validation with intelligent nickname alternatives
+5. **QR Code Customization:** Add branding and styling options for QR code display
+6. **Heartbeat Optimization:** Consider reducing heartbeat frequency for mobile battery life
+
+---
+
 ## Next Implementation Phases
 
 ### Phase 2: Backend Integration & Static Deployment
 - Deploy SPA to AWS S3 with CloudFront CDN distribution
-- Connect generated API client to actual FastAPI backend endpoints  
+- Connect generated API client to actual FastAPI backend endpoints
 - Implement flexible user response storage with JSONB
 - Create generic activity CRUD endpoints
 - Establish session configuration vs. instance pattern

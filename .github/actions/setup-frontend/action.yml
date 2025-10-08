@@ -1,0 +1,45 @@
+name: 'Setup Frontend Environment'
+description: 'Set up Node.js and frontend dependencies for CI/CD'
+
+inputs:
+  node-version:
+    description: 'Node.js version to use'
+    required: false
+    default: '22'
+  cache-key-suffix:
+    description: 'Additional suffix for cache key'
+    required: false
+    default: ''
+
+outputs:
+  cache-hit:
+    description: 'Whether cache was hit'
+    value: ${{ steps.cache.outputs.cache-hit }}
+  node-version:
+    description: 'Node.js version that was set up'
+    value: ${{ steps.setup-node.outputs.node-version }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Node.js
+      id: setup-node
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Install frontend dependencies
+      shell: bash
+      working-directory: frontend
+      run: |
+        npm ci --prefer-offline --no-audit
+
+    - name: Verify installation
+      shell: bash
+      working-directory: frontend
+      run: |
+        node --version
+        npm --version
+        npm list --depth=0

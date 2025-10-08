@@ -207,23 +207,39 @@ All activities follow the same state machine:
 - Implement request/response models with Pydantic
 - **OpenAPI Integration:** Maintain comprehensive OpenAPI specification for Orval generation
 - **Frontend Integration:** Ensure OpenAPI spec changes trigger frontend API regeneration
-- Use async/await for database operations
+- Use async/await for database operations with proper transaction handling
+- **Async SQLAlchemy Patterns:** Always use `async with db.begin()` for transaction boundaries
+- **Database Session Management:** Use `await db.execute(select(...))` and `scalar_one_or_none()` for queries
+- **Entity Refresh:** Call `await db.refresh(entity)` after flush to get computed properties
+- **Timezone Handling:** Use `datetime.now(timezone.utc)` for consistent UTC datetime storage
+- **Status Computation:** Implement computed properties on models for real-time status calculation
 - Implement proper CORS for CloudFront integration
 - Add health check endpoints for ECS service discovery
 - Use structured logging for CloudWatch integration
 - **API Design:** Follow REST conventions that generate clean TypeScript interfaces
 - **Response Models:** Structure responses to match expected frontend usage patterns
+- **Participant Management:** Implement session-scoped uniqueness constraints (e.g., nickname per session)
+- **Heartbeat Patterns:** Use timestamp comparison for connection status (online/idle/disconnected)
+- **Validation Services:** Create separate validation endpoints for real-time form feedback
 
 ### Frontend Development (SPA Architecture)
 - **SPA Configuration:** Use Vite for static build, TanStack Router for client-side routing
 - **Build System:** Use `npm run build:spa` for production static assets
 - **Deployment:** Optimize for S3 static hosting with CloudFront CDN caching
 - **API Integration:** Use Orval-generated hooks directly, avoid wrapper abstractions
-- **Generated API Hooks:** `useListSessionsApiV1SessionsGet`, `useCreateSessionApiV1SessionsPost` etc.
+- **Generated API Hooks:** Use specific hooks like `useJoinSessionApiV1SessionsSessionIdJoinPost`, `useGetSessionParticipantsApiV1SessionsSessionIdParticipantsGet`
+- **Mutation Patterns:** Use `.mutate()` for POST/PUT/DELETE operations with proper error handling
+- **Query Patterns:** Configure `refetchInterval` for real-time polling (10-second intervals for participant status)
+- **Background Polling:** Enable `refetchIntervalInBackground: true` for live updates when tab is inactive
 - Use TanStack Query for API state management and polling (integrated via Orval)
 - **API Generation:** Always run `npm run generate:api` after OpenAPI spec changes
+- **Real-time Updates:** Implement polling instead of manual refetch for live data (participant lists, status updates)
+- **Loading States:** Leverage generated hooks' `isLoading`, `isPending` states for UX feedback
+- **Error Handling:** Use built-in error states from generated hooks rather than custom error boundaries
 - Implement proper error boundaries and Suspense for loading states
 - **Static Assets:** Ensure all resources are bundled or referenced properly for CDN
+- **Mobile Optimization:** Implement touch-friendly interfaces with 44px minimum tap targets
+- **Form Validation:** Use debounced validation hooks for real-time nickname checking
 - Implement responsive design for mobile-first approach
 - **Testing:** Use Vitest (not Jest) for better Vite integration and SPA compatibility
 - **Test Setup:** Configure jsdom environment with proper mocks in setup.ts
@@ -279,6 +295,20 @@ All activities follow the same state machine:
 - **Testing Strategy:** Use generated MSW handlers for consistent mock behavior
 - **Hook Usage:** Use generated hooks directly (e.g., `useCreateSessionApiV1SessionsPost`) without wrapper layers
 - **Error Handling:** Leverage TanStack Query's built-in error handling from generated hooks
+
+**Participant Management Patterns:**
+- **Session Scoping:** All participant operations scoped to session ID for data isolation
+- **Nickname Uniqueness:** Implement per-session nickname validation with conflict resolution
+- **Status Tracking:** Use heartbeat timestamps for real-time connection status computation
+- **Real-time Polling:** 10-second intervals for participant list updates with background refetching
+- **Mobile QR Workflow:** Implement `/join/{sessionId}` route for direct QR code navigation
+- **Async Database Operations:** Always use transaction boundaries for multi-step participant operations
+- **Status Indicators:** Visual feedback for online (green), idle (yellow), disconnected (red) states
+- **Admin Controls:** Implement participant removal with optimistic UI updates
+- **Error Recovery:** Handle nickname conflicts, session not found, and network errors gracefully
+- **Form Validation:** Real-time nickname validation with debounced API calls
+- **Component Architecture:** Separate QRCodeDisplay, SessionJoin, and ParticipantList components
+- **Route Patterns:** Use TanStack Router params for session ID passing in QR join workflow
 
 ### Security Standards
 - **Database:** Encrypted RDS instances with rotation
@@ -344,7 +374,7 @@ Focus Copilot rules on:
 
 **Completed Frontend Tasks:**
 - ✅ React 18+ with TypeScript setup
-- ✅ TanStack Router (SPA mode) and Query (state) integration  
+- ✅ TanStack Router (SPA mode) and Query (state) integration
 - ✅ Multi-persona interface system (admin/viewer/participant)
 - ✅ shadcn/ui + Tailwind CSS component system
 - ✅ Vitest testing framework (migrated from Jest for better Vite integration)

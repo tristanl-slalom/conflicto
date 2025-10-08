@@ -1,8 +1,8 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/admin/')({
   component: AdminLayout,
-})
+});
 
 function AdminLayout() {
   return (
@@ -19,18 +19,21 @@ function AdminLayout() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-400">Session Management Interface</span>
+              <span className="text-sm text-gray-400">
+                Session Management Interface
+              </span>
             </div>
           </div>
         </div>
       </div>
-      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Session Controls */}
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
-              <h2 className="text-lg font-medium text-white mb-4">Session Configuration</h2>
+              <h2 className="text-lg font-medium text-white mb-4">
+                Session Configuration
+              </h2>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -65,7 +68,9 @@ function AdminLayout() {
             </div>
 
             <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
-              <h2 className="text-lg font-medium text-white mb-4">Content Management</h2>
+              <h2 className="text-lg font-medium text-white mb-4">
+                Content Management
+              </h2>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -104,27 +109,31 @@ function AdminLayout() {
           {/* Session Status */}
           <div className="space-y-6">
             <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
-              <h2 className="text-lg font-medium text-white mb-4">Session Status</h2>
+              <h2 className="text-lg font-medium text-white mb-4">
+                Session Status
+              </h2>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-gray-300">Status</span>
-                  <span className="px-2 py-1 bg-yellow-900 text-yellow-300 rounded-full text-sm">
-                    Draft
+                  <span className="px-2 py-1 bg-green-900 text-green-300 rounded-full text-sm">
+                    Active
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-gray-300">Participants</span>
-                  <span className="text-white font-mono">0</span>
+                  <span className="text-white font-mono">3</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-gray-300">Session ID</span>
-                  <span className="text-gray-400 font-mono text-sm">-</span>
+                  <span className="text-white font-mono text-sm">123</span>
                 </div>
               </div>
             </div>
 
             <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
-              <h2 className="text-lg font-medium text-white mb-4">Quick Actions</h2>
+              <h2 className="text-lg font-medium text-white mb-4">
+                Quick Actions
+              </h2>
               <div className="space-y-3">
                 <button className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md transition-colors">
                   Start Session
@@ -137,9 +146,14 @@ function AdminLayout() {
                 </button>
               </div>
             </div>
+
+            <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
+              <h2 className="text-lg font-medium text-white mb-4">Participants</h2>
+              <div className="text-gray-400 text-sm">No participants yet</div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

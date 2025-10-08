@@ -44,6 +44,60 @@ import type {
   RequestHandlerOptions
 } from 'msw';
 
+/**
+ * JSONB configuration data
+ */
+export type ActivityConfig = { [key: string]: unknown };
+
+/**
+ * Schema for Activity response.
+ */
+export interface Activity {
+  /** Type of the activity */
+  type: string;
+  /** JSONB configuration data */
+  config?: ActivityConfig;
+  /** Order index for the activity */
+  order_index?: number;
+  id: string;
+  session_id: number;
+  status: ActivityStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * JSONB configuration data
+ */
+export type ActivityCreateConfig = { [key: string]: unknown };
+
+/**
+ * Status of the activity
+ */
+export type ActivityCreateStatus = ActivityStatus | null;
+
+/**
+ * Schema for creating a new Activity.
+ */
+export interface ActivityCreate {
+  /** Type of the activity */
+  type: string;
+  /** JSONB configuration data */
+  config?: ActivityCreateConfig;
+  /** Order index for the activity */
+  order_index?: number;
+  /** Status of the activity */
+  status?: ActivityCreateStatus;
+}
+
+/**
+ * Schema for list of activities.
+ */
+export interface ActivityList {
+  activities: Activity[];
+  total: number;
+}
+
 export type ActivityResponseDescription = string | null;
 
 export type ActivityResponseConfiguration = { [key: string]: unknown };
@@ -72,6 +126,33 @@ export interface ActivityResponse {
 }
 
 /**
+ * Activity status enumeration.
+ */
+export type ActivityStatus = typeof ActivityStatus[keyof typeof ActivityStatus];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const ActivityStatus = {
+  draft: 'draft',
+  active: 'active',
+  completed: 'completed',
+  cancelled: 'cancelled',
+} as const;
+
+export type ActivityStatusResponseLastResponseAt = string | null;
+
+/**
+ * Activity status for real-time polling.
+ */
+export interface ActivityStatusResponse {
+  activity_id: string;
+  status: ActivityStatus;
+  response_count: number;
+  last_response_at?: ActivityStatusResponseLastResponseAt;
+  last_updated: string;
+}
+
+/**
  * Activity type enumeration.
  */
 export type ActivityType = typeof ActivityType[keyof typeof ActivityType];
@@ -84,6 +165,26 @@ export const ActivityType = {
   qa: 'qa',
   planning_poker: 'planning_poker',
 } as const;
+
+export type ActivityUpdateType = string | null;
+
+export type ActivityUpdateConfigAnyOf = { [key: string]: unknown };
+
+export type ActivityUpdateConfig = ActivityUpdateConfigAnyOf | null;
+
+export type ActivityUpdateOrderIndex = number | null;
+
+export type ActivityUpdateStatus = ActivityStatus | null;
+
+/**
+ * Schema for updating an Activity.
+ */
+export interface ActivityUpdate {
+  type?: ActivityUpdateType;
+  config?: ActivityUpdateConfig;
+  order_index?: ActivityUpdateOrderIndex;
+  status?: ActivityUpdateStatus;
+}
 
 /**
  * Error response model.
@@ -108,32 +209,85 @@ export interface HealthResponse {
 }
 
 /**
- * Participant response model.
+ * Schema for incremental response updates since timestamp.
  */
-export interface ParticipantResponse {
-  id: number;
-  created_at: string;
+export interface IncrementalResponseList {
+  items?: UserResponse[];
+  since: string;
+  count: number;
+}
+
+export type NicknameValidationResponseSuggestedNickname = string | null;
+
+/**
+ * Nickname validation response model.
+ */
+export interface NicknameValidationResponse {
+  available: boolean;
+  suggested_nickname?: NicknameValidationResponseSuggestedNickname;
+}
+
+export type ParticipantHeartbeatRequestActivityContextAnyOf = { [key: string]: unknown };
+
+export type ParticipantHeartbeatRequestActivityContext = ParticipantHeartbeatRequestActivityContextAnyOf | null;
+
+/**
+ * Participant heartbeat request model.
+ */
+export interface ParticipantHeartbeatRequest {
+  activity_context?: ParticipantHeartbeatRequestActivityContext;
+}
+
+export type ParticipantHeartbeatResponseActivityContext = { [key: string]: unknown };
+
+/**
+ * Participant heartbeat response model.
+ */
+export interface ParticipantHeartbeatResponse {
+  status: string;
+  activity_context: ParticipantHeartbeatResponseActivityContext;
   updated_at: string;
-  session_id: number;
-  display_name: string;
-  role: ParticipantRole;
-  is_active: boolean;
-  joined_at: string;
-  last_seen_at: string;
 }
 
 /**
- * Participant role enumeration.
+ * Session join request model.
  */
-export type ParticipantRole = typeof ParticipantRole[keyof typeof ParticipantRole];
+export interface ParticipantJoinRequest {
+  /**
+   * @minLength 1
+   * @maxLength 50
+   */
+  nickname: string;
+}
 
+export type ParticipantJoinResponseSessionState = { [key: string]: unknown };
 
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const ParticipantRole = {
-  admin: 'admin',
-  viewer: 'viewer',
-  participant: 'participant',
-} as const;
+/**
+ * Session join response model.
+ */
+export interface ParticipantJoinResponse {
+  participant_id: string;
+  session_state: ParticipantJoinResponseSessionState;
+}
+
+/**
+ * Participant list response model.
+ */
+export interface ParticipantListResponse {
+  participants: ParticipantStatus[];
+  total_count: number;
+}
+
+/**
+ * Computed participant status model.
+ */
+export interface ParticipantStatus {
+  participant_id: string;
+  nickname: string;
+  status: string;
+  joined_at: string;
+  last_seen: string;
+}
 
 export type SessionCreateDescription = string | null;
 
@@ -182,7 +336,7 @@ export interface SessionDetail {
   participant_count?: number;
   activity_count?: number;
   activities?: ActivityResponse[];
-  participants?: ParticipantResponse[];
+  participants?: ParticipantStatus[];
 }
 
 /**
@@ -237,6 +391,19 @@ export const SessionStatus = {
   completed: 'completed',
 } as const;
 
+export type SessionStatusResponseCurrentActivityId = string | null;
+
+/**
+ * Session status for real-time polling.
+ */
+export interface SessionStatusResponse {
+  session_id: number;
+  status: SessionStatus;
+  current_activity_id?: SessionStatusResponseCurrentActivityId;
+  participant_count: number;
+  last_updated: string;
+}
+
 export type SessionUpdateTitle = string | null;
 
 export type SessionUpdateDescription = string | null;
@@ -253,6 +420,70 @@ export interface SessionUpdate {
   description?: SessionUpdateDescription;
   max_participants?: SessionUpdateMaxParticipants;
   status?: SessionUpdateStatus;
+}
+
+/**
+ * Activity-specific response data in JSON format
+ */
+export type UserResponseResponseData = { [key: string]: unknown };
+
+/**
+ * Schema for User Response with all fields.
+ */
+export interface UserResponse {
+  /** Activity-specific response data in JSON format */
+  response_data: UserResponseResponseData;
+  id: string;
+  session_id: number;
+  activity_id: string;
+  participant_id: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Activity-specific response data in JSON format
+ */
+export type UserResponseCreateResponseData = { [key: string]: unknown };
+
+/**
+ * Schema for creating a User Response.
+ */
+export interface UserResponseCreate {
+  /** Activity-specific response data in JSON format */
+  response_data: UserResponseCreateResponseData;
+}
+
+/**
+ * Schema for paginated User Response list with summary.
+ */
+export interface UserResponseList {
+  responses: UserResponse[];
+  summary: UserResponseSummary;
+}
+
+export type UserResponseSummaryLastUpdated = string | null;
+
+/**
+ * Schema for User Response summary statistics.
+ */
+export interface UserResponseSummary {
+  total_responses: number;
+  unique_participants: number;
+  last_updated: UserResponseSummaryLastUpdated;
+}
+
+/**
+ * Activity-specific response data in JSON format
+ */
+export type UserResponseUpdateResponseData = { [key: string]: unknown };
+
+/**
+ * Schema for updating a User Response.
+ */
+export interface UserResponseUpdate {
+  /** Activity-specific response data in JSON format */
+  response_data: UserResponseUpdateResponseData;
 }
 
 export type ValidationErrorLocItem = string | number;
@@ -272,6 +503,74 @@ export type GetSessionByCodeApiV1SessionsCodeCodeGetParams = {
 code_type?: string;
 };
 
+export type ValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetParams = {
+/**
+ * @minLength 1
+ * @maxLength 50
+ */
+nickname: string;
+};
+
+export type CreateResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPostParams = {
+participant_id: number;
+};
+
+export type GetActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGetParams = {
+/**
+ * @minimum 0
+ */
+offset?: number;
+/**
+ * @minimum 1
+ * @maximum 1000
+ */
+limit?: number;
+};
+
+export type GetParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet200 = UserResponse | null;
+
+export type GetParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGetParams = {
+/**
+ * @minimum 0
+ */
+offset?: number;
+/**
+ * @minimum 1
+ * @maximum 1000
+ */
+limit?: number;
+};
+
+export type GetResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGetParams = {
+/**
+ * @minimum 1
+ * @maximum 10000
+ */
+limit?: number;
+};
+
+export type GetSessionActivitiesApiV1SessionsSessionIdActivitiesGetParams = {
+/**
+ * @minimum 0
+ */
+offset?: number;
+/**
+ * @minimum 1
+ * @maximum 1000
+ */
+limit?: number;
+/**
+ * Filter activities by status
+ */
+status?: ActivityStatus | null;
+};
+
+export type UpdateActivityStatusApiV1ActivitiesActivityIdStatusPatchParams = {
+status: ActivityStatus;
+};
+
+export type GetActiveActivityApiV1SessionsSessionIdActivitiesActiveGet200 = Activity | null;
+
 /**
  * Health check endpoint.
 
@@ -281,8 +580,8 @@ Returns service health status and checks database connectivity.
 export const healthCheckApiV1HealthGet = (
      options?: AxiosRequestConfig
  ): Promise<AxiosResponse<HealthResponse>> => {
-    
-    
+
+
     return axios.default.get(
       `/api/v1/health/`,options
     );
@@ -297,7 +596,7 @@ export const getHealthCheckApiV1HealthGetQueryKey = () => {
     ] as const;
     }
 
-    
+
 export const getHealthCheckApiV1HealthGetQueryOptions = <TData = Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>, TError = AxiosError<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>, TError, TData>>, axios?: AxiosRequestConfig}
 ) => {
 
@@ -305,13 +604,13 @@ const {query: queryOptions, axios: axiosOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getHealthCheckApiV1HealthGetQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>> = ({ signal }) => healthCheckApiV1HealthGet({ signal, ...axiosOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -350,7 +649,7 @@ export function useHealthCheckApiV1HealthGet<TData = Awaited<ReturnType<typeof h
 
 export function useHealthCheckApiV1HealthGet<TData = Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>, TError = AxiosError<ErrorResponse>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthCheckApiV1HealthGet>>, TError, TData>>, axios?: AxiosRequestConfig}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getHealthCheckApiV1HealthGetQueryOptions(options)
@@ -374,8 +673,8 @@ Returns whether the service is ready to accept requests.
 export const readinessCheckApiV1HealthReadyGet = (
      options?: AxiosRequestConfig
  ): Promise<AxiosResponse<HealthResponse>> => {
-    
-    
+
+
     return axios.default.get(
       `/api/v1/health/ready`,options
     );
@@ -390,7 +689,7 @@ export const getReadinessCheckApiV1HealthReadyGetQueryKey = () => {
     ] as const;
     }
 
-    
+
 export const getReadinessCheckApiV1HealthReadyGetQueryOptions = <TData = Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>, TError = AxiosError<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>, TError, TData>>, axios?: AxiosRequestConfig}
 ) => {
 
@@ -398,13 +697,13 @@ const {query: queryOptions, axios: axiosOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getReadinessCheckApiV1HealthReadyGetQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>> = ({ signal }) => readinessCheckApiV1HealthReadyGet({ signal, ...axiosOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -443,7 +742,7 @@ export function useReadinessCheckApiV1HealthReadyGet<TData = Awaited<ReturnType<
 
 export function useReadinessCheckApiV1HealthReadyGet<TData = Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>, TError = AxiosError<unknown>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readinessCheckApiV1HealthReadyGet>>, TError, TData>>, axios?: AxiosRequestConfig}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getReadinessCheckApiV1HealthReadyGetQueryOptions(options)
@@ -467,8 +766,8 @@ Returns whether the service is alive and running.
 export const livenessCheckApiV1HealthLiveGet = (
      options?: AxiosRequestConfig
  ): Promise<AxiosResponse<HealthResponse>> => {
-    
-    
+
+
     return axios.default.get(
       `/api/v1/health/live`,options
     );
@@ -483,7 +782,7 @@ export const getLivenessCheckApiV1HealthLiveGetQueryKey = () => {
     ] as const;
     }
 
-    
+
 export const getLivenessCheckApiV1HealthLiveGetQueryOptions = <TData = Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>, TError = AxiosError<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>, TError, TData>>, axios?: AxiosRequestConfig}
 ) => {
 
@@ -491,13 +790,13 @@ const {query: queryOptions, axios: axiosOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getLivenessCheckApiV1HealthLiveGetQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>> = ({ signal }) => livenessCheckApiV1HealthLiveGet({ signal, ...axiosOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -536,7 +835,7 @@ export function useLivenessCheckApiV1HealthLiveGet<TData = Awaited<ReturnType<ty
 
 export function useLivenessCheckApiV1HealthLiveGet<TData = Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>, TError = AxiosError<unknown>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof livenessCheckApiV1HealthLiveGet>>, TError, TData>>, axios?: AxiosRequestConfig}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getLivenessCheckApiV1HealthLiveGetQueryOptions(options)
@@ -561,8 +860,8 @@ The session starts in DRAFT status.
 export const createSessionApiV1SessionsPost = (
     sessionCreate: SessionCreate, options?: AxiosRequestConfig
  ): Promise<AxiosResponse<SessionResponse>> => {
-    
-    
+
+
     return axios.default.post(
       `/api/v1/sessions/`,
       sessionCreate,options
@@ -582,7 +881,7 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, axios: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSessionApiV1SessionsPost>>, {data: SessionCreate}> = (props) => {
@@ -591,7 +890,7 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
           return  createSessionApiV1SessionsPost(data,axiosOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -616,7 +915,7 @@ export const useCreateSessionApiV1SessionsPost = <TError = AxiosError<ErrorRespo
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * List all sessions with pagination.
 
@@ -626,8 +925,8 @@ Returns a paginated list of all sessions, ordered by creation date (newest first
 export const listSessionsApiV1SessionsGet = (
     params?: ListSessionsApiV1SessionsGetParams, options?: AxiosRequestConfig
  ): Promise<AxiosResponse<SessionList>> => {
-    
-    
+
+
     return axios.default.get(
       `/api/v1/sessions/`,{
     ...options,
@@ -644,7 +943,7 @@ export const getListSessionsApiV1SessionsGetQueryKey = (params?: ListSessionsApi
     ] as const;
     }
 
-    
+
 export const getListSessionsApiV1SessionsGetQueryOptions = <TData = Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(params?: ListSessionsApiV1SessionsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>, TError, TData>>, axios?: AxiosRequestConfig}
 ) => {
 
@@ -652,13 +951,13 @@ const {query: queryOptions, axios: axiosOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getListSessionsApiV1SessionsGetQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>> = ({ signal }) => listSessionsApiV1SessionsGet(params, { signal, ...axiosOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -697,7 +996,7 @@ export function useListSessionsApiV1SessionsGet<TData = Awaited<ReturnType<typeo
 
 export function useListSessionsApiV1SessionsGet<TData = Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(
  params?: ListSessionsApiV1SessionsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSessionsApiV1SessionsGet>>, TError, TData>>, axios?: AxiosRequestConfig}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getListSessionsApiV1SessionsGetQueryOptions(params,options)
@@ -721,8 +1020,8 @@ Returns complete session details including activities and participants.
 export const getSessionApiV1SessionsSessionIdGet = (
     sessionId: number, options?: AxiosRequestConfig
  ): Promise<AxiosResponse<SessionDetail>> => {
-    
-    
+
+
     return axios.default.get(
       `/api/v1/sessions/${sessionId}`,options
     );
@@ -737,7 +1036,7 @@ export const getGetSessionApiV1SessionsSessionIdGetQueryKey = (sessionId?: numbe
     ] as const;
     }
 
-    
+
 export const getGetSessionApiV1SessionsSessionIdGetQueryOptions = <TData = Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(sessionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>, TError, TData>>, axios?: AxiosRequestConfig}
 ) => {
 
@@ -745,13 +1044,13 @@ const {query: queryOptions, axios: axiosOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetSessionApiV1SessionsSessionIdGetQueryKey(sessionId);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>> = ({ signal }) => getSessionApiV1SessionsSessionIdGet(sessionId, { signal, ...axiosOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(sessionId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -790,7 +1089,7 @@ export function useGetSessionApiV1SessionsSessionIdGet<TData = Awaited<ReturnTyp
 
 export function useGetSessionApiV1SessionsSessionIdGet<TData = Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(
  sessionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionApiV1SessionsSessionIdGet>>, TError, TData>>, axios?: AxiosRequestConfig}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetSessionApiV1SessionsSessionIdGetQueryOptions(sessionId,options)
@@ -815,8 +1114,8 @@ export const updateSessionApiV1SessionsSessionIdPut = (
     sessionId: number,
     sessionUpdate: SessionUpdate, options?: AxiosRequestConfig
  ): Promise<AxiosResponse<SessionResponse>> => {
-    
-    
+
+
     return axios.default.put(
       `/api/v1/sessions/${sessionId}`,
       sessionUpdate,options
@@ -836,7 +1135,7 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, axios: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSessionApiV1SessionsSessionIdPut>>, {sessionId: number;data: SessionUpdate}> = (props) => {
@@ -845,7 +1144,7 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
           return  updateSessionApiV1SessionsSessionIdPut(sessionId,data,axiosOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -870,7 +1169,7 @@ export const useUpdateSessionApiV1SessionsSessionIdPut = <TError = AxiosError<Er
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * Delete a session.
 
@@ -880,8 +1179,8 @@ Permanently deletes a session and all associated data (activities, participants,
 export const deleteSessionApiV1SessionsSessionIdDelete = (
     sessionId: number, options?: AxiosRequestConfig
  ): Promise<AxiosResponse<void>> => {
-    
-    
+
+
     return axios.default.delete(
       `/api/v1/sessions/${sessionId}`,options
     );
@@ -900,7 +1199,7 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, axios: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteSessionApiV1SessionsSessionIdDelete>>, {sessionId: number}> = (props) => {
@@ -909,13 +1208,13 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
           return  deleteSessionApiV1SessionsSessionIdDelete(sessionId,axiosOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type DeleteSessionApiV1SessionsSessionIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteSessionApiV1SessionsSessionIdDelete>>>
-    
+
     export type DeleteSessionApiV1SessionsSessionIdDeleteMutationError = AxiosError<ErrorResponse | HTTPValidationError>
 
     /**
@@ -934,7 +1233,7 @@ export const useDeleteSessionApiV1SessionsSessionIdDelete = <TError = AxiosError
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * Get session by QR code or admin code.
 
@@ -945,8 +1244,8 @@ export const getSessionByCodeApiV1SessionsCodeCodeGet = (
     code: string,
     params?: GetSessionByCodeApiV1SessionsCodeCodeGetParams, options?: AxiosRequestConfig
  ): Promise<AxiosResponse<SessionResponse>> => {
-    
-    
+
+
     return axios.default.get(
       `/api/v1/sessions/code/${code}`,{
     ...options,
@@ -964,7 +1263,7 @@ export const getGetSessionByCodeApiV1SessionsCodeCodeGetQueryKey = (code?: strin
     ] as const;
     }
 
-    
+
 export const getGetSessionByCodeApiV1SessionsCodeCodeGetQueryOptions = <TData = Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(code: string,
     params?: GetSessionByCodeApiV1SessionsCodeCodeGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>, TError, TData>>, axios?: AxiosRequestConfig}
 ) => {
@@ -973,13 +1272,13 @@ const {query: queryOptions, axios: axiosOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetSessionByCodeApiV1SessionsCodeCodeGetQueryKey(code,params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>> = ({ signal }) => getSessionByCodeApiV1SessionsCodeCodeGet(code,params, { signal, ...axiosOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(code), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -1022,10 +1321,1772 @@ export function useGetSessionByCodeApiV1SessionsCodeCodeGet<TData = Awaited<Retu
 export function useGetSessionByCodeApiV1SessionsCodeCodeGet<TData = Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(
  code: string,
     params?: GetSessionByCodeApiV1SessionsCodeCodeGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionByCodeApiV1SessionsCodeCodeGet>>, TError, TData>>, axios?: AxiosRequestConfig}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetSessionByCodeApiV1SessionsCodeCodeGetQueryOptions(code,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * Get real-time session status for polling.
+
+Returns current session status, active activity, participant count,
+and last update timestamp for efficient polling.
+ * @summary Get Session Status
+ */
+export const getSessionStatusApiV1SessionsSessionIdStatusGet = (
+    sessionId: number, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<SessionStatusResponse>> => {
+
+
+    return axios.default.get(
+      `/api/v1/sessions/${sessionId}/status`,options
+    );
+  }
+
+
+
+
+export const getGetSessionStatusApiV1SessionsSessionIdStatusGetQueryKey = (sessionId?: number,) => {
+    return [
+    `/api/v1/sessions/${sessionId}/status`
+    ] as const;
+    }
+
+
+export const getGetSessionStatusApiV1SessionsSessionIdStatusGetQueryOptions = <TData = Awaited<ReturnType<typeof getSessionStatusApiV1SessionsSessionIdStatusGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(sessionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionStatusApiV1SessionsSessionIdStatusGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+) => {
+
+const {query: queryOptions, axios: axiosOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSessionStatusApiV1SessionsSessionIdStatusGetQueryKey(sessionId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSessionStatusApiV1SessionsSessionIdStatusGet>>> = ({ signal }) => getSessionStatusApiV1SessionsSessionIdStatusGet(sessionId, { signal, ...axiosOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(sessionId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSessionStatusApiV1SessionsSessionIdStatusGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSessionStatusApiV1SessionsSessionIdStatusGetQueryResult = NonNullable<Awaited<ReturnType<typeof getSessionStatusApiV1SessionsSessionIdStatusGet>>>
+export type GetSessionStatusApiV1SessionsSessionIdStatusGetQueryError = AxiosError<ErrorResponse | HTTPValidationError>
+
+
+export function useGetSessionStatusApiV1SessionsSessionIdStatusGet<TData = Awaited<ReturnType<typeof getSessionStatusApiV1SessionsSessionIdStatusGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(
+ sessionId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionStatusApiV1SessionsSessionIdStatusGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSessionStatusApiV1SessionsSessionIdStatusGet>>,
+          TError,
+          Awaited<ReturnType<typeof getSessionStatusApiV1SessionsSessionIdStatusGet>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSessionStatusApiV1SessionsSessionIdStatusGet<TData = Awaited<ReturnType<typeof getSessionStatusApiV1SessionsSessionIdStatusGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(
+ sessionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionStatusApiV1SessionsSessionIdStatusGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSessionStatusApiV1SessionsSessionIdStatusGet>>,
+          TError,
+          Awaited<ReturnType<typeof getSessionStatusApiV1SessionsSessionIdStatusGet>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSessionStatusApiV1SessionsSessionIdStatusGet<TData = Awaited<ReturnType<typeof getSessionStatusApiV1SessionsSessionIdStatusGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(
+ sessionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionStatusApiV1SessionsSessionIdStatusGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Session Status
+ */
+
+export function useGetSessionStatusApiV1SessionsSessionIdStatusGet<TData = Awaited<ReturnType<typeof getSessionStatusApiV1SessionsSessionIdStatusGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(
+ sessionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionStatusApiV1SessionsSessionIdStatusGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSessionStatusApiV1SessionsSessionIdStatusGetQueryOptions(sessionId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * Join a session with a nickname via QR code scan.
+
+- **session_id**: Session ID from QR code URL
+- **nickname**: Desired participant nickname (1-50 characters)
+
+Returns participant_id and current session state for synchronization.
+ * @summary Join Session
+ */
+export const joinSessionApiV1SessionsSessionIdJoinPost = (
+    sessionId: number,
+    participantJoinRequest: ParticipantJoinRequest, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<ParticipantJoinResponse>> => {
+
+
+    return axios.default.post(
+      `/api/v1/sessions/${sessionId}/join`,
+      participantJoinRequest,options
+    );
+  }
+
+
+
+export const getJoinSessionApiV1SessionsSessionIdJoinPostMutationOptions = <TError = AxiosError<ErrorResponse | ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof joinSessionApiV1SessionsSessionIdJoinPost>>, TError,{sessionId: number;data: ParticipantJoinRequest}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof joinSessionApiV1SessionsSessionIdJoinPost>>, TError,{sessionId: number;data: ParticipantJoinRequest}, TContext> => {
+
+const mutationKey = ['joinSessionApiV1SessionsSessionIdJoinPost'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof joinSessionApiV1SessionsSessionIdJoinPost>>, {sessionId: number;data: ParticipantJoinRequest}> = (props) => {
+          const {sessionId,data} = props ?? {};
+
+          return  joinSessionApiV1SessionsSessionIdJoinPost(sessionId,data,axiosOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type JoinSessionApiV1SessionsSessionIdJoinPostMutationResult = NonNullable<Awaited<ReturnType<typeof joinSessionApiV1SessionsSessionIdJoinPost>>>
+    export type JoinSessionApiV1SessionsSessionIdJoinPostMutationBody = ParticipantJoinRequest
+    export type JoinSessionApiV1SessionsSessionIdJoinPostMutationError = AxiosError<ErrorResponse | ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Join Session
+ */
+export const useJoinSessionApiV1SessionsSessionIdJoinPost = <TError = AxiosError<ErrorResponse | ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof joinSessionApiV1SessionsSessionIdJoinPost>>, TError,{sessionId: number;data: ParticipantJoinRequest}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof joinSessionApiV1SessionsSessionIdJoinPost>>,
+        TError,
+        {sessionId: number;data: ParticipantJoinRequest},
+        TContext
+      > => {
+
+      const mutationOptions = getJoinSessionApiV1SessionsSessionIdJoinPostMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+
+/**
+ * Validate if a nickname is available in a session.
+
+- **session_id**: Session ID to check nickname availability
+- **nickname**: Nickname to validate
+
+Returns availability status and suggested alternatives if taken.
+ * @summary Validate Nickname
+ */
+export const validateNicknameApiV1SessionsSessionIdNicknamesValidateGet = (
+    sessionId: number,
+    params: ValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetParams, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<NicknameValidationResponse>> => {
+
+
+    return axios.default.get(
+      `/api/v1/sessions/${sessionId}/nicknames/validate`,{
+    ...options,
+        params: {...params, ...options?.params},}
+    );
+  }
+
+
+
+
+export const getValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetQueryKey = (sessionId?: number,
+    params?: ValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetParams,) => {
+    return [
+    `/api/v1/sessions/${sessionId}/nicknames/validate`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+
+export const getValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetQueryOptions = <TData = Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>, TError = AxiosError<HTTPValidationError>>(sessionId: number,
+    params: ValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+) => {
+
+const {query: queryOptions, axios: axiosOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetQueryKey(sessionId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>> = ({ signal }) => validateNicknameApiV1SessionsSessionIdNicknamesValidateGet(sessionId,params, { signal, ...axiosOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(sessionId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetQueryResult = NonNullable<Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>>
+export type ValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetQueryError = AxiosError<HTTPValidationError>
+
+
+export function useValidateNicknameApiV1SessionsSessionIdNicknamesValidateGet<TData = Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    params: ValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>,
+          TError,
+          Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useValidateNicknameApiV1SessionsSessionIdNicknamesValidateGet<TData = Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    params: ValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>,
+          TError,
+          Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useValidateNicknameApiV1SessionsSessionIdNicknamesValidateGet<TData = Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    params: ValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Validate Nickname
+ */
+
+export function useValidateNicknameApiV1SessionsSessionIdNicknamesValidateGet<TData = Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    params: ValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetQueryOptions(sessionId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * Update participant heartbeat and get current activity context.
+
+- **participant_id**: UUID of participant
+- **activity_context**: Optional context data from current activity
+
+Returns computed status and current activity information.
+Should be called every 15-30 seconds by participant clients.
+ * @summary Update Heartbeat
+ */
+export const updateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPost = (
+    participantId: string,
+    participantHeartbeatRequest: ParticipantHeartbeatRequest, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<ParticipantHeartbeatResponse>> => {
+
+
+    return axios.default.post(
+      `/api/v1/participants/${participantId}/heartbeat`,
+      participantHeartbeatRequest,options
+    );
+  }
+
+
+
+export const getUpdateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPostMutationOptions = <TError = AxiosError<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPost>>, TError,{participantId: string;data: ParticipantHeartbeatRequest}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof updateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPost>>, TError,{participantId: string;data: ParticipantHeartbeatRequest}, TContext> => {
+
+const mutationKey = ['updateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPost'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPost>>, {participantId: string;data: ParticipantHeartbeatRequest}> = (props) => {
+          const {participantId,data} = props ?? {};
+
+          return  updateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPost(participantId,data,axiosOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPostMutationResult = NonNullable<Awaited<ReturnType<typeof updateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPost>>>
+    export type UpdateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPostMutationBody = ParticipantHeartbeatRequest
+    export type UpdateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPostMutationError = AxiosError<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Update Heartbeat
+ */
+export const useUpdateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPost = <TError = AxiosError<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPost>>, TError,{participantId: string;data: ParticipantHeartbeatRequest}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPost>>,
+        TError,
+        {participantId: string;data: ParticipantHeartbeatRequest},
+        TContext
+      > => {
+
+      const mutationOptions = getUpdateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPostMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+
+/**
+ * Get all participants in a session with their computed status.
+
+- **session_id**: Session ID to get participants for
+
+Returns list of participants with online/idle/disconnected status
+computed from their last heartbeat timing.
+ * @summary Get Session Participants
+ */
+export const getSessionParticipantsApiV1SessionsSessionIdParticipantsGet = (
+    sessionId: number, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<ParticipantListResponse>> => {
+
+
+    return axios.default.get(
+      `/api/v1/sessions/${sessionId}/participants`,options
+    );
+  }
+
+
+
+
+export const getGetSessionParticipantsApiV1SessionsSessionIdParticipantsGetQueryKey = (sessionId?: number,) => {
+    return [
+    `/api/v1/sessions/${sessionId}/participants`
+    ] as const;
+    }
+
+
+export const getGetSessionParticipantsApiV1SessionsSessionIdParticipantsGetQueryOptions = <TData = Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(sessionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+) => {
+
+const {query: queryOptions, axios: axiosOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSessionParticipantsApiV1SessionsSessionIdParticipantsGetQueryKey(sessionId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>> = ({ signal }) => getSessionParticipantsApiV1SessionsSessionIdParticipantsGet(sessionId, { signal, ...axiosOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(sessionId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSessionParticipantsApiV1SessionsSessionIdParticipantsGetQueryResult = NonNullable<Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>>
+export type GetSessionParticipantsApiV1SessionsSessionIdParticipantsGetQueryError = AxiosError<ErrorResponse | HTTPValidationError>
+
+
+export function useGetSessionParticipantsApiV1SessionsSessionIdParticipantsGet<TData = Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(
+ sessionId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>,
+          TError,
+          Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSessionParticipantsApiV1SessionsSessionIdParticipantsGet<TData = Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(
+ sessionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>,
+          TError,
+          Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSessionParticipantsApiV1SessionsSessionIdParticipantsGet<TData = Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(
+ sessionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Session Participants
+ */
+
+export function useGetSessionParticipantsApiV1SessionsSessionIdParticipantsGet<TData = Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(
+ sessionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSessionParticipantsApiV1SessionsSessionIdParticipantsGetQueryOptions(sessionId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * Remove a participant from their session.
+
+- **participant_id**: UUID of participant to remove
+
+Admin operation to kick participants or clean up disconnected users.
+ * @summary Remove Participant
+ */
+export const removeParticipantApiV1ParticipantsParticipantIdDelete = (
+    participantId: string, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<unknown | void>> => {
+
+
+    return axios.default.delete(
+      `/api/v1/participants/${participantId}`,options
+    );
+  }
+
+
+
+export const getRemoveParticipantApiV1ParticipantsParticipantIdDeleteMutationOptions = <TError = AxiosError<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeParticipantApiV1ParticipantsParticipantIdDelete>>, TError,{participantId: string}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof removeParticipantApiV1ParticipantsParticipantIdDelete>>, TError,{participantId: string}, TContext> => {
+
+const mutationKey = ['removeParticipantApiV1ParticipantsParticipantIdDelete'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeParticipantApiV1ParticipantsParticipantIdDelete>>, {participantId: string}> = (props) => {
+          const {participantId} = props ?? {};
+
+          return  removeParticipantApiV1ParticipantsParticipantIdDelete(participantId,axiosOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RemoveParticipantApiV1ParticipantsParticipantIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof removeParticipantApiV1ParticipantsParticipantIdDelete>>>
+
+    export type RemoveParticipantApiV1ParticipantsParticipantIdDeleteMutationError = AxiosError<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Remove Participant
+ */
+export const useRemoveParticipantApiV1ParticipantsParticipantIdDelete = <TError = AxiosError<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeParticipantApiV1ParticipantsParticipantIdDelete>>, TError,{participantId: string}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof removeParticipantApiV1ParticipantsParticipantIdDelete>>,
+        TError,
+        {participantId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getRemoveParticipantApiV1ParticipantsParticipantIdDeleteMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+
+/**
+ * Create a new user response for an activity.
+ * @summary Create Response
+ */
+export const createResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPost = (
+    sessionId: number,
+    activityId: string,
+    userResponseCreate: UserResponseCreate,
+    params: CreateResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPostParams, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<UserResponse>> => {
+
+
+    return axios.default.post(
+      `/api/v1/sessions/${sessionId}/activities/${activityId}/responses`,
+      userResponseCreate,{
+    ...options,
+        params: {...params, ...options?.params},}
+    );
+  }
+
+
+
+export const getCreateResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPostMutationOptions = <TError = AxiosError<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPost>>, TError,{sessionId: number;activityId: string;data: UserResponseCreate;params: CreateResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPostParams}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof createResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPost>>, TError,{sessionId: number;activityId: string;data: UserResponseCreate;params: CreateResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPostParams}, TContext> => {
+
+const mutationKey = ['createResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPost'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPost>>, {sessionId: number;activityId: string;data: UserResponseCreate;params: CreateResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPostParams}> = (props) => {
+          const {sessionId,activityId,data,params} = props ?? {};
+
+          return  createResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPost(sessionId,activityId,data,params,axiosOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPostMutationResult = NonNullable<Awaited<ReturnType<typeof createResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPost>>>
+    export type CreateResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPostMutationBody = UserResponseCreate
+    export type CreateResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPostMutationError = AxiosError<HTTPValidationError>
+
+    /**
+ * @summary Create Response
+ */
+export const useCreateResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPost = <TError = AxiosError<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPost>>, TError,{sessionId: number;activityId: string;data: UserResponseCreate;params: CreateResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPostParams}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPost>>,
+        TError,
+        {sessionId: number;activityId: string;data: UserResponseCreate;params: CreateResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPostParams},
+        TContext
+      > => {
+
+      const mutationOptions = getCreateResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPostMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+
+/**
+ * Get all responses for a specific activity with summary.
+ * @summary Get Activity Responses
+ */
+export const getActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGet = (
+    sessionId: number,
+    activityId: string,
+    params?: GetActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGetParams, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<UserResponseList>> => {
+
+
+    return axios.default.get(
+      `/api/v1/sessions/${sessionId}/activities/${activityId}/responses`,{
+    ...options,
+        params: {...params, ...options?.params},}
+    );
+  }
+
+
+
+
+export const getGetActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGetQueryKey = (sessionId?: number,
+    activityId?: string,
+    params?: GetActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGetParams,) => {
+    return [
+    `/api/v1/sessions/${sessionId}/activities/${activityId}/responses`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+
+export const getGetActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGetQueryOptions = <TData = Awaited<ReturnType<typeof getActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGet>>, TError = AxiosError<HTTPValidationError>>(sessionId: number,
+    activityId: string,
+    params?: GetActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+) => {
+
+const {query: queryOptions, axios: axiosOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGetQueryKey(sessionId,activityId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGet>>> = ({ signal }) => getActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGet(sessionId,activityId,params, { signal, ...axiosOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(sessionId && activityId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGetQueryResult = NonNullable<Awaited<ReturnType<typeof getActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGet>>>
+export type GetActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGetQueryError = AxiosError<HTTPValidationError>
+
+
+export function useGetActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGet<TData = Awaited<ReturnType<typeof getActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    activityId: string,
+    params: undefined |  GetActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGet>>,
+          TError,
+          Awaited<ReturnType<typeof getActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGet>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGet<TData = Awaited<ReturnType<typeof getActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    activityId: string,
+    params?: GetActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGet>>,
+          TError,
+          Awaited<ReturnType<typeof getActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGet>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGet<TData = Awaited<ReturnType<typeof getActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    activityId: string,
+    params?: GetActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Activity Responses
+ */
+
+export function useGetActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGet<TData = Awaited<ReturnType<typeof getActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    activityId: string,
+    params?: GetActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGetQueryOptions(sessionId,activityId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * Get a specific participant's response for an activity.
+ * @summary Get Participant Response
+ */
+export const getParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet = (
+    sessionId: number,
+    activityId: string,
+    participantId: number, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<GetParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet200>> => {
+
+
+    return axios.default.get(
+      `/api/v1/sessions/${sessionId}/activities/${activityId}/responses/${participantId}`,options
+    );
+  }
+
+
+
+
+export const getGetParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGetQueryKey = (sessionId?: number,
+    activityId?: string,
+    participantId?: number,) => {
+    return [
+    `/api/v1/sessions/${sessionId}/activities/${activityId}/responses/${participantId}`
+    ] as const;
+    }
+
+
+export const getGetParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGetQueryOptions = <TData = Awaited<ReturnType<typeof getParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet>>, TError = AxiosError<HTTPValidationError>>(sessionId: number,
+    activityId: string,
+    participantId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+) => {
+
+const {query: queryOptions, axios: axiosOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGetQueryKey(sessionId,activityId,participantId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet>>> = ({ signal }) => getParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet(sessionId,activityId,participantId, { signal, ...axiosOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(sessionId && activityId && participantId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGetQueryResult = NonNullable<Awaited<ReturnType<typeof getParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet>>>
+export type GetParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGetQueryError = AxiosError<HTTPValidationError>
+
+
+export function useGetParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet<TData = Awaited<ReturnType<typeof getParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    activityId: string,
+    participantId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof getParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet<TData = Awaited<ReturnType<typeof getParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    activityId: string,
+    participantId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof getParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet<TData = Awaited<ReturnType<typeof getParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    activityId: string,
+    participantId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Participant Response
+ */
+
+export function useGetParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet<TData = Awaited<ReturnType<typeof getParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    activityId: string,
+    participantId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGetQueryOptions(sessionId,activityId,participantId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * Update an existing user response.
+ * @summary Update Response
+ */
+export const updateResponseApiV1ResponsesResponseIdPut = (
+    responseId: string,
+    userResponseUpdate: UserResponseUpdate, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<UserResponse>> => {
+
+
+    return axios.default.put(
+      `/api/v1/responses/${responseId}`,
+      userResponseUpdate,options
+    );
+  }
+
+
+
+export const getUpdateResponseApiV1ResponsesResponseIdPutMutationOptions = <TError = AxiosError<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateResponseApiV1ResponsesResponseIdPut>>, TError,{responseId: string;data: UserResponseUpdate}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof updateResponseApiV1ResponsesResponseIdPut>>, TError,{responseId: string;data: UserResponseUpdate}, TContext> => {
+
+const mutationKey = ['updateResponseApiV1ResponsesResponseIdPut'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateResponseApiV1ResponsesResponseIdPut>>, {responseId: string;data: UserResponseUpdate}> = (props) => {
+          const {responseId,data} = props ?? {};
+
+          return  updateResponseApiV1ResponsesResponseIdPut(responseId,data,axiosOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateResponseApiV1ResponsesResponseIdPutMutationResult = NonNullable<Awaited<ReturnType<typeof updateResponseApiV1ResponsesResponseIdPut>>>
+    export type UpdateResponseApiV1ResponsesResponseIdPutMutationBody = UserResponseUpdate
+    export type UpdateResponseApiV1ResponsesResponseIdPutMutationError = AxiosError<HTTPValidationError>
+
+    /**
+ * @summary Update Response
+ */
+export const useUpdateResponseApiV1ResponsesResponseIdPut = <TError = AxiosError<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateResponseApiV1ResponsesResponseIdPut>>, TError,{responseId: string;data: UserResponseUpdate}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateResponseApiV1ResponsesResponseIdPut>>,
+        TError,
+        {responseId: string;data: UserResponseUpdate},
+        TContext
+      > => {
+
+      const mutationOptions = getUpdateResponseApiV1ResponsesResponseIdPutMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+
+/**
+ * Delete a user response.
+ * @summary Delete Response
+ */
+export const deleteResponseApiV1ResponsesResponseIdDelete = (
+    responseId: string, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<void>> => {
+
+
+    return axios.default.delete(
+      `/api/v1/responses/${responseId}`,options
+    );
+  }
+
+
+
+export const getDeleteResponseApiV1ResponsesResponseIdDeleteMutationOptions = <TError = AxiosError<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteResponseApiV1ResponsesResponseIdDelete>>, TError,{responseId: string}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteResponseApiV1ResponsesResponseIdDelete>>, TError,{responseId: string}, TContext> => {
+
+const mutationKey = ['deleteResponseApiV1ResponsesResponseIdDelete'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteResponseApiV1ResponsesResponseIdDelete>>, {responseId: string}> = (props) => {
+          const {responseId} = props ?? {};
+
+          return  deleteResponseApiV1ResponsesResponseIdDelete(responseId,axiosOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteResponseApiV1ResponsesResponseIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteResponseApiV1ResponsesResponseIdDelete>>>
+
+    export type DeleteResponseApiV1ResponsesResponseIdDeleteMutationError = AxiosError<HTTPValidationError>
+
+    /**
+ * @summary Delete Response
+ */
+export const useDeleteResponseApiV1ResponsesResponseIdDelete = <TError = AxiosError<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteResponseApiV1ResponsesResponseIdDelete>>, TError,{responseId: string}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteResponseApiV1ResponsesResponseIdDelete>>,
+        TError,
+        {responseId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getDeleteResponseApiV1ResponsesResponseIdDeleteMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+
+/**
+ * Get all responses by a specific participant in a session.
+ * @summary Get Participant Responses
+ */
+export const getParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGet = (
+    sessionId: number,
+    participantId: number,
+    params?: GetParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGetParams, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<UserResponse[]>> => {
+
+
+    return axios.default.get(
+      `/api/v1/sessions/${sessionId}/participants/${participantId}/responses`,{
+    ...options,
+        params: {...params, ...options?.params},}
+    );
+  }
+
+
+
+
+export const getGetParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGetQueryKey = (sessionId?: number,
+    participantId?: number,
+    params?: GetParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGetParams,) => {
+    return [
+    `/api/v1/sessions/${sessionId}/participants/${participantId}/responses`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+
+export const getGetParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGetQueryOptions = <TData = Awaited<ReturnType<typeof getParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGet>>, TError = AxiosError<HTTPValidationError>>(sessionId: number,
+    participantId: number,
+    params?: GetParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+) => {
+
+const {query: queryOptions, axios: axiosOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGetQueryKey(sessionId,participantId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGet>>> = ({ signal }) => getParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGet(sessionId,participantId,params, { signal, ...axiosOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(sessionId && participantId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGetQueryResult = NonNullable<Awaited<ReturnType<typeof getParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGet>>>
+export type GetParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGetQueryError = AxiosError<HTTPValidationError>
+
+
+export function useGetParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGet<TData = Awaited<ReturnType<typeof getParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    participantId: number,
+    params: undefined |  GetParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGet>>,
+          TError,
+          Awaited<ReturnType<typeof getParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGet>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGet<TData = Awaited<ReturnType<typeof getParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    participantId: number,
+    params?: GetParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGet>>,
+          TError,
+          Awaited<ReturnType<typeof getParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGet>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGet<TData = Awaited<ReturnType<typeof getParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    participantId: number,
+    params?: GetParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Participant Responses
+ */
+
+export function useGetParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGet<TData = Awaited<ReturnType<typeof getParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    participantId: number,
+    params?: GetParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGetQueryOptions(sessionId,participantId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * Get responses created since a specific timestamp for incremental updates.
+ * @summary Get Responses Since
+ */
+export const getResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGet = (
+    sessionId: number,
+    activityId: string,
+    timestamp: string,
+    params?: GetResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGetParams, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<IncrementalResponseList>> => {
+
+
+    return axios.default.get(
+      `/api/v1/sessions/${sessionId}/activities/${activityId}/responses/since/${timestamp}`,{
+    ...options,
+        params: {...params, ...options?.params},}
+    );
+  }
+
+
+
+
+export const getGetResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGetQueryKey = (sessionId?: number,
+    activityId?: string,
+    timestamp?: string,
+    params?: GetResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGetParams,) => {
+    return [
+    `/api/v1/sessions/${sessionId}/activities/${activityId}/responses/since/${timestamp}`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+
+export const getGetResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGetQueryOptions = <TData = Awaited<ReturnType<typeof getResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGet>>, TError = AxiosError<HTTPValidationError>>(sessionId: number,
+    activityId: string,
+    timestamp: string,
+    params?: GetResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+) => {
+
+const {query: queryOptions, axios: axiosOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGetQueryKey(sessionId,activityId,timestamp,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGet>>> = ({ signal }) => getResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGet(sessionId,activityId,timestamp,params, { signal, ...axiosOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(sessionId && activityId && timestamp), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGetQueryResult = NonNullable<Awaited<ReturnType<typeof getResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGet>>>
+export type GetResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGetQueryError = AxiosError<HTTPValidationError>
+
+
+export function useGetResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGet<TData = Awaited<ReturnType<typeof getResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    activityId: string,
+    timestamp: string,
+    params: undefined |  GetResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGet>>,
+          TError,
+          Awaited<ReturnType<typeof getResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGet>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGet<TData = Awaited<ReturnType<typeof getResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    activityId: string,
+    timestamp: string,
+    params?: GetResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGet>>,
+          TError,
+          Awaited<ReturnType<typeof getResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGet>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGet<TData = Awaited<ReturnType<typeof getResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    activityId: string,
+    timestamp: string,
+    params?: GetResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Responses Since
+ */
+
+export function useGetResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGet<TData = Awaited<ReturnType<typeof getResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    activityId: string,
+    timestamp: string,
+    params?: GetResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGetQueryOptions(sessionId,activityId,timestamp,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * Create a new activity for a session.
+ * @summary Create Activity
+ */
+export const createActivityApiV1SessionsSessionIdActivitiesPost = (
+    sessionId: number,
+    activityCreate: ActivityCreate, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<Activity>> => {
+
+
+    return axios.default.post(
+      `/api/v1/sessions/${sessionId}/activities`,
+      activityCreate,options
+    );
+  }
+
+
+
+export const getCreateActivityApiV1SessionsSessionIdActivitiesPostMutationOptions = <TError = AxiosError<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createActivityApiV1SessionsSessionIdActivitiesPost>>, TError,{sessionId: number;data: ActivityCreate}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof createActivityApiV1SessionsSessionIdActivitiesPost>>, TError,{sessionId: number;data: ActivityCreate}, TContext> => {
+
+const mutationKey = ['createActivityApiV1SessionsSessionIdActivitiesPost'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createActivityApiV1SessionsSessionIdActivitiesPost>>, {sessionId: number;data: ActivityCreate}> = (props) => {
+          const {sessionId,data} = props ?? {};
+
+          return  createActivityApiV1SessionsSessionIdActivitiesPost(sessionId,data,axiosOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateActivityApiV1SessionsSessionIdActivitiesPostMutationResult = NonNullable<Awaited<ReturnType<typeof createActivityApiV1SessionsSessionIdActivitiesPost>>>
+    export type CreateActivityApiV1SessionsSessionIdActivitiesPostMutationBody = ActivityCreate
+    export type CreateActivityApiV1SessionsSessionIdActivitiesPostMutationError = AxiosError<HTTPValidationError>
+
+    /**
+ * @summary Create Activity
+ */
+export const useCreateActivityApiV1SessionsSessionIdActivitiesPost = <TError = AxiosError<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createActivityApiV1SessionsSessionIdActivitiesPost>>, TError,{sessionId: number;data: ActivityCreate}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createActivityApiV1SessionsSessionIdActivitiesPost>>,
+        TError,
+        {sessionId: number;data: ActivityCreate},
+        TContext
+      > => {
+
+      const mutationOptions = getCreateActivityApiV1SessionsSessionIdActivitiesPostMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+
+/**
+ * Get all activities for a session.
+ * @summary Get Session Activities
+ */
+export const getSessionActivitiesApiV1SessionsSessionIdActivitiesGet = (
+    sessionId: number,
+    params?: GetSessionActivitiesApiV1SessionsSessionIdActivitiesGetParams, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<ActivityList>> => {
+
+
+    return axios.default.get(
+      `/api/v1/sessions/${sessionId}/activities`,{
+    ...options,
+        params: {...params, ...options?.params},}
+    );
+  }
+
+
+
+
+export const getGetSessionActivitiesApiV1SessionsSessionIdActivitiesGetQueryKey = (sessionId?: number,
+    params?: GetSessionActivitiesApiV1SessionsSessionIdActivitiesGetParams,) => {
+    return [
+    `/api/v1/sessions/${sessionId}/activities`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+
+export const getGetSessionActivitiesApiV1SessionsSessionIdActivitiesGetQueryOptions = <TData = Awaited<ReturnType<typeof getSessionActivitiesApiV1SessionsSessionIdActivitiesGet>>, TError = AxiosError<HTTPValidationError>>(sessionId: number,
+    params?: GetSessionActivitiesApiV1SessionsSessionIdActivitiesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionActivitiesApiV1SessionsSessionIdActivitiesGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+) => {
+
+const {query: queryOptions, axios: axiosOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSessionActivitiesApiV1SessionsSessionIdActivitiesGetQueryKey(sessionId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSessionActivitiesApiV1SessionsSessionIdActivitiesGet>>> = ({ signal }) => getSessionActivitiesApiV1SessionsSessionIdActivitiesGet(sessionId,params, { signal, ...axiosOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(sessionId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSessionActivitiesApiV1SessionsSessionIdActivitiesGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSessionActivitiesApiV1SessionsSessionIdActivitiesGetQueryResult = NonNullable<Awaited<ReturnType<typeof getSessionActivitiesApiV1SessionsSessionIdActivitiesGet>>>
+export type GetSessionActivitiesApiV1SessionsSessionIdActivitiesGetQueryError = AxiosError<HTTPValidationError>
+
+
+export function useGetSessionActivitiesApiV1SessionsSessionIdActivitiesGet<TData = Awaited<ReturnType<typeof getSessionActivitiesApiV1SessionsSessionIdActivitiesGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    params: undefined |  GetSessionActivitiesApiV1SessionsSessionIdActivitiesGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionActivitiesApiV1SessionsSessionIdActivitiesGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSessionActivitiesApiV1SessionsSessionIdActivitiesGet>>,
+          TError,
+          Awaited<ReturnType<typeof getSessionActivitiesApiV1SessionsSessionIdActivitiesGet>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSessionActivitiesApiV1SessionsSessionIdActivitiesGet<TData = Awaited<ReturnType<typeof getSessionActivitiesApiV1SessionsSessionIdActivitiesGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    params?: GetSessionActivitiesApiV1SessionsSessionIdActivitiesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionActivitiesApiV1SessionsSessionIdActivitiesGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSessionActivitiesApiV1SessionsSessionIdActivitiesGet>>,
+          TError,
+          Awaited<ReturnType<typeof getSessionActivitiesApiV1SessionsSessionIdActivitiesGet>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSessionActivitiesApiV1SessionsSessionIdActivitiesGet<TData = Awaited<ReturnType<typeof getSessionActivitiesApiV1SessionsSessionIdActivitiesGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    params?: GetSessionActivitiesApiV1SessionsSessionIdActivitiesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionActivitiesApiV1SessionsSessionIdActivitiesGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Session Activities
+ */
+
+export function useGetSessionActivitiesApiV1SessionsSessionIdActivitiesGet<TData = Awaited<ReturnType<typeof getSessionActivitiesApiV1SessionsSessionIdActivitiesGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    params?: GetSessionActivitiesApiV1SessionsSessionIdActivitiesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionActivitiesApiV1SessionsSessionIdActivitiesGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSessionActivitiesApiV1SessionsSessionIdActivitiesGetQueryOptions(sessionId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * Get an activity by ID.
+ * @summary Get Activity
+ */
+export const getActivityApiV1ActivitiesActivityIdGet = (
+    activityId: string, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<Activity>> => {
+
+
+    return axios.default.get(
+      `/api/v1/activities/${activityId}`,options
+    );
+  }
+
+
+
+
+export const getGetActivityApiV1ActivitiesActivityIdGetQueryKey = (activityId?: string,) => {
+    return [
+    `/api/v1/activities/${activityId}`
+    ] as const;
+    }
+
+
+export const getGetActivityApiV1ActivitiesActivityIdGetQueryOptions = <TData = Awaited<ReturnType<typeof getActivityApiV1ActivitiesActivityIdGet>>, TError = AxiosError<HTTPValidationError>>(activityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivityApiV1ActivitiesActivityIdGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+) => {
+
+const {query: queryOptions, axios: axiosOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetActivityApiV1ActivitiesActivityIdGetQueryKey(activityId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getActivityApiV1ActivitiesActivityIdGet>>> = ({ signal }) => getActivityApiV1ActivitiesActivityIdGet(activityId, { signal, ...axiosOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(activityId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getActivityApiV1ActivitiesActivityIdGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetActivityApiV1ActivitiesActivityIdGetQueryResult = NonNullable<Awaited<ReturnType<typeof getActivityApiV1ActivitiesActivityIdGet>>>
+export type GetActivityApiV1ActivitiesActivityIdGetQueryError = AxiosError<HTTPValidationError>
+
+
+export function useGetActivityApiV1ActivitiesActivityIdGet<TData = Awaited<ReturnType<typeof getActivityApiV1ActivitiesActivityIdGet>>, TError = AxiosError<HTTPValidationError>>(
+ activityId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivityApiV1ActivitiesActivityIdGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getActivityApiV1ActivitiesActivityIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof getActivityApiV1ActivitiesActivityIdGet>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetActivityApiV1ActivitiesActivityIdGet<TData = Awaited<ReturnType<typeof getActivityApiV1ActivitiesActivityIdGet>>, TError = AxiosError<HTTPValidationError>>(
+ activityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivityApiV1ActivitiesActivityIdGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getActivityApiV1ActivitiesActivityIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof getActivityApiV1ActivitiesActivityIdGet>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetActivityApiV1ActivitiesActivityIdGet<TData = Awaited<ReturnType<typeof getActivityApiV1ActivitiesActivityIdGet>>, TError = AxiosError<HTTPValidationError>>(
+ activityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivityApiV1ActivitiesActivityIdGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Activity
+ */
+
+export function useGetActivityApiV1ActivitiesActivityIdGet<TData = Awaited<ReturnType<typeof getActivityApiV1ActivitiesActivityIdGet>>, TError = AxiosError<HTTPValidationError>>(
+ activityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivityApiV1ActivitiesActivityIdGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetActivityApiV1ActivitiesActivityIdGetQueryOptions(activityId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * Update an existing activity.
+ * @summary Update Activity
+ */
+export const updateActivityApiV1ActivitiesActivityIdPut = (
+    activityId: string,
+    activityUpdate: ActivityUpdate, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<Activity>> => {
+
+
+    return axios.default.put(
+      `/api/v1/activities/${activityId}`,
+      activityUpdate,options
+    );
+  }
+
+
+
+export const getUpdateActivityApiV1ActivitiesActivityIdPutMutationOptions = <TError = AxiosError<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateActivityApiV1ActivitiesActivityIdPut>>, TError,{activityId: string;data: ActivityUpdate}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof updateActivityApiV1ActivitiesActivityIdPut>>, TError,{activityId: string;data: ActivityUpdate}, TContext> => {
+
+const mutationKey = ['updateActivityApiV1ActivitiesActivityIdPut'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateActivityApiV1ActivitiesActivityIdPut>>, {activityId: string;data: ActivityUpdate}> = (props) => {
+          const {activityId,data} = props ?? {};
+
+          return  updateActivityApiV1ActivitiesActivityIdPut(activityId,data,axiosOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateActivityApiV1ActivitiesActivityIdPutMutationResult = NonNullable<Awaited<ReturnType<typeof updateActivityApiV1ActivitiesActivityIdPut>>>
+    export type UpdateActivityApiV1ActivitiesActivityIdPutMutationBody = ActivityUpdate
+    export type UpdateActivityApiV1ActivitiesActivityIdPutMutationError = AxiosError<HTTPValidationError>
+
+    /**
+ * @summary Update Activity
+ */
+export const useUpdateActivityApiV1ActivitiesActivityIdPut = <TError = AxiosError<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateActivityApiV1ActivitiesActivityIdPut>>, TError,{activityId: string;data: ActivityUpdate}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateActivityApiV1ActivitiesActivityIdPut>>,
+        TError,
+        {activityId: string;data: ActivityUpdate},
+        TContext
+      > => {
+
+      const mutationOptions = getUpdateActivityApiV1ActivitiesActivityIdPutMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+
+/**
+ * Delete an activity.
+ * @summary Delete Activity
+ */
+export const deleteActivityApiV1ActivitiesActivityIdDelete = (
+    activityId: string, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<void>> => {
+
+
+    return axios.default.delete(
+      `/api/v1/activities/${activityId}`,options
+    );
+  }
+
+
+
+export const getDeleteActivityApiV1ActivitiesActivityIdDeleteMutationOptions = <TError = AxiosError<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteActivityApiV1ActivitiesActivityIdDelete>>, TError,{activityId: string}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteActivityApiV1ActivitiesActivityIdDelete>>, TError,{activityId: string}, TContext> => {
+
+const mutationKey = ['deleteActivityApiV1ActivitiesActivityIdDelete'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteActivityApiV1ActivitiesActivityIdDelete>>, {activityId: string}> = (props) => {
+          const {activityId} = props ?? {};
+
+          return  deleteActivityApiV1ActivitiesActivityIdDelete(activityId,axiosOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteActivityApiV1ActivitiesActivityIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteActivityApiV1ActivitiesActivityIdDelete>>>
+
+    export type DeleteActivityApiV1ActivitiesActivityIdDeleteMutationError = AxiosError<HTTPValidationError>
+
+    /**
+ * @summary Delete Activity
+ */
+export const useDeleteActivityApiV1ActivitiesActivityIdDelete = <TError = AxiosError<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteActivityApiV1ActivitiesActivityIdDelete>>, TError,{activityId: string}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteActivityApiV1ActivitiesActivityIdDelete>>,
+        TError,
+        {activityId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getDeleteActivityApiV1ActivitiesActivityIdDeleteMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+
+/**
+ * Update activity status.
+ * @summary Update Activity Status
+ */
+export const updateActivityStatusApiV1ActivitiesActivityIdStatusPatch = (
+    activityId: string,
+    params: UpdateActivityStatusApiV1ActivitiesActivityIdStatusPatchParams, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<Activity>> => {
+
+
+    return axios.default.patch(
+      `/api/v1/activities/${activityId}/status`,undefined,{
+    ...options,
+        params: {...params, ...options?.params},}
+    );
+  }
+
+
+
+export const getUpdateActivityStatusApiV1ActivitiesActivityIdStatusPatchMutationOptions = <TError = AxiosError<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateActivityStatusApiV1ActivitiesActivityIdStatusPatch>>, TError,{activityId: string;params: UpdateActivityStatusApiV1ActivitiesActivityIdStatusPatchParams}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof updateActivityStatusApiV1ActivitiesActivityIdStatusPatch>>, TError,{activityId: string;params: UpdateActivityStatusApiV1ActivitiesActivityIdStatusPatchParams}, TContext> => {
+
+const mutationKey = ['updateActivityStatusApiV1ActivitiesActivityIdStatusPatch'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateActivityStatusApiV1ActivitiesActivityIdStatusPatch>>, {activityId: string;params: UpdateActivityStatusApiV1ActivitiesActivityIdStatusPatchParams}> = (props) => {
+          const {activityId,params} = props ?? {};
+
+          return  updateActivityStatusApiV1ActivitiesActivityIdStatusPatch(activityId,params,axiosOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateActivityStatusApiV1ActivitiesActivityIdStatusPatchMutationResult = NonNullable<Awaited<ReturnType<typeof updateActivityStatusApiV1ActivitiesActivityIdStatusPatch>>>
+
+    export type UpdateActivityStatusApiV1ActivitiesActivityIdStatusPatchMutationError = AxiosError<HTTPValidationError>
+
+    /**
+ * @summary Update Activity Status
+ */
+export const useUpdateActivityStatusApiV1ActivitiesActivityIdStatusPatch = <TError = AxiosError<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateActivityStatusApiV1ActivitiesActivityIdStatusPatch>>, TError,{activityId: string;params: UpdateActivityStatusApiV1ActivitiesActivityIdStatusPatchParams}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateActivityStatusApiV1ActivitiesActivityIdStatusPatch>>,
+        TError,
+        {activityId: string;params: UpdateActivityStatusApiV1ActivitiesActivityIdStatusPatchParams},
+        TContext
+      > => {
+
+      const mutationOptions = getUpdateActivityStatusApiV1ActivitiesActivityIdStatusPatchMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+
+/**
+ * Get the currently active activity for a session.
+ * @summary Get Active Activity
+ */
+export const getActiveActivityApiV1SessionsSessionIdActivitiesActiveGet = (
+    sessionId: number, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<GetActiveActivityApiV1SessionsSessionIdActivitiesActiveGet200>> => {
+
+
+    return axios.default.get(
+      `/api/v1/sessions/${sessionId}/activities/active`,options
+    );
+  }
+
+
+
+
+export const getGetActiveActivityApiV1SessionsSessionIdActivitiesActiveGetQueryKey = (sessionId?: number,) => {
+    return [
+    `/api/v1/sessions/${sessionId}/activities/active`
+    ] as const;
+    }
+
+
+export const getGetActiveActivityApiV1SessionsSessionIdActivitiesActiveGetQueryOptions = <TData = Awaited<ReturnType<typeof getActiveActivityApiV1SessionsSessionIdActivitiesActiveGet>>, TError = AxiosError<HTTPValidationError>>(sessionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActiveActivityApiV1SessionsSessionIdActivitiesActiveGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+) => {
+
+const {query: queryOptions, axios: axiosOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetActiveActivityApiV1SessionsSessionIdActivitiesActiveGetQueryKey(sessionId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getActiveActivityApiV1SessionsSessionIdActivitiesActiveGet>>> = ({ signal }) => getActiveActivityApiV1SessionsSessionIdActivitiesActiveGet(sessionId, { signal, ...axiosOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(sessionId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getActiveActivityApiV1SessionsSessionIdActivitiesActiveGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetActiveActivityApiV1SessionsSessionIdActivitiesActiveGetQueryResult = NonNullable<Awaited<ReturnType<typeof getActiveActivityApiV1SessionsSessionIdActivitiesActiveGet>>>
+export type GetActiveActivityApiV1SessionsSessionIdActivitiesActiveGetQueryError = AxiosError<HTTPValidationError>
+
+
+export function useGetActiveActivityApiV1SessionsSessionIdActivitiesActiveGet<TData = Awaited<ReturnType<typeof getActiveActivityApiV1SessionsSessionIdActivitiesActiveGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActiveActivityApiV1SessionsSessionIdActivitiesActiveGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getActiveActivityApiV1SessionsSessionIdActivitiesActiveGet>>,
+          TError,
+          Awaited<ReturnType<typeof getActiveActivityApiV1SessionsSessionIdActivitiesActiveGet>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetActiveActivityApiV1SessionsSessionIdActivitiesActiveGet<TData = Awaited<ReturnType<typeof getActiveActivityApiV1SessionsSessionIdActivitiesActiveGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActiveActivityApiV1SessionsSessionIdActivitiesActiveGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getActiveActivityApiV1SessionsSessionIdActivitiesActiveGet>>,
+          TError,
+          Awaited<ReturnType<typeof getActiveActivityApiV1SessionsSessionIdActivitiesActiveGet>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetActiveActivityApiV1SessionsSessionIdActivitiesActiveGet<TData = Awaited<ReturnType<typeof getActiveActivityApiV1SessionsSessionIdActivitiesActiveGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActiveActivityApiV1SessionsSessionIdActivitiesActiveGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Active Activity
+ */
+
+export function useGetActiveActivityApiV1SessionsSessionIdActivitiesActiveGet<TData = Awaited<ReturnType<typeof getActiveActivityApiV1SessionsSessionIdActivitiesActiveGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActiveActivityApiV1SessionsSessionIdActivitiesActiveGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetActiveActivityApiV1SessionsSessionIdActivitiesActiveGetQueryOptions(sessionId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * Get activity status for real-time polling.
+ * @summary Get Activity Status
+ */
+export const getActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGet = (
+    sessionId: number,
+    activityId: string, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<ActivityStatusResponse>> => {
+
+
+    return axios.default.get(
+      `/api/v1/sessions/${sessionId}/activities/${activityId}/status`,options
+    );
+  }
+
+
+
+
+export const getGetActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGetQueryKey = (sessionId?: number,
+    activityId?: string,) => {
+    return [
+    `/api/v1/sessions/${sessionId}/activities/${activityId}/status`
+    ] as const;
+    }
+
+
+export const getGetActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGetQueryOptions = <TData = Awaited<ReturnType<typeof getActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGet>>, TError = AxiosError<HTTPValidationError>>(sessionId: number,
+    activityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+) => {
+
+const {query: queryOptions, axios: axiosOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGetQueryKey(sessionId,activityId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGet>>> = ({ signal }) => getActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGet(sessionId,activityId, { signal, ...axiosOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(sessionId && activityId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGetQueryResult = NonNullable<Awaited<ReturnType<typeof getActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGet>>>
+export type GetActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGetQueryError = AxiosError<HTTPValidationError>
+
+
+export function useGetActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGet<TData = Awaited<ReturnType<typeof getActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    activityId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGet>>,
+          TError,
+          Awaited<ReturnType<typeof getActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGet>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGet<TData = Awaited<ReturnType<typeof getActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    activityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGet>>,
+          TError,
+          Awaited<ReturnType<typeof getActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGet>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGet<TData = Awaited<ReturnType<typeof getActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    activityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Activity Status
+ */
+
+export function useGetActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGet<TData = Awaited<ReturnType<typeof getActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGet>>, TError = AxiosError<HTTPValidationError>>(
+ sessionId: number,
+    activityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGet>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGetQueryOptions(sessionId,activityId,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -1044,8 +3105,8 @@ export function useGetSessionByCodeApiV1SessionsCodeCodeGet<TData = Awaited<Retu
 export const rootGet = (
      options?: AxiosRequestConfig
  ): Promise<AxiosResponse<unknown>> => {
-    
-    
+
+
     return axios.default.get(
       `/`,options
     );
@@ -1060,7 +3121,7 @@ export const getRootGetQueryKey = () => {
     ] as const;
     }
 
-    
+
 export const getRootGetQueryOptions = <TData = Awaited<ReturnType<typeof rootGet>>, TError = AxiosError<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rootGet>>, TError, TData>>, axios?: AxiosRequestConfig}
 ) => {
 
@@ -1068,13 +3129,13 @@ const {query: queryOptions, axios: axiosOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getRootGetQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof rootGet>>> = ({ signal }) => rootGet({ signal, ...axiosOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof rootGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -1113,7 +3174,7 @@ export function useRootGet<TData = Awaited<ReturnType<typeof rootGet>>, TError =
 
 export function useRootGet<TData = Awaited<ReturnType<typeof rootGet>>, TError = AxiosError<unknown>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rootGet>>, TError, TData>>, axios?: AxiosRequestConfig}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getRootGetQueryOptions(options)
@@ -1136,16 +3197,52 @@ export const getCreateSessionApiV1SessionsPostResponseMock = (overrideResponse: 
 
 export const getListSessionsApiV1SessionsGetResponseMock = (overrideResponse: Partial< SessionList > = {}): SessionList => ({sessions: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, title: faker.string.alpha({length: {min: 10, max: 20}}), description: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), status: faker.helpers.arrayElement(Object.values(SessionStatus)), qr_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), admin_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), max_participants: faker.number.int({min: undefined, max: undefined}), started_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), completed_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), participant_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), activity_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined])})), total: faker.number.int({min: undefined, max: undefined}), offset: faker.number.int({min: undefined, max: undefined}), limit: faker.number.int({min: undefined, max: undefined}), ...overrideResponse})
 
-export const getGetSessionApiV1SessionsSessionIdGetResponseMock = (overrideResponse: Partial< SessionDetail > = {}): SessionDetail => ({id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, title: faker.string.alpha({length: {min: 10, max: 20}}), description: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), status: faker.helpers.arrayElement(Object.values(SessionStatus)), qr_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), admin_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), max_participants: faker.number.int({min: undefined, max: undefined}), started_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), completed_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), participant_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), activity_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), activities: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, session_id: faker.number.int({min: undefined, max: undefined}), title: faker.string.alpha({length: {min: 10, max: 20}}), description: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), activity_type: faker.helpers.arrayElement(Object.values(ActivityType)), configuration: {}, is_active: faker.datatype.boolean(), order_index: faker.number.int({min: undefined, max: undefined}), started_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), completed_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), response_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined])})), undefined]), participants: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, session_id: faker.number.int({min: undefined, max: undefined}), display_name: faker.string.alpha({length: {min: 10, max: 20}}), role: faker.helpers.arrayElement(Object.values(ParticipantRole)), is_active: faker.datatype.boolean(), joined_at: `${faker.date.past().toISOString().split('.')[0]}Z`, last_seen_at: `${faker.date.past().toISOString().split('.')[0]}Z`})), undefined]), ...overrideResponse})
+export const getGetSessionApiV1SessionsSessionIdGetResponseMock = (overrideResponse: Partial< SessionDetail > = {}): SessionDetail => ({id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, title: faker.string.alpha({length: {min: 10, max: 20}}), description: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), status: faker.helpers.arrayElement(Object.values(SessionStatus)), qr_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), admin_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), max_participants: faker.number.int({min: undefined, max: undefined}), started_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), completed_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), participant_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), activity_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), activities: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, session_id: faker.number.int({min: undefined, max: undefined}), title: faker.string.alpha({length: {min: 10, max: 20}}), description: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), activity_type: faker.helpers.arrayElement(Object.values(ActivityType)), configuration: {}, is_active: faker.datatype.boolean(), order_index: faker.number.int({min: undefined, max: undefined}), started_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), completed_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), response_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined])})), undefined]), participants: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({participant_id: faker.string.alpha({length: {min: 10, max: 20}}), nickname: faker.string.alpha({length: {min: 10, max: 20}}), status: faker.string.alpha({length: {min: 10, max: 20}}), joined_at: `${faker.date.past().toISOString().split('.')[0]}Z`, last_seen: `${faker.date.past().toISOString().split('.')[0]}Z`})), undefined]), ...overrideResponse})
 
 export const getUpdateSessionApiV1SessionsSessionIdPutResponseMock = (overrideResponse: Partial< SessionResponse > = {}): SessionResponse => ({id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, title: faker.string.alpha({length: {min: 10, max: 20}}), description: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), status: faker.helpers.arrayElement(Object.values(SessionStatus)), qr_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), admin_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), max_participants: faker.number.int({min: undefined, max: undefined}), started_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), completed_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), participant_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), activity_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), ...overrideResponse})
 
 export const getGetSessionByCodeApiV1SessionsCodeCodeGetResponseMock = (overrideResponse: Partial< SessionResponse > = {}): SessionResponse => ({id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, title: faker.string.alpha({length: {min: 10, max: 20}}), description: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), status: faker.helpers.arrayElement(Object.values(SessionStatus)), qr_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), admin_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), max_participants: faker.number.int({min: undefined, max: undefined}), started_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), completed_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), participant_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), activity_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), ...overrideResponse})
 
+export const getGetSessionStatusApiV1SessionsSessionIdStatusGetResponseMock = (overrideResponse: Partial< SessionStatusResponse > = {}): SessionStatusResponse => ({session_id: faker.number.int({min: undefined, max: undefined}), status: faker.helpers.arrayElement(Object.values(SessionStatus)), current_activity_id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.uuid(),null,]), undefined]), participant_count: faker.number.int({min: undefined, max: undefined}), last_updated: `${faker.date.past().toISOString().split('.')[0]}Z`, ...overrideResponse})
+
+export const getJoinSessionApiV1SessionsSessionIdJoinPostResponseMock = (overrideResponse: Partial< ParticipantJoinResponse > = {}): ParticipantJoinResponse => ({participant_id: faker.string.alpha({length: {min: 10, max: 20}}), session_state: {}, ...overrideResponse})
+
+export const getValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetResponseMock = (overrideResponse: Partial< NicknameValidationResponse > = {}): NicknameValidationResponse => ({available: faker.datatype.boolean(), suggested_nickname: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), undefined]), ...overrideResponse})
+
+export const getUpdateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPostResponseMock = (overrideResponse: Partial< ParticipantHeartbeatResponse > = {}): ParticipantHeartbeatResponse => ({status: faker.string.alpha({length: {min: 10, max: 20}}), activity_context: {}, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, ...overrideResponse})
+
+export const getGetSessionParticipantsApiV1SessionsSessionIdParticipantsGetResponseMock = (overrideResponse: Partial< ParticipantListResponse > = {}): ParticipantListResponse => ({participants: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({participant_id: faker.string.alpha({length: {min: 10, max: 20}}), nickname: faker.string.alpha({length: {min: 10, max: 20}}), status: faker.string.alpha({length: {min: 10, max: 20}}), joined_at: `${faker.date.past().toISOString().split('.')[0]}Z`, last_seen: `${faker.date.past().toISOString().split('.')[0]}Z`})), total_count: faker.number.int({min: undefined, max: undefined}), ...overrideResponse})
+
+export const getCreateResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPostResponseMock = (overrideResponse: Partial< UserResponse > = {}): UserResponse => ({response_data: {}, id: faker.string.uuid(), session_id: faker.number.int({min: undefined, max: undefined}), activity_id: faker.string.uuid(), participant_id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, ...overrideResponse})
+
+export const getGetActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGetResponseMock = (overrideResponse: Partial< UserResponseList > = {}): UserResponseList => ({responses: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({response_data: {}, id: faker.string.uuid(), session_id: faker.number.int({min: undefined, max: undefined}), activity_id: faker.string.uuid(), participant_id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`})), summary: {total_responses: faker.number.int({min: undefined, max: undefined}), unique_participants: faker.number.int({min: undefined, max: undefined}), last_updated: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,])}, ...overrideResponse})
+
+export const getGetParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGetResponseMock = (): GetParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet200 => (faker.helpers.arrayElement([{response_data: {}, id: faker.string.uuid(), session_id: faker.number.int({min: undefined, max: undefined}), activity_id: faker.string.uuid(), participant_id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`},null,]))
+
+export const getUpdateResponseApiV1ResponsesResponseIdPutResponseMock = (overrideResponse: Partial< UserResponse > = {}): UserResponse => ({response_data: {}, id: faker.string.uuid(), session_id: faker.number.int({min: undefined, max: undefined}), activity_id: faker.string.uuid(), participant_id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, ...overrideResponse})
+
+export const getGetParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGetResponseMock = (): UserResponse[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({response_data: {}, id: faker.string.uuid(), session_id: faker.number.int({min: undefined, max: undefined}), activity_id: faker.string.uuid(), participant_id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`})))
+
+export const getGetResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGetResponseMock = (overrideResponse: Partial< IncrementalResponseList > = {}): IncrementalResponseList => ({items: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({response_data: {}, id: faker.string.uuid(), session_id: faker.number.int({min: undefined, max: undefined}), activity_id: faker.string.uuid(), participant_id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`})), undefined]), since: `${faker.date.past().toISOString().split('.')[0]}Z`, count: faker.number.int({min: undefined, max: undefined}), ...overrideResponse})
+
+export const getCreateActivityApiV1SessionsSessionIdActivitiesPostResponseMock = (overrideResponse: Partial< Activity > = {}): Activity => ({type: faker.string.alpha({length: {min: 10, max: 20}}), config: faker.helpers.arrayElement([{}, undefined]), order_index: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), id: faker.string.uuid(), session_id: faker.number.int({min: undefined, max: undefined}), status: faker.helpers.arrayElement(Object.values(ActivityStatus)), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, ...overrideResponse})
+
+export const getGetSessionActivitiesApiV1SessionsSessionIdActivitiesGetResponseMock = (overrideResponse: Partial< ActivityList > = {}): ActivityList => ({activities: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({type: faker.string.alpha({length: {min: 10, max: 20}}), config: faker.helpers.arrayElement([{}, undefined]), order_index: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), id: faker.string.uuid(), session_id: faker.number.int({min: undefined, max: undefined}), status: faker.helpers.arrayElement(Object.values(ActivityStatus)), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`})), total: faker.number.int({min: undefined, max: undefined}), ...overrideResponse})
+
+export const getGetActivityApiV1ActivitiesActivityIdGetResponseMock = (overrideResponse: Partial< Activity > = {}): Activity => ({type: faker.string.alpha({length: {min: 10, max: 20}}), config: faker.helpers.arrayElement([{}, undefined]), order_index: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), id: faker.string.uuid(), session_id: faker.number.int({min: undefined, max: undefined}), status: faker.helpers.arrayElement(Object.values(ActivityStatus)), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, ...overrideResponse})
+
+export const getUpdateActivityApiV1ActivitiesActivityIdPutResponseMock = (overrideResponse: Partial< Activity > = {}): Activity => ({type: faker.string.alpha({length: {min: 10, max: 20}}), config: faker.helpers.arrayElement([{}, undefined]), order_index: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), id: faker.string.uuid(), session_id: faker.number.int({min: undefined, max: undefined}), status: faker.helpers.arrayElement(Object.values(ActivityStatus)), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, ...overrideResponse})
+
+export const getUpdateActivityStatusApiV1ActivitiesActivityIdStatusPatchResponseMock = (overrideResponse: Partial< Activity > = {}): Activity => ({type: faker.string.alpha({length: {min: 10, max: 20}}), config: faker.helpers.arrayElement([{}, undefined]), order_index: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), id: faker.string.uuid(), session_id: faker.number.int({min: undefined, max: undefined}), status: faker.helpers.arrayElement(Object.values(ActivityStatus)), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, ...overrideResponse})
+
+export const getGetActiveActivityApiV1SessionsSessionIdActivitiesActiveGetResponseMock = (): GetActiveActivityApiV1SessionsSessionIdActivitiesActiveGet200 => (faker.helpers.arrayElement([{type: faker.string.alpha({length: {min: 10, max: 20}}), config: faker.helpers.arrayElement([{}, undefined]), order_index: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), id: faker.string.uuid(), session_id: faker.number.int({min: undefined, max: undefined}), status: faker.helpers.arrayElement(Object.values(ActivityStatus)), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`},null,]))
+
+export const getGetActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGetResponseMock = (overrideResponse: Partial< ActivityStatusResponse > = {}): ActivityStatusResponse => ({activity_id: faker.string.uuid(), status: faker.helpers.arrayElement(Object.values(ActivityStatus)), response_count: faker.number.int({min: undefined, max: undefined}), last_response_at: faker.helpers.arrayElement([faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), undefined]), last_updated: `${faker.date.past().toISOString().split('.')[0]}Z`, ...overrideResponse})
+
 
 export const getHealthCheckApiV1HealthGetMockHandler = (overrideResponse?: HealthResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<HealthResponse> | HealthResponse), options?: RequestHandlerOptions) => {
   return http.get('*/api/v1/health/', async (info) => {await delay(1000);
-  
+
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
     : getHealthCheckApiV1HealthGetResponseMock()),
@@ -1157,7 +3254,7 @@ export const getHealthCheckApiV1HealthGetMockHandler = (overrideResponse?: Healt
 
 export const getReadinessCheckApiV1HealthReadyGetMockHandler = (overrideResponse?: HealthResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<HealthResponse> | HealthResponse), options?: RequestHandlerOptions) => {
   return http.get('*/api/v1/health/ready', async (info) => {await delay(1000);
-  
+
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
     : getReadinessCheckApiV1HealthReadyGetResponseMock()),
@@ -1169,7 +3266,7 @@ export const getReadinessCheckApiV1HealthReadyGetMockHandler = (overrideResponse
 
 export const getLivenessCheckApiV1HealthLiveGetMockHandler = (overrideResponse?: HealthResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<HealthResponse> | HealthResponse), options?: RequestHandlerOptions) => {
   return http.get('*/api/v1/health/live', async (info) => {await delay(1000);
-  
+
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
     : getLivenessCheckApiV1HealthLiveGetResponseMock()),
@@ -1181,7 +3278,7 @@ export const getLivenessCheckApiV1HealthLiveGetMockHandler = (overrideResponse?:
 
 export const getCreateSessionApiV1SessionsPostMockHandler = (overrideResponse?: SessionResponse | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<SessionResponse> | SessionResponse), options?: RequestHandlerOptions) => {
   return http.post('*/api/v1/sessions/', async (info) => {await delay(1000);
-  
+
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
     : getCreateSessionApiV1SessionsPostResponseMock()),
@@ -1193,7 +3290,7 @@ export const getCreateSessionApiV1SessionsPostMockHandler = (overrideResponse?: 
 
 export const getListSessionsApiV1SessionsGetMockHandler = (overrideResponse?: SessionList | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<SessionList> | SessionList), options?: RequestHandlerOptions) => {
   return http.get('*/api/v1/sessions/', async (info) => {await delay(1000);
-  
+
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
     : getListSessionsApiV1SessionsGetResponseMock()),
@@ -1205,7 +3302,7 @@ export const getListSessionsApiV1SessionsGetMockHandler = (overrideResponse?: Se
 
 export const getGetSessionApiV1SessionsSessionIdGetMockHandler = (overrideResponse?: SessionDetail | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<SessionDetail> | SessionDetail), options?: RequestHandlerOptions) => {
   return http.get('*/api/v1/sessions/:sessionId', async (info) => {await delay(1000);
-  
+
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
     : getGetSessionApiV1SessionsSessionIdGetResponseMock()),
@@ -1217,7 +3314,7 @@ export const getGetSessionApiV1SessionsSessionIdGetMockHandler = (overrideRespon
 
 export const getUpdateSessionApiV1SessionsSessionIdPutMockHandler = (overrideResponse?: SessionResponse | ((info: Parameters<Parameters<typeof http.put>[1]>[0]) => Promise<SessionResponse> | SessionResponse), options?: RequestHandlerOptions) => {
   return http.put('*/api/v1/sessions/:sessionId', async (info) => {await delay(1000);
-  
+
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
     : getUpdateSessionApiV1SessionsSessionIdPutResponseMock()),
@@ -1232,17 +3329,263 @@ export const getDeleteSessionApiV1SessionsSessionIdDeleteMockHandler = (override
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
     return new HttpResponse(null,
       { status: 204,
-        
+
       })
   }, options)
 }
 
 export const getGetSessionByCodeApiV1SessionsCodeCodeGetMockHandler = (overrideResponse?: SessionResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<SessionResponse> | SessionResponse), options?: RequestHandlerOptions) => {
   return http.get('*/api/v1/sessions/code/:code', async (info) => {await delay(1000);
-  
+
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
     : getGetSessionByCodeApiV1SessionsCodeCodeGetResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  }, options)
+}
+
+export const getGetSessionStatusApiV1SessionsSessionIdStatusGetMockHandler = (overrideResponse?: SessionStatusResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<SessionStatusResponse> | SessionStatusResponse), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/sessions/:sessionId/status', async (info) => {await delay(1000);
+
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetSessionStatusApiV1SessionsSessionIdStatusGetResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  }, options)
+}
+
+export const getJoinSessionApiV1SessionsSessionIdJoinPostMockHandler = (overrideResponse?: ParticipantJoinResponse | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<ParticipantJoinResponse> | ParticipantJoinResponse), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/sessions/:sessionId/join', async (info) => {await delay(1000);
+
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getJoinSessionApiV1SessionsSessionIdJoinPostResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  }, options)
+}
+
+export const getValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetMockHandler = (overrideResponse?: NicknameValidationResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<NicknameValidationResponse> | NicknameValidationResponse), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/sessions/:sessionId/nicknames/validate', async (info) => {await delay(1000);
+
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  }, options)
+}
+
+export const getUpdateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPostMockHandler = (overrideResponse?: ParticipantHeartbeatResponse | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<ParticipantHeartbeatResponse> | ParticipantHeartbeatResponse), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/participants/:participantId/heartbeat', async (info) => {await delay(1000);
+
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getUpdateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPostResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  }, options)
+}
+
+export const getGetSessionParticipantsApiV1SessionsSessionIdParticipantsGetMockHandler = (overrideResponse?: ParticipantListResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ParticipantListResponse> | ParticipantListResponse), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/sessions/:sessionId/participants', async (info) => {await delay(1000);
+
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetSessionParticipantsApiV1SessionsSessionIdParticipantsGetResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  }, options)
+}
+
+export const getRemoveParticipantApiV1ParticipantsParticipantIdDeleteMockHandler = (overrideResponse?: unknown | void | ((info: Parameters<Parameters<typeof http.delete>[1]>[0]) => Promise<unknown | void> | unknown | void), options?: RequestHandlerOptions) => {
+  return http.delete('*/api/v1/participants/:participantId', async (info) => {await delay(1000);
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+    return new HttpResponse(null,
+      { status: 200,
+
+      })
+  }, options)
+}
+
+export const getCreateResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPostMockHandler = (overrideResponse?: UserResponse | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<UserResponse> | UserResponse), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/sessions/:sessionId/activities/:activityId/responses', async (info) => {await delay(1000);
+
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getCreateResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPostResponseMock()),
+      { status: 201,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  }, options)
+}
+
+export const getGetActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGetMockHandler = (overrideResponse?: UserResponseList | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<UserResponseList> | UserResponseList), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/sessions/:sessionId/activities/:activityId/responses', async (info) => {await delay(1000);
+
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGetResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  }, options)
+}
+
+export const getGetParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGetMockHandler = (overrideResponse?: GetParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet200 | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<GetParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet200> | GetParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGet200), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/sessions/:sessionId/activities/:activityId/responses/:participantId', async (info) => {await delay(1000);
+
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGetResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  }, options)
+}
+
+export const getUpdateResponseApiV1ResponsesResponseIdPutMockHandler = (overrideResponse?: UserResponse | ((info: Parameters<Parameters<typeof http.put>[1]>[0]) => Promise<UserResponse> | UserResponse), options?: RequestHandlerOptions) => {
+  return http.put('*/api/v1/responses/:responseId', async (info) => {await delay(1000);
+
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getUpdateResponseApiV1ResponsesResponseIdPutResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  }, options)
+}
+
+export const getDeleteResponseApiV1ResponsesResponseIdDeleteMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.delete>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
+  return http.delete('*/api/v1/responses/:responseId', async (info) => {await delay(1000);
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+    return new HttpResponse(null,
+      { status: 204,
+
+      })
+  }, options)
+}
+
+export const getGetParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGetMockHandler = (overrideResponse?: UserResponse[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<UserResponse[]> | UserResponse[]), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/sessions/:sessionId/participants/:participantId/responses', async (info) => {await delay(1000);
+
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGetResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  }, options)
+}
+
+export const getGetResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGetMockHandler = (overrideResponse?: IncrementalResponseList | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<IncrementalResponseList> | IncrementalResponseList), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/sessions/:sessionId/activities/:activityId/responses/since/:timestamp', async (info) => {await delay(1000);
+
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGetResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  }, options)
+}
+
+export const getCreateActivityApiV1SessionsSessionIdActivitiesPostMockHandler = (overrideResponse?: Activity | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<Activity> | Activity), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/sessions/:sessionId/activities', async (info) => {await delay(1000);
+
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getCreateActivityApiV1SessionsSessionIdActivitiesPostResponseMock()),
+      { status: 201,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  }, options)
+}
+
+export const getGetSessionActivitiesApiV1SessionsSessionIdActivitiesGetMockHandler = (overrideResponse?: ActivityList | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ActivityList> | ActivityList), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/sessions/:sessionId/activities', async (info) => {await delay(1000);
+
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetSessionActivitiesApiV1SessionsSessionIdActivitiesGetResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  }, options)
+}
+
+export const getGetActivityApiV1ActivitiesActivityIdGetMockHandler = (overrideResponse?: Activity | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<Activity> | Activity), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/activities/:activityId', async (info) => {await delay(1000);
+
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetActivityApiV1ActivitiesActivityIdGetResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  }, options)
+}
+
+export const getUpdateActivityApiV1ActivitiesActivityIdPutMockHandler = (overrideResponse?: Activity | ((info: Parameters<Parameters<typeof http.put>[1]>[0]) => Promise<Activity> | Activity), options?: RequestHandlerOptions) => {
+  return http.put('*/api/v1/activities/:activityId', async (info) => {await delay(1000);
+
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getUpdateActivityApiV1ActivitiesActivityIdPutResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  }, options)
+}
+
+export const getDeleteActivityApiV1ActivitiesActivityIdDeleteMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.delete>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
+  return http.delete('*/api/v1/activities/:activityId', async (info) => {await delay(1000);
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+    return new HttpResponse(null,
+      { status: 204,
+
+      })
+  }, options)
+}
+
+export const getUpdateActivityStatusApiV1ActivitiesActivityIdStatusPatchMockHandler = (overrideResponse?: Activity | ((info: Parameters<Parameters<typeof http.patch>[1]>[0]) => Promise<Activity> | Activity), options?: RequestHandlerOptions) => {
+  return http.patch('*/api/v1/activities/:activityId/status', async (info) => {await delay(1000);
+
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getUpdateActivityStatusApiV1ActivitiesActivityIdStatusPatchResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  }, options)
+}
+
+export const getGetActiveActivityApiV1SessionsSessionIdActivitiesActiveGetMockHandler = (overrideResponse?: GetActiveActivityApiV1SessionsSessionIdActivitiesActiveGet200 | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<GetActiveActivityApiV1SessionsSessionIdActivitiesActiveGet200> | GetActiveActivityApiV1SessionsSessionIdActivitiesActiveGet200), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/sessions/:sessionId/activities/active', async (info) => {await delay(1000);
+
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetActiveActivityApiV1SessionsSessionIdActivitiesActiveGetResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  }, options)
+}
+
+export const getGetActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGetMockHandler = (overrideResponse?: ActivityStatusResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ActivityStatusResponse> | ActivityStatusResponse), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/sessions/:sessionId/activities/:activityId/status', async (info) => {await delay(1000);
+
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGetResponseMock()),
       { status: 200,
         headers: { 'Content-Type': 'application/json' }
       })
@@ -1254,7 +3597,7 @@ export const getRootGetMockHandler = (overrideResponse?: unknown | ((info: Param
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
     return new HttpResponse(null,
       { status: 200,
-        
+
       })
   }, options)
 }
@@ -1268,5 +3611,26 @@ export const getCajaBackendMock = () => [
   getUpdateSessionApiV1SessionsSessionIdPutMockHandler(),
   getDeleteSessionApiV1SessionsSessionIdDeleteMockHandler(),
   getGetSessionByCodeApiV1SessionsCodeCodeGetMockHandler(),
+  getGetSessionStatusApiV1SessionsSessionIdStatusGetMockHandler(),
+  getJoinSessionApiV1SessionsSessionIdJoinPostMockHandler(),
+  getValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetMockHandler(),
+  getUpdateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPostMockHandler(),
+  getGetSessionParticipantsApiV1SessionsSessionIdParticipantsGetMockHandler(),
+  getRemoveParticipantApiV1ParticipantsParticipantIdDeleteMockHandler(),
+  getCreateResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPostMockHandler(),
+  getGetActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGetMockHandler(),
+  getGetParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGetMockHandler(),
+  getUpdateResponseApiV1ResponsesResponseIdPutMockHandler(),
+  getDeleteResponseApiV1ResponsesResponseIdDeleteMockHandler(),
+  getGetParticipantResponsesApiV1SessionsSessionIdParticipantsParticipantIdResponsesGetMockHandler(),
+  getGetResponsesSinceApiV1SessionsSessionIdActivitiesActivityIdResponsesSinceTimestampGetMockHandler(),
+  getCreateActivityApiV1SessionsSessionIdActivitiesPostMockHandler(),
+  getGetSessionActivitiesApiV1SessionsSessionIdActivitiesGetMockHandler(),
+  getGetActivityApiV1ActivitiesActivityIdGetMockHandler(),
+  getUpdateActivityApiV1ActivitiesActivityIdPutMockHandler(),
+  getDeleteActivityApiV1ActivitiesActivityIdDeleteMockHandler(),
+  getUpdateActivityStatusApiV1ActivitiesActivityIdStatusPatchMockHandler(),
+  getGetActiveActivityApiV1SessionsSessionIdActivitiesActiveGetMockHandler(),
+  getGetActivityStatusApiV1SessionsSessionIdActivitiesActivityIdStatusGetMockHandler(),
   getRootGetMockHandler()
 ]
