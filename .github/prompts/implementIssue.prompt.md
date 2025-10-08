@@ -5,12 +5,22 @@ description: "Fetch GitHub issue via MCP and implement complete solution with co
 
 # /implementIssue - Complete Issue Implementation Workflow
 
-Implements a complete GitHub issue using the Model Context Protocol (MCP) server integration for the Caja live event engagement platform.
+Implements a complete GitHub issue using the Model Context Protocol (MCP) server integration for the Caja live event engagement platform. Automatically assigns the issue to the current user to prevent conflicts with other team members.
 
 ## Usage
 
 ```
-implementIssue {issue-number}
+implementIssue ### Phase 1: Specification Generation
+```
+🔍 Fetching issue #{number} via GitHub MCP...
+📋 Issue: "{issue-title}"
+👤 Getting current user via GitHub MCP...
+➡️ Assigning issue to: {github-username}
+✅ Issue successfully assigned via GitHub MCP (or warning if failed)
+📄 Generated specification: ai-docs/requirements/issue-{number}/issue-{number}_{title-slug}.spec.md
+📋 Generated plan: ai-docs/requirements/issue-{number}/issue-{number}_{title-slug}.plan.md
+
+📚 Specification and implementation plan generated!ber}
 ```
 
 ## Examples
@@ -28,6 +38,13 @@ implementIssue {issue-number}
 - Retrieve title, description, acceptance criteria, and labels
 - Get dependencies, related issues, and linked PRs
 - Analyze recent comments and implementation discussions
+
+#### Automatic Issue Assignment
+- **Prevents conflicts:** Assigns the issue to current user before starting work
+- **User detection:** Use GitHub MCP to get current authenticated user information
+- **MCP assignment:** Use GitHub MCP to update issue assignee directly via API
+- **Smart assignment:** Only assign if issue is unassigned or confirm if reassigning
+- **Graceful handling:** Log clear messages about assignment status and continue if assignment fails
 
 #### Issue Documentation Structure Creation
 - Create `ai-docs/requirements/issues/issue-{number}/` folder
@@ -293,9 +310,25 @@ Closes #{issue-number}
 - **Draft Status:** False (ready for review)
 
 #### Implementation Commands
-The AI should execute these GitHub MCP commands after implementation:
+The AI should execute these GitHub MCP commands during the workflow:
 
-1. **Create Pull Request:**
+1. **Get Current User (for assignment):**
+	```
+	github_get_current_user()
+	# Returns current authenticated user information including login/username
+	```
+
+2. **Assign Issue to Current User:**
+	```
+	github_update_issue(
+		 owner="repository-owner",
+		 repo="repository-name",
+		 issue_number={issue-number},
+		 assignees=[current_user_login]
+	)
+	```
+
+3. **Create Pull Request:**
 	```
 	mcp_github_create_pull_request(
 		 owner="repository-owner",
@@ -411,6 +444,13 @@ Provide detailed validation checklist:
 - Suggest checking issue number and repository access
 - Provide link to GitHub issues page for reference
 
+### Issue Assignment Failures
+- If GitHub MCP cannot identify current user, check MCP authentication and configuration
+- If assignment fails due to permissions, log warning and continue with implementation
+- If issue is already assigned to someone else, ask user if they want to reassign or continue
+- If GitHub MCP is unavailable, fall back to manual assignment reminder
+- Display clear message about assignment status regardless of success/failure
+
 ### Branch Conflicts
 - Check if current branch matches target issue number
 - Offer to switch to existing branch or create variant
@@ -430,7 +470,9 @@ Provide detailed validation checklist:
 ```
 🔍 Fetching issue #{number} via GitHub MCP...
 📋 Issue: "{issue-title}"
-📄 Generated specification: ai-docs/requirements/issue-{number}/issue-{number}_{title-slug}.spec.md
+� Assigning issue to current user: {github-username}
+✅ Issue successfully assigned (or warning if failed)
+�📄 Generated specification: ai-docs/requirements/issue-{number}/issue-{number}_{title-slug}.spec.md
 📋 Generated plan: ai-docs/requirements/issue-{number}/issue-{number}_{title-slug}.plan.md
 
 📚 Specification and implementation plan generated!
@@ -475,6 +517,8 @@ Next steps:
 4. **Consistency:** Ensures all implementations follow reviewed specifications
 5. **Debugging:** Easier to trace implementation decisions back to plans
 6. **Learning:** Developers can see AI's interpretation and planning process
+7. **Conflict Prevention:** Automatically assigns issues to prevent multiple developers working on the same issue
+8. **Clear Ownership:** Makes it obvious who is responsible for each issue implementation
 7. **Complete PR Template:** Automatically generates comprehensive pull requests with:
 	- Detailed implementation summary
 	- Complete acceptance criteria checklist
