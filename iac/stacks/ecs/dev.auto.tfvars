@@ -1,5 +1,11 @@
   vpc_id="vpc-074237327c8b24ea9"
-  data_subnet_ids=[
+  app_subnet_ids=[
 	"subnet-060f4090dde7c76a7", 
 	"subnet-001e4cd203bf00d5a", 
 	"subnet-00237ecd0794fe995"]
+  public_subnet_ids=[
+	"subnet-0d4e5074a219169ea", 
+	"subnet-0b1d0b6f8ee5b90af", 
+	"subnet-046edb33eb8d61e19"]
+  hosted_zone_id="Z09637621T67AIVRHV1NJ"
+  app_domain="conflicto.dbash.dev"

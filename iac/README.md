@@ -400,6 +400,60 @@ aws sts get-caller-identity --profile genai-immersion-houston
 aws configure list --profile genai-immersion-houston | grep region
 ```
 
+---
+
+## 12. Terraform Variable File Conventions (`*.auto.tfvars`)
+
+To keep environment-specific values consistent across all stacks, we standardize on using an auto-loaded variable file per environment within each stack directory (e.g. `dev.auto.tfvars`). Terraform automatically loads any file ending in `*.auto.tfvars` during `plan` / `apply`, eliminating the need to pass a long list of `-var` arguments.
+
+### Why
+
+* Reduces command complexity / copy‑paste errors
+* Ensures parity of critical values (VPC IDs, subnet arrays, hosted zone IDs, domain names) across re-runs
+* Keeps ephemeral experimentation variables out of committed CLI history
+
+### Guidelines
+
+1. Place the environment file beside the stack's `main.tf` (e.g. `iac/stacks/ecs/dev.auto.tfvars`).
+2. DO commit these files for non‑secret infra values (IDs, names, CIDRs). DO NOT put secrets (passwords, generated tokens) here—use Secrets Manager / SSM or pass them via CI pipeline variables.
+3. Keep naming aligned to environment slug (`dev.auto.tfvars`, `staging.auto.tfvars`, `prod.auto.tfvars`).
+4. If a value is genuinely secret but still a variable (e.g. legacy API key during transition), prefer:
+   * Omit from the `.auto.tfvars` file
+   * Supply via a wrapper make target that reads from a secure local store (Keychain, 1Password CLI) OR
+   * Inject through CI environment variables and a generated ephemeral `override.auto.tfvars` ignored by git.
+5. Avoid duplicating identical defaults across stacks—set defaults in `variables.tf` and only override when environment-specific.
+6. When adding new required variables, update every environment's `*.auto.tfvars` in the same commit to keep plans reproducible.
+
+### Example (`dev.auto.tfvars`)
+
+```hcl
+environment       = "dev"
+vpc_id            = "vpc-0abc123456789xyz"
+public_subnet_ids = ["subnet-aaa","subnet-bbb","subnet-ccc"]
+app_subnet_ids    = ["subnet-ddd","subnet-eee","subnet-fff"]
+hosted_zone_id    = "Z123456789ABC"
+app_domain        = "conflicto.dbash.dev"
+create_service    = false
+```
+
+### Makefile Convenience (Optional Future Enhancement)
+
+You can add a `plan-dev` target per stack:
+
+```makefile
+plan-dev:
+  terraform plan -var-file=dev.auto.tfvars
+```
+ 
+Even though `*.auto.tfvars` loads automatically, the explicit form can help when mixing environments in the same directory temporarily.
+
+### Git Hygiene
+
+* Add a `.gitignore` rule for any file pattern you intend to keep local only (e.g. `override.auto.tfvars`).
+* Review diffs for environment files carefully—changes signal a potential drift in infra parameters.
+
+---
+
 Optional guard: Put this snippet in your shell profile to display the active AWS account when entering the repo directory.
 
 ---
