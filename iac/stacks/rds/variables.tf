@@ -28,8 +28,8 @@ variable "data_subnet_ids" {
 
 variable "db_engine_version" {
   type        = string
-  description = "PostgreSQL engine version"
-  default     = "15.5"
+  description = "PostgreSQL engine version (use aws rds describe-db-engine-versions --engine postgres to list)."
+  default     = "15.4"
 }
 
 variable "instance_class" {
