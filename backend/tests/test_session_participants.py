@@ -1,7 +1,6 @@
 """
 Simplified tests for session management functionality.
 """
-import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
