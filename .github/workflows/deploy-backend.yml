@@ -160,6 +160,10 @@ jobs:
           jq '.containerDefinitions[0].command = ["poetry", "run", "alembic", "upgrade", "head"]' \
           > migration-task-def.json
 
+          # Ensure the migration task has the same IAM role as the main app
+          echo "Migration task definition:"
+          cat migration-task-def.json | jq '.'
+
           # Register the migration task definition
           MIGRATION_TASK_DEF_ARN=$(aws ecs register-task-definition \
             --cli-input-json file://migration-task-def.json \
@@ -194,24 +198,52 @@ jobs:
 
           echo "Selected subnet: $SUBNET_ID"
 
-          # Get security group for the ECS service
+          # Get security groups - need both app and database access
           echo "Looking for security groups..."
 
-          SECURITY_GROUP_ID=$(aws ec2 describe-security-groups \
+          # Get the app security group (for general access)
+          APP_SECURITY_GROUP_ID=$(aws ec2 describe-security-groups \
             --filters "Name=group-name,Values=conflicto-${ENV}-app*" \
             --query 'SecurityGroups[0].GroupId' \
             --output text 2>/dev/null)
 
-          if [ "$SECURITY_GROUP_ID" = "None" ] || [ -z "$SECURITY_GROUP_ID" ]; then
-            echo "Warning: Could not find app security group, using default..."
-            SECURITY_GROUP_ID=$(aws ec2 describe-security-groups \
-              --filters "Name=group-name,Values=default" \
-              --query 'SecurityGroups[0].GroupId' \
-              --output text 2>/dev/null)
+          # Get the database security group (for RDS access)
+          DB_SECURITY_GROUP_ID=$(aws ec2 describe-security-groups \
+            --filters "Name=group-name,Values=conflicto-${ENV}-db*" \
+            --query 'SecurityGroups[0].GroupId' \
+            --output text 2>/dev/null)
+
+          # Build security group list
+          SECURITY_GROUPS=""
+          if [ "$APP_SECURITY_GROUP_ID" != "None" ] && [ -n "$APP_SECURITY_GROUP_ID" ]; then
+            SECURITY_GROUPS="$APP_SECURITY_GROUP_ID"
+            echo "Found app security group: $APP_SECURITY_GROUP_ID"
           fi
 
-          if [ "$SECURITY_GROUP_ID" = "None" ] || [ -z "$SECURITY_GROUP_ID" ]; then
-            echo "Error: Could not find any suitable security group"
+          if [ "$DB_SECURITY_GROUP_ID" != "None" ] && [ -n "$DB_SECURITY_GROUP_ID" ]; then
+            if [ -n "$SECURITY_GROUPS" ]; then
+              SECURITY_GROUPS="$SECURITY_GROUPS,$DB_SECURITY_GROUP_ID"
+            else
+              SECURITY_GROUPS="$DB_SECURITY_GROUP_ID"
+            fi
+            echo "Found database security group: $DB_SECURITY_GROUP_ID"
+          fi
+
+          # If no specific security groups found, try to find any that allow database access
+          if [ -z "$SECURITY_GROUPS" ]; then
+            echo "Warning: Could not find specific security groups, looking for any with database access..."
+            FALLBACK_SG=$(aws ec2 describe-security-groups \
+              --filters "Name=group-name,Values=*${ENV}*" \
+              --query 'SecurityGroups[0].GroupId' \
+              --output text 2>/dev/null)
+
+            if [ "$FALLBACK_SG" != "None" ] && [ -n "$FALLBACK_SG" ]; then
+              SECURITY_GROUPS="$FALLBACK_SG"
+            fi
+          fi
+
+          if [ -z "$SECURITY_GROUPS" ]; then
+            echo "Error: Could not find any suitable security groups"
             echo "Available security groups:"
             aws ec2 describe-security-groups --query 'SecurityGroups[].{GroupId:GroupId,GroupName:GroupName,VpcId:VpcId}' --output table
             exit 1
@@ -219,14 +251,14 @@ jobs:
 
           echo "Running migration task..."
           echo "Subnet: $SUBNET_ID"
-          echo "Security Group: $SECURITY_GROUP_ID"
+          echo "Security Groups: $SECURITY_GROUPS"
 
-          # Run the migration task
+          # Run the migration task with proper security groups
           MIGRATION_TASK_ARN=$(aws ecs run-task \
             --cluster conflicto-${ENV}-cluster \
             --task-definition $MIGRATION_TASK_DEF_ARN \
             --launch-type FARGATE \
-            --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_ID],securityGroups=[$SECURITY_GROUP_ID],assignPublicIp=ENABLED}" \
+            --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_ID],securityGroups=[$SECURITY_GROUPS],assignPublicIp=DISABLED}" \
             --query 'tasks[0].taskArn' \
             --output text)
 
