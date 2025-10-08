@@ -23,24 +23,32 @@ Provides Terraform management for the existing Route 53 hosted zone `dbash.dev` 
    terraform plan
    ```
    Expect: create certificate + validation records; zone shows no changes.
-4. Apply:
+4. Two-Phase Apply (due to unknown validation options at plan time):
+
    ```bash
-   terraform apply
+   make apply-cert-only   # creates the certificate resource
+   make apply-complete    # creates validation records & validation resource
    ```
-5. Wait for validation to complete (can take a few minutes). Re-run:
+
+5. Wait for validation to complete (few minutes). Re-run:
+
    ```bash
    terraform refresh
    terraform output certificate_arn
    ```
 
+ 
 ## Variables
+
 See `variables.tf` for customization (add more subdomains via `app_subdomains`).
 
 ## Safety
+
 - `prevent_destroy` on hosted zone to avoid accidental deletion.
 - Certificate uses `create_before_destroy` to enable seamless rotation.
 
 ## Future Enhancements
+
 - Add root/apex ALIAS records for app endpoints once ALB/CloudFront exist.
 - Separate wildcard certificate if needed (`*.conflicto.dbash.dev`).
 - DNS query logging / resolver rules (future issue).

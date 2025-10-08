@@ -13,6 +13,14 @@ plan:
 apply:
 	terraform apply -auto-approve
 
+# Step 1: create only the certificate (needed because validation options are unknown until after creation)
+apply-cert-only:
+	terraform apply -auto-approve -target=aws_acm_certificate.app
+
+# Step 2: after cert exists, run full apply to create validation records & finalize
+apply-complete:
+	terraform apply -auto-approve
+
 outputs:
 	terraform output -json | jq
 
@@ -20,3 +28,4 @@ refresh:
 	terraform refresh
 
 .PHONY: init import-zone plan apply outputs refresh
+.PHONY: apply-cert-only apply-complete
