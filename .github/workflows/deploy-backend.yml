@@ -1,0 +1,115 @@
+name: Build and Deploy Backend to ECS
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+permissions:
+  id-token: write   # Required for OIDC authentication
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      # Authenticate to AWS using OIDC
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOYER_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+          role-session-name: GitHubActions-Deploy-${{ github.run_id }}
+      
+      # Login to Amazon ECR
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      
+      # Set environment variables
+      - name: Set environment variables
+        id: vars
+        env:
+          ENV: ${{ github.event.inputs.environment || 'dev' }}
+        run: |
+          echo "environment=${ENV}" >> $GITHUB_OUTPUT
+          echo "image_tag=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+          echo "ecr_registry=${{ steps.login-ecr.outputs.registry }}" >> $GITHUB_OUTPUT
+          echo "ecr_repository=conflicto-backend-${ENV}" >> $GITHUB_OUTPUT
+          echo "image_uri=${{ steps.login-ecr.outputs.registry }}/conflicto-backend-${ENV}:${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+      
+      # Build and push Docker image
+      - name: Build, tag, and push image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ steps.vars.outputs.ecr_repository }}
+          IMAGE_TAG: ${{ steps.vars.outputs.image_tag }}
+        run: |
+          cd backend
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          echo "Pushed image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+      
+      # Update ECS task definition with new image
+      - name: Download current task definition
+        env:
+          ENV: ${{ steps.vars.outputs.environment }}
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition conflicto-backend-${ENV} \
+            --query taskDefinition > task-definition.json
+      
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: conflicto-backend
+          image: ${{ steps.vars.outputs.image_uri }}
+      
+      # Deploy to ECS
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        env:
+          ENV: ${{ steps.vars.outputs.environment }}
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: conflicto-backend-service-${{ env.ENV }}
+          cluster: conflicto-${{ env.ENV }}
+          wait-for-service-stability: true
+      
+      # Output deployment info
+      - name: Deployment summary
+        env:
+          ENV: ${{ steps.vars.outputs.environment }}
+          IMAGE_URI: ${{ steps.vars.outputs.image_uri }}
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** ${ENV}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image:** \`${IMAGE_URI}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Cluster:** conflicto-${ENV}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Service:** conflicto-backend-service-${ENV}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Git SHA:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Deployment successful!" >> $GITHUB_STEP_SUMMARY
