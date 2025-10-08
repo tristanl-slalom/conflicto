@@ -24,6 +24,9 @@ const PreLobbyLandingPage: React.FC<PreLobbyLandingPageProps> = ({
       query: {
         refetchInterval: 5000, // Poll every 5 seconds for session status changes
         refetchIntervalInBackground: true,
+        retry: 1, // Only retry once on failure
+        retryDelay: 2000, // Wait 2 seconds before retry
+        refetchOnWindowFocus: false, // Don't refetch when window gains focus
       }
     }
   );

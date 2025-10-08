@@ -23,7 +23,17 @@ export const useSessionManagement = () => {
     refetch: refetchSessions,
     isLoading: isLoadingSessions,
     error: sessionsError 
-  } = useListSessionsApiV1SessionsGet();
+  } = useListSessionsApiV1SessionsGet(
+    undefined, // No params needed
+    {
+      query: {
+        retry: 1, // Only retry once on failure
+        retryDelay: 2000, // Wait 2 seconds before retry
+        refetchOnWindowFocus: false, // Don't refetch when window gains focus
+        staleTime: 30000, // Consider data stale after 30 seconds
+      }
+    }
+  );
 
   /**
    * Create a new session
@@ -98,7 +108,11 @@ export const useSessionManagement = () => {
       sessionId!, 
       { 
         query: { 
-          enabled: !!sessionId 
+          enabled: !!sessionId,
+          retry: 1, // Only retry once on failure
+          retryDelay: 2000, // Wait 2 seconds before retry
+          refetchOnWindowFocus: false, // Don't refetch when window gains focus
+          staleTime: 30000, // Consider data stale after 30 seconds
         } 
       }
     );

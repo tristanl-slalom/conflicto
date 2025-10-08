@@ -34,6 +34,14 @@ function SessionJoinPage() {
     )
   }
   
-  // If not joined yet, show the join form
-  return <SessionJoin sessionId={sessionId} />
+  // If not joined yet, wrap the join form in ParticipantSessionWrapper
+  // This allows it to show pre-lobby for draft sessions or handle session not found
+  return (
+    <ParticipantSessionWrapper 
+      sessionId={parseInt(sessionId)}
+      nickname={undefined}
+    >
+      <SessionJoin sessionId={sessionId} />
+    </ParticipantSessionWrapper>
+  )
 }

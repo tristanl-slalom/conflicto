@@ -23,6 +23,9 @@ const PreLobbyParticipantList: React.FC<PreLobbyParticipantListProps> = ({
         refetchInterval: 3000, // Poll every 3 seconds for real-time updates
         refetchIntervalInBackground: true,
         staleTime: 1000, // Consider data stale after 1 second
+        retry: 1, // Only retry once on failure
+        retryDelay: 2000, // Wait 2 seconds before retry
+        refetchOnWindowFocus: false, // Don't refetch when window gains focus
       }
     }
   );

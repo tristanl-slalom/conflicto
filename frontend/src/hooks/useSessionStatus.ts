@@ -30,6 +30,7 @@ export const useSessionStatus = (
   } = options;
 
   const [previousStatus, setPreviousStatus] = useState<string | null>(null);
+  const [hasError, setHasError] = useState(false);
 
   // Use existing session API with polling
   const { 
@@ -40,13 +41,24 @@ export const useSessionStatus = (
     sessionId,
     {
       query: {
-        enabled,
-        refetchInterval: pollingInterval,
+        enabled: enabled && !hasError, // Disable polling if there's been an error
+        refetchInterval: hasError ? false : pollingInterval, // Stop polling on error
         refetchIntervalInBackground: true,
         staleTime: 1000, // Consider data stale after 1 second
+        retry: 1, // Only retry once on failure
+        retryDelay: 2000, // Wait 2 seconds before retry
+        refetchOnMount: true,
+        refetchOnWindowFocus: false, // Don't refetch when window gains focus
       }
     }
   );
+
+  // Track errors to stop polling
+  useEffect(() => {
+    if (error) {
+      setHasError(true);
+    }
+  }, [error]);
 
   const session = sessionData?.status === 200 ? sessionData.data : null;
   const currentStatus = session?.status || 'unknown';

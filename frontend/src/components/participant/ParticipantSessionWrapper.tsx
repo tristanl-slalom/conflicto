@@ -49,16 +49,31 @@ const ParticipantSessionWrapper: React.FC<ParticipantSessionWrapperProps> = ({
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
           <div className="text-red-400 text-6xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-bold mb-4">Session Error</h1>
+          <h1 className="text-2xl font-bold mb-4">Session Not Found</h1>
           <p className="text-gray-300 mb-6">
-            {sessionStatus.error}
+            The session you're trying to join could not be found or may have been removed.
           </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg transition-colors"
-          >
-            Try Again
-          </button>
+          <div className="space-y-3">
+            <button
+              onClick={() => {
+                // Clear any cached session data and go home instead of refreshing
+                sessionStorage.clear();
+                window.location.href = '/';
+              }}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg transition-colors"
+            >
+              Go Home
+            </button>
+            <button
+              onClick={() => {
+                // Only reload if user explicitly wants to try again
+                window.location.reload();
+              }}
+              className="w-full bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -67,13 +82,19 @@ const ParticipantSessionWrapper: React.FC<ParticipantSessionWrapperProps> = ({
   // Handle different session statuses
   switch (sessionStatus.status) {
     case 'draft':
-      // Show pre-lobby for draft sessions
-      return (
-        <PreLobbyLandingPage 
-          sessionId={sessionId}
-          nickname={nickname}
-        />
-      );
+      // For draft sessions, check if user has joined
+      if (nickname) {
+        // User has joined - show pre-lobby
+        return (
+          <PreLobbyLandingPage 
+            sessionId={sessionId}
+            nickname={nickname}
+          />
+        );
+      } else {
+        // User hasn't joined yet - show join form
+        return <>{children}</>;
+      }
       
     case 'active':
       // Show regular participant interface for active sessions
