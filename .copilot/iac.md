@@ -541,4 +541,59 @@ Add a comment or edit this file with: `APPROVED: <name> <date>` to authorize sca
 
 ---
 
+## 18. Phase 0.5: IAM OIDC Provider & Terraform Deployer Roles
+
+**Status:** ✅ Implementation Complete
+**Issue:** #64
+**Stack:** `infrastructure/iam/`
+**Branch:** `feature/issue-64-phase-0-5-iam-oidc-provider-terraform-deployer-roles`
+
+### Resources Created
+
+- AWS IAM OIDC provider for GitHub Actions (`token.actions.githubusercontent.com`)
+- Three IAM roles: `conflicto-terraform-deployer-{dev,staging,prod}`
+- Repository-restricted trust policies (limited to `tristanl-slalom/conflicto`)
+- Inline permission policies covering phases 0-5 infrastructure services
+
+### Implementation Approach
+
+**Hybrid Pattern:** Due to PowerUserAccess constraints (cannot create IAM roles via Terraform), the implementation uses:
+1. Manual AWS Console creation of OIDC provider and roles (documented in `docs/IAM_OIDC_SETUP.md`)
+2. Terraform import to bring resources under IaC management
+3. Terraform manages all future updates after initial import
+
+### Usage in CI/CD
+
+Role ARNs will be consumed by GitHub Actions workflows (Issue #57):
+
+```yaml
+- uses: aws-actions/configure-aws-credentials@v4
+  with:
+    role-to-assume: ${{ vars.AWS_DEPLOYER_ROLE_ARN }}
+    aws-region: us-east-1
+```
+
+Get role ARNs:
+```bash
+cd infrastructure/iam
+terraform output deployer_role_arns
+```
+
+### Documentation
+
+- Stack README: `infrastructure/iam/README.md`
+- Console setup guide: `docs/IAM_OIDC_SETUP.md` (step-by-step manual creation)
+- GitHub Actions examples: `docs/GITHUB_ACTIONS_OIDC.md`
+- Technical spec: `ai-docs/requirements/issues/issue-64/issue-64_phase-0-5-iam-oidc-provider-terraform-deployer-roles.spec.md`
+- Implementation plan: `ai-docs/requirements/issues/issue-64/issue-64_phase-0-5-iam-oidc-provider-terraform-deployer-roles.plan.md`
+
+### Next Steps
+
+- Manual AWS Console resource creation (per `docs/IAM_OIDC_SETUP.md`)
+- Terraform import of manually created resources
+- Integrate role ARNs into CI/CD workflows (#57)
+- Schedule Phase 10 hardening (wildcard removal, tag conditions, branch restrictions)
+
+---
+
 End of Plan
