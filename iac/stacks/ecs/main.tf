@@ -36,7 +36,11 @@ resource "aws_cloudwatch_log_group" "app" {
 
 resource "aws_ecs_cluster" "this" {
   name = "${local.name_prefix}-cluster"
-  configuration { execute_command_configuration { logging = "DEFAULT" } }
+  configuration {
+    execute_command_configuration {
+      logging = "DEFAULT"
+    }
+  }
   tags = module.shared.tags
 }
 
@@ -133,7 +137,10 @@ resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.app[0].arn
   port              = 80
   protocol          = "HTTP"
-  default_action { type = "forward" target_group_arn = aws_lb_target_group.app[0].arn }
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.app[0].arn
+  }
 }
 
 # IAM roles for task execution
