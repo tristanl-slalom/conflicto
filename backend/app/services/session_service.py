@@ -3,7 +3,8 @@ Session service layer for business logic.
 """
 import secrets
 import string
-from typing import List, Optional
+from datetime import datetime
+from typing import Optional
 
 from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -91,7 +92,7 @@ class SessionService:
     @staticmethod
     async def list_sessions(
         db: AsyncSession, offset: int = 0, limit: int = 100
-    ) -> List[Session]:
+    ) -> list[Session]:
         """List sessions with pagination."""
         query = (
             select(Session)
@@ -100,7 +101,7 @@ class SessionService:
             .order_by(Session.created_at.desc())
         )
         result = await db.execute(query)
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     @staticmethod
     async def update_session(
@@ -129,12 +130,12 @@ class SessionService:
                 old_status == SessionStatus.DRAFT
                 and session.status == SessionStatus.ACTIVE
             ):
-                session.started_at = func.now()
+                session.started_at = datetime.utcnow()
             elif (
                 session.status == SessionStatus.COMPLETED
                 and session.completed_at is None
             ):
-                session.completed_at = func.now()
+                session.completed_at = datetime.utcnow()
 
         await db.commit()
         await db.refresh(session)
@@ -182,7 +183,7 @@ class SessionService:
 
     @staticmethod
     async def _code_exists(
-        db: AsyncSession, qr_code: str = None, admin_code: str = None
+        db: AsyncSession, qr_code: str | None = None, admin_code: str | None = None
     ) -> bool:
         """Check if a code already exists."""
         if qr_code:

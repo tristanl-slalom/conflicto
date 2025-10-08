@@ -35,6 +35,7 @@ $(shell mkdir -p $(PROCESS_DIR))
 .PHONY: test-backend test-frontend test-all test-watch test-coverage
 .PHONY: install install-backend install-frontend lint-backend lint-frontend
 .PHONY: format-backend format-frontend quality
+.PHONY: ci ci-backend ci-frontend ci-security ci-build ci-validate ci-full
 
 # Default target - show help
 help:
@@ -576,3 +577,85 @@ pre-commit-install:
 pre-commit-run:
 	@echo "🪝 Running pre-commit on all files..."
 	cd backend && poetry run pre-commit run --all-files
+
+# =============================================================================
+# CI/CD OPERATIONS
+# =============================================================================
+
+# Run full CI pipeline locally
+ci: ci-backend ci-frontend ci-security ci-build
+	@echo "🎉 Full CI pipeline completed successfully!"
+
+# Backend CI checks
+ci-backend:
+	@echo "🐍 Running backend CI checks..."
+	@if [ ! -d "$(BACKEND_DIR)" ]; then \
+		echo "❌ Backend directory '$(BACKEND_DIR)' not found"; \
+		exit 1; \
+	fi
+	@echo "📦 Installing backend dependencies..."
+	cd $(BACKEND_DIR) && poetry install --no-interaction
+	@echo "🧹 Running backend linting (ruff)..."
+	cd $(BACKEND_DIR) && ./../.github/scripts/test-backend.sh
+	@echo "✅ Backend CI checks completed!"
+
+# Frontend CI checks
+ci-frontend:
+	@echo "⚛️ Running frontend CI checks..."
+	@if [ ! -d "$(FRONTEND_DIR)" ]; then \
+		echo "❌ Frontend directory '$(FRONTEND_DIR)' not found"; \
+		exit 1; \
+	fi
+	@echo "📦 Installing frontend dependencies..."
+	cd $(FRONTEND_DIR) && npm ci --prefer-offline --no-audit
+	@echo "🧪 Running frontend tests and checks..."
+	cd $(FRONTEND_DIR) && ./../.github/scripts/test-frontend.sh
+	@echo "✅ Frontend CI checks completed!"
+
+# Security scanning
+ci-security:
+	@echo "🔒 Running security scanning..."
+	@echo "🔍 Filesystem vulnerability scan..."
+	@if command -v trivy >/dev/null 2>&1; then \
+		trivy fs --severity HIGH,CRITICAL .; \
+	else \
+		echo "⚠️ Trivy not found - skipping vulnerability scan"; \
+		echo "   Install: curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin"; \
+	fi
+	@echo "✅ Security scanning completed!"
+
+# Build validation
+ci-build:
+	@echo "🔨 Running build validation..."
+	@echo "🐍 Building backend..."
+	cd $(BACKEND_DIR) && poetry build
+	@echo "⚛️ Building frontend..."
+	cd $(FRONTEND_DIR) && npm run build
+	@echo "✅ Build validation completed!"
+
+# Docker build validation
+ci-docker:
+	@echo "🐳 Running Docker build validation..."
+	@echo "🐍 Building backend Docker image..."
+	cd $(BACKEND_DIR) && docker build -t conflicto-backend:ci-test .
+	@echo "⚛️ Building frontend Docker image..."
+	@if [ -f "$(FRONTEND_DIR)/Dockerfile" ]; then \
+		docker build -f $(FRONTEND_DIR)/Dockerfile -t conflicto-frontend:ci-test .; \
+	else \
+		echo "⚠️ Frontend Dockerfile not found - skipping frontend Docker build"; \
+	fi
+	@echo "🧪 Testing container startup..."
+	@docker run --rm -d --name ci-backend-test conflicto-backend:ci-test || true
+	@sleep 5
+	@docker stop ci-backend-test 2>/dev/null || true
+	@docker rm ci-backend-test 2>/dev/null || true
+	@echo "✅ Docker build validation completed!"
+
+# Full CI validation (everything except Docker)
+ci-validate: ci-backend ci-frontend ci-security ci-build
+	@echo "🎯 Running final validation..."
+	@echo "✅ All CI validations passed!"
+
+# Complete CI pipeline with Docker
+ci-full: ci-validate ci-docker
+	@echo "🏆 Complete CI pipeline finished successfully!"

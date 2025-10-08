@@ -6,7 +6,7 @@ import { vi } from 'vitest';
 // Setup localStorage mock
 const localStorageMock = {
   getItem: vi.fn(),
-  setItem: vi.fn(), 
+  setItem: vi.fn(),
   removeItem: vi.fn(),
   clear: vi.fn(),
 };
@@ -76,7 +76,7 @@ vi.mock('@tanstack/react-query', () => ({
 // Mock Lucide React icons
 vi.mock('lucide-react', () => {
   const MockIcon = () => null;
-  
+
   return {
     Settings: MockIcon,
     Monitor: MockIcon,

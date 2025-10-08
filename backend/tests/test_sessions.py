@@ -5,7 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import Session, SessionStatus
+from app.db.models import SessionStatus
 from app.models.schemas import SessionCreate
 from app.services.session_service import SessionService
 

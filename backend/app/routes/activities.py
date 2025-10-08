@@ -1,5 +1,5 @@
 """API routes for Activity operations."""
-from typing import List
+from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
@@ -51,6 +51,7 @@ async def get_session_activities(
     session_id: int,
     offset: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
+    status: Optional[ActivityStatus] = Query(None, description="Filter activities by status"),
     db: AsyncSession = Depends(get_db),
 ) -> ActivityList:
     """Get all activities for a session."""
@@ -60,6 +61,7 @@ async def get_session_activities(
             session_id=session_id,
             offset=offset,
             limit=limit,
+            status=status,
         )
         return ActivityList(activities=activities, total=total_count)
     except Exception as e:

@@ -111,10 +111,6 @@ poetry run pytest
 poetry run black app tests
 poetry run isort app tests
 
-# Run linting
-poetry run flake8 app tests
-poetry run mypy app
-
 # Database operations
 poetry run alembic revision --autogenerate -m "description"
 poetry run alembic upgrade head

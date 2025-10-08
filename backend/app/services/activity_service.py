@@ -1,5 +1,5 @@
 """Service layer for Activity operations."""
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 from sqlalchemy import select, func, desc
@@ -19,11 +19,18 @@ class ActivityService:
         activity_data: ActivityCreate,
     ) -> Activity:
         """Create a new activity."""
+        # First validate that the session exists
+        from app.services.session_service import SessionService
+        session = await SessionService.get_session(db, session_id)
+        if not session:
+            raise ValueError(f"Session with id {session_id} not found")
+        
         db_activity = Activity(
             session_id=session_id,
             type=activity_data.type,
             config=activity_data.config,
             order_index=activity_data.order_index,
+            status=activity_data.status,
         )
         db.add(db_activity)
         await db.commit()
@@ -64,17 +71,23 @@ class ActivityService:
         session_id: int,
         offset: int = 0,
         limit: int = 100,
+        status: Optional[ActivityStatus] = None,
     ) -> tuple[List[Activity], int]:
         """Get all activities for a session with total count."""
+        # Build base query conditions
+        conditions = [Activity.session_id == session_id]
+        if status:
+            conditions.append(Activity.status == status)
+        
         # Get total count
-        count_query = select(func.count(Activity.id)).where(Activity.session_id == session_id)
+        count_query = select(func.count(Activity.id)).where(*conditions)
         count_result = await db.execute(count_query)
         total_count = count_result.scalar()
         
         # Get activities
         query = (
             select(Activity)
-            .where(Activity.session_id == session_id)
+            .where(*conditions)
             .order_by(Activity.order_index)
             .offset(offset)
             .limit(limit)
