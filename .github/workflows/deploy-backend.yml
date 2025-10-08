@@ -95,7 +95,7 @@ jobs:
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           service: conflicto-${{ env.ENV }}-svc
-          cluster: conflicto-${{ env.ENV }}
+          cluster: conflicto-${{ env.ENV }}-cluster
           wait-for-service-stability: true
 
       # Output deployment info
@@ -108,7 +108,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Environment:** ${ENV}" >> $GITHUB_STEP_SUMMARY
           echo "- **Image:** \`${IMAGE_URI}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Cluster:** conflicto-${ENV}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Cluster:** conflicto-${ENV}-cluster" >> $GITHUB_STEP_SUMMARY
           echo "- **Service:** conflicto-${ENV}-svc" >> $GITHUB_STEP_SUMMARY
           echo "- **Git SHA:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
