@@ -1,0 +1,9 @@
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+*.tfvars.json
+# Allow lock file for provider checksums to be committed (recommended); comment out if you prefer to ignore.
+# .terraform.lock.hcl
