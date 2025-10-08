@@ -3,10 +3,10 @@ import { sessionCreateSchema, type SessionCreateFormData } from '../../lib/valid
 import { useSessionManagement } from '../../hooks/useSessionManagement';
 import type { SessionCreateFormProps } from '../../types/admin';
 
-interface FormErrors {
-  title?: string;
-  description?: string;
-}
+// Ensure FormErrors has the same keys as SessionCreateFormData
+type FormErrors = {
+  [K in keyof SessionCreateFormData]?: string;
+};
 
 export const SessionCreateForm = ({ 
   onSuccess, 
