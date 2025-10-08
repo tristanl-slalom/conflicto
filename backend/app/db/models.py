@@ -15,6 +15,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
     func,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
@@ -110,13 +111,18 @@ class Participant(Base):
 
     __tablename__ = "participants"
 
-    id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(Integer, ForeignKey("sessions.id"), nullable=False)
-    display_name = Column(String(100), nullable=False)
-    role = Column(String(20), default=ParticipantRole.PARTICIPANT, nullable=False)
-    is_active = Column(Boolean, default=True)
+    id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4, index=True)
+    session_id = Column(Integer, ForeignKey("sessions.id", ondelete="CASCADE"), nullable=False)
+    nickname = Column(String(50), nullable=False)
     joined_at = Column(DateTime(timezone=True), server_default=func.now())
-    last_seen_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_seen = Column(DateTime(timezone=True), server_default=func.now())
+    connection_data = Column(JSONB, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    __table_args__ = (
+        UniqueConstraint('session_id', 'nickname', name='unique_session_nickname'),
+    )
 
     # Relationships
     session = relationship("Session", back_populates="participants")
@@ -132,7 +138,7 @@ class UserResponse(Base):
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     session_id: Mapped[int] = mapped_column(Integer, ForeignKey("sessions.id", ondelete="CASCADE"))
     activity_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("activities.id", ondelete="CASCADE"))
-    participant_id: Mapped[int] = mapped_column(Integer, ForeignKey("participants.id", ondelete="CASCADE"))
+    participant_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("participants.id", ondelete="CASCADE"))
     response_data: Mapped[dict] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

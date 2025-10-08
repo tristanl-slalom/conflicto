@@ -58,7 +58,7 @@ class SessionDetail(SessionResponse):
     """Detailed session response with activities and participants."""
 
     activities: List["ActivityResponse"] = []
-    participants: List["ParticipantResponse"] = []
+    participants: List["ParticipantStatus"] = []
 
 
 # Activity models
@@ -98,30 +98,64 @@ class ActivityResponse(BaseResponse):
 
 
 # Participant models
-class ParticipantCreate(BaseModel):
-    """Participant creation request model."""
-
-    display_name: str = Field(..., min_length=1, max_length=100)
-    role: ParticipantRole = ParticipantRole.PARTICIPANT
-
-
-class ParticipantUpdate(BaseModel):
-    """Participant update request model."""
-
-    display_name: Optional[str] = Field(None, min_length=1, max_length=100)
-    role: Optional[ParticipantRole] = None
-    is_active: Optional[bool] = None
+class ParticipantJoinRequest(BaseModel):
+    """Session join request model."""
+    
+    nickname: str = Field(..., min_length=1, max_length=50)
 
 
-class ParticipantResponse(BaseResponse):
-    """Participant response model."""
+class ParticipantJoinResponse(BaseModel):
+    """Session join response model."""
+    
+    participant_id: str  # UUID as string
+    session_state: Dict[str, Any]  # Current activity and state info
+    
+    class Config:
+        from_attributes = True
 
-    session_id: int
-    display_name: str
-    role: ParticipantRole
-    is_active: bool
+
+class ParticipantHeartbeatRequest(BaseModel):
+    """Participant heartbeat request model."""
+    
+    activity_context: Optional[Dict[str, Any]] = None
+
+
+class ParticipantHeartbeatResponse(BaseModel):
+    """Participant heartbeat response model."""
+    
+    status: str  # "online", "idle", "disconnected" 
+    activity_context: Dict[str, Any]
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class NicknameValidationResponse(BaseModel):
+    """Nickname validation response model."""
+    
+    available: bool
+    suggested_nickname: Optional[str] = None
+
+
+class ParticipantStatus(BaseModel):
+    """Computed participant status model."""
+    
+    participant_id: str
+    nickname: str
+    status: str  # "online", "idle", "disconnected"
     joined_at: datetime
-    last_seen_at: datetime
+    last_seen: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ParticipantListResponse(BaseModel):
+    """Participant list response model."""
+    
+    participants: List[ParticipantStatus]
+    total_count: int
 
 
 # Activity Response models
@@ -165,7 +199,7 @@ class ActivityList(BaseModel):
 class ParticipantList(BaseModel):
     """Participant list response model."""
 
-    participants: List[ParticipantResponse]
+    participants: List[ParticipantStatus]
     total: int
 
 
@@ -190,4 +224,4 @@ class HealthResponse(BaseModel):
 # Update forward references
 SessionDetail.model_rebuild()
 ActivityResponse.model_rebuild()
-ParticipantResponse.model_rebuild()
+ParticipantStatus.model_rebuild()

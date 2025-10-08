@@ -1,4 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
+import QRCodeDisplay from '../../components/QRCodeDisplay'
+import ParticipantList from '../../components/ParticipantList'
 
 export const Route = createFileRoute('/admin/')({
   component: AdminLayout,
@@ -108,18 +110,25 @@ function AdminLayout() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-gray-300">Status</span>
-                  <span className="px-2 py-1 bg-yellow-900 text-yellow-300 rounded-full text-sm">
-                    Draft
+                  <span className="px-2 py-1 bg-green-900 text-green-300 rounded-full text-sm">
+                    Active
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-gray-300">Participants</span>
-                  <span className="text-white font-mono">0</span>
+                  <span className="text-white font-mono">3</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-gray-300">Session ID</span>
-                  <span className="text-gray-400 font-mono text-sm">-</span>
+                  <span className="text-white font-mono text-sm">123</span>
                 </div>
+              </div>
+            </div>
+
+            <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
+              <h2 className="text-lg font-medium text-white mb-4">Participant QR Code</h2>
+              <div className="flex justify-center">
+                <QRCodeDisplay sessionId={123} size={180} />
               </div>
             </div>
 
@@ -136,6 +145,11 @@ function AdminLayout() {
                   Export Results
                 </button>
               </div>
+            </div>
+
+            <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
+              <h2 className="text-lg font-medium text-white mb-4">Participants</h2>
+              <ParticipantList sessionId={123} />
             </div>
           </div>
         </div>
