@@ -36,9 +36,14 @@ export const useSessionManagement = () => {
         description: formData.description || undefined,
       };
 
+      console.log('🚀 Creating session with data:', sessionCreateData);
+      console.log('🔗 API call about to be made...');
+
       const response = await createSessionMutation.mutateAsync({ 
         data: sessionCreateData 
       });
+
+      console.log('✅ Session created successfully:', response.data);
 
       // Refresh the sessions list
       await refetchSessions();
@@ -51,6 +56,14 @@ export const useSessionManagement = () => {
 
       return response.data;
     } catch (error) {
+      console.error('❌ Session creation failed:', error);
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        response: (error as any)?.response?.data,
+        status: (error as any)?.response?.status,
+        url: (error as any)?.config?.url,
+      });
+
       const errorMessage = error instanceof Error 
         ? error.message 
         : 'Failed to create session. Please try again.';

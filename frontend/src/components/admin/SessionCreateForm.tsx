@@ -112,14 +112,6 @@ export const SessionCreateForm = ({
 
   const canSubmit = formData.title.trim().length > 0 && !errors.title;
 
-  // Debug logging - remove this after fixing
-  console.log('Form Debug:', {
-    title: formData.title,
-    titleLength: formData.title.trim().length,
-    errors,
-    canSubmit
-  });
-
   return (
     <div className={`bg-slate-800 rounded-lg p-6 border border-slate-700 ${className}`}>
       <h2 className="text-lg font-medium text-white mb-4">
