@@ -141,7 +141,10 @@ class Participant(Base):
 
     id = Column(UUIDType, primary_key=True, default=uuid4, index=True)
     session_id = Column(Integer, ForeignKey("sessions.id", ondelete="CASCADE"), nullable=False)
-    nickname = Column(String(50), nullable=False)
+    nickname = Column(String(50), nullable=False)  # For QR code onboarding feature
+    display_name = Column(String(100), nullable=True)  # For main branch compatibility
+    role = Column(String(20), default="participant", nullable=False)  # For main branch compatibility
+    is_active = Column(Boolean, default=True, nullable=False)  # For main branch compatibility
     joined_at = Column(DateTime(timezone=True), server_default=func.now())
     last_seen = Column(DateTime(timezone=True), server_default=func.now())
     connection_data = Column(JSONBType, default=dict)
@@ -151,6 +154,15 @@ class Participant(Base):
     __table_args__ = (
         UniqueConstraint('session_id', 'nickname', name='unique_session_nickname'),
     )
+
+    def __init__(self, **kwargs):
+        # If display_name is provided but nickname is not, use display_name as nickname
+        if 'display_name' in kwargs and 'nickname' not in kwargs:
+            kwargs['nickname'] = kwargs['display_name']
+        # If nickname is provided but display_name is not, use nickname as display_name  
+        elif 'nickname' in kwargs and 'display_name' not in kwargs:
+            kwargs['display_name'] = kwargs['nickname']
+        super().__init__(**kwargs)
 
     # Relationships
     session = relationship("Session", back_populates="participants")

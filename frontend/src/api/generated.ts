@@ -72,6 +72,11 @@ export interface Activity {
 export type ActivityCreateConfig = { [key: string]: unknown };
 
 /**
+ * Status of the activity
+ */
+export type ActivityCreateStatus = ActivityStatus | null;
+
+/**
  * Schema for creating a new Activity.
  */
 export interface ActivityCreate {
@@ -81,6 +86,8 @@ export interface ActivityCreate {
   config?: ActivityCreateConfig;
   /** Order index for the activity */
   order_index?: number;
+  /** Status of the activity */
+  status?: ActivityCreateStatus;
 }
 
 /**
@@ -188,77 +195,33 @@ export interface HealthResponse {
   version?: string;
 }
 
-export type NicknameValidationResponseSuggestedNickname = string | null;
-
 /**
- * Nickname validation response model.
+ * Participant response model.
  */
-export interface NicknameValidationResponse {
-  available: boolean;
-  suggested_nickname?: NicknameValidationResponseSuggestedNickname;
-}
-
-export type ParticipantHeartbeatRequestActivityContextAnyOf = { [key: string]: unknown };
-
-export type ParticipantHeartbeatRequestActivityContext = ParticipantHeartbeatRequestActivityContextAnyOf | null;
-
-/**
- * Participant heartbeat request model.
- */
-export interface ParticipantHeartbeatRequest {
-  activity_context?: ParticipantHeartbeatRequestActivityContext;
-}
-
-export type ParticipantHeartbeatResponseActivityContext = { [key: string]: unknown };
-
-/**
- * Participant heartbeat response model.
- */
-export interface ParticipantHeartbeatResponse {
-  status: string;
-  activity_context: ParticipantHeartbeatResponseActivityContext;
+export interface ParticipantResponse {
+  id: number;
+  created_at: string;
   updated_at: string;
-}
-
-/**
- * Session join request model.
- */
-export interface ParticipantJoinRequest {
-  /**
-   * @minLength 1
-   * @maxLength 50
-   */
-  nickname: string;
-}
-
-export type ParticipantJoinResponseSessionState = { [key: string]: unknown };
-
-/**
- * Session join response model.
- */
-export interface ParticipantJoinResponse {
-  participant_id: string;
-  session_state: ParticipantJoinResponseSessionState;
-}
-
-/**
- * Participant list response model.
- */
-export interface ParticipantListResponse {
-  participants: ParticipantStatus[];
-  total_count: number;
-}
-
-/**
- * Computed participant status model.
- */
-export interface ParticipantStatus {
-  participant_id: string;
-  nickname: string;
-  status: string;
+  session_id: number;
+  display_name: string;
+  role: ParticipantRole;
+  is_active: boolean;
   joined_at: string;
-  last_seen: string;
+  last_seen_at: string;
 }
+
+/**
+ * Participant role enumeration.
+ */
+export type ParticipantRole = typeof ParticipantRole[keyof typeof ParticipantRole];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const ParticipantRole = {
+  admin: 'admin',
+  viewer: 'viewer',
+  participant: 'participant',
+} as const;
 
 export type SessionCreateDescription = string | null;
 
@@ -307,7 +270,7 @@ export interface SessionDetail {
   participant_count?: number;
   activity_count?: number;
   activities?: ActivityResponse[];
-  participants?: ParticipantStatus[];
+  participants?: ParticipantResponse[];
 }
 
 /**
@@ -461,14 +424,6 @@ export type GetSessionByCodeApiV1SessionsCodeCodeGetParams = {
 code_type?: string;
 };
 
-export type ValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetParams = {
-/**
- * @minLength 1
- * @maxLength 50
- */
-nickname: string;
-};
-
 export type CreateResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPostParams = {
 participant_id: number;
 };
@@ -509,6 +464,10 @@ offset?: number;
  * @maximum 1000
  */
 limit?: number;
+/**
+ * Filter activities by status
+ */
+status?: ActivityStatus | null;
 };
 
 export type UpdateActivityStatusApiV1ActivitiesActivityIdStatusPatchParams = {
@@ -1282,412 +1241,6 @@ export function useGetSessionByCodeApiV1SessionsCodeCodeGet<TData = Awaited<Retu
 
 
 
-/**
- * Join a session with a nickname via QR code scan.
-
-- **session_id**: Session ID from QR code URL
-- **nickname**: Desired participant nickname (1-50 characters)
-
-Returns participant_id and current session state for synchronization.
- * @summary Join Session
- */
-export const joinSessionApiV1SessionsSessionIdJoinPost = (
-    sessionId: number,
-    participantJoinRequest: ParticipantJoinRequest, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<ParticipantJoinResponse>> => {
-    
-    
-    return axios.default.post(
-      `/api/v1/sessions/${sessionId}/join`,
-      participantJoinRequest,options
-    );
-  }
-
-
-
-export const getJoinSessionApiV1SessionsSessionIdJoinPostMutationOptions = <TError = AxiosError<ErrorResponse | ErrorResponse | HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof joinSessionApiV1SessionsSessionIdJoinPost>>, TError,{sessionId: number;data: ParticipantJoinRequest}, TContext>, axios?: AxiosRequestConfig}
-): UseMutationOptions<Awaited<ReturnType<typeof joinSessionApiV1SessionsSessionIdJoinPost>>, TError,{sessionId: number;data: ParticipantJoinRequest}, TContext> => {
-
-const mutationKey = ['joinSessionApiV1SessionsSessionIdJoinPost'];
-const {mutation: mutationOptions, axios: axiosOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, axios: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof joinSessionApiV1SessionsSessionIdJoinPost>>, {sessionId: number;data: ParticipantJoinRequest}> = (props) => {
-          const {sessionId,data} = props ?? {};
-
-          return  joinSessionApiV1SessionsSessionIdJoinPost(sessionId,data,axiosOptions)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type JoinSessionApiV1SessionsSessionIdJoinPostMutationResult = NonNullable<Awaited<ReturnType<typeof joinSessionApiV1SessionsSessionIdJoinPost>>>
-    export type JoinSessionApiV1SessionsSessionIdJoinPostMutationBody = ParticipantJoinRequest
-    export type JoinSessionApiV1SessionsSessionIdJoinPostMutationError = AxiosError<ErrorResponse | ErrorResponse | HTTPValidationError>
-
-    /**
- * @summary Join Session
- */
-export const useJoinSessionApiV1SessionsSessionIdJoinPost = <TError = AxiosError<ErrorResponse | ErrorResponse | HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof joinSessionApiV1SessionsSessionIdJoinPost>>, TError,{sessionId: number;data: ParticipantJoinRequest}, TContext>, axios?: AxiosRequestConfig}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof joinSessionApiV1SessionsSessionIdJoinPost>>,
-        TError,
-        {sessionId: number;data: ParticipantJoinRequest},
-        TContext
-      > => {
-
-      const mutationOptions = getJoinSessionApiV1SessionsSessionIdJoinPostMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    
-/**
- * Validate if a nickname is available in a session.
-
-- **session_id**: Session ID to check nickname availability
-- **nickname**: Nickname to validate
-
-Returns availability status and suggested alternatives if taken.
- * @summary Validate Nickname
- */
-export const validateNicknameApiV1SessionsSessionIdNicknamesValidateGet = (
-    sessionId: number,
-    params: ValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetParams, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<NicknameValidationResponse>> => {
-    
-    
-    return axios.default.get(
-      `/api/v1/sessions/${sessionId}/nicknames/validate`,{
-    ...options,
-        params: {...params, ...options?.params},}
-    );
-  }
-
-
-
-
-export const getValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetQueryKey = (sessionId?: number,
-    params?: ValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetParams,) => {
-    return [
-    `/api/v1/sessions/${sessionId}/nicknames/validate`, ...(params ? [params]: [])
-    ] as const;
-    }
-
-    
-export const getValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetQueryOptions = <TData = Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>, TError = AxiosError<HTTPValidationError>>(sessionId: number,
-    params: ValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>, TError, TData>>, axios?: AxiosRequestConfig}
-) => {
-
-const {query: queryOptions, axios: axiosOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetQueryKey(sessionId,params);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>> = ({ signal }) => validateNicknameApiV1SessionsSessionIdNicknamesValidateGet(sessionId,params, { signal, ...axiosOptions });
-
-      
-
-      
-
-   return  { queryKey, queryFn, enabled: !!(sessionId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type ValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetQueryResult = NonNullable<Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>>
-export type ValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetQueryError = AxiosError<HTTPValidationError>
-
-
-export function useValidateNicknameApiV1SessionsSessionIdNicknamesValidateGet<TData = Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>, TError = AxiosError<HTTPValidationError>>(
- sessionId: number,
-    params: ValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>,
-          TError,
-          Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>
-        > , 'initialData'
-      >, axios?: AxiosRequestConfig}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useValidateNicknameApiV1SessionsSessionIdNicknamesValidateGet<TData = Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>, TError = AxiosError<HTTPValidationError>>(
- sessionId: number,
-    params: ValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>,
-          TError,
-          Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>
-        > , 'initialData'
-      >, axios?: AxiosRequestConfig}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useValidateNicknameApiV1SessionsSessionIdNicknamesValidateGet<TData = Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>, TError = AxiosError<HTTPValidationError>>(
- sessionId: number,
-    params: ValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>, TError, TData>>, axios?: AxiosRequestConfig}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Validate Nickname
- */
-
-export function useValidateNicknameApiV1SessionsSessionIdNicknamesValidateGet<TData = Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>, TError = AxiosError<HTTPValidationError>>(
- sessionId: number,
-    params: ValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof validateNicknameApiV1SessionsSessionIdNicknamesValidateGet>>, TError, TData>>, axios?: AxiosRequestConfig}
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetQueryOptions(sessionId,params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-/**
- * Update participant heartbeat and get current activity context.
-
-- **participant_id**: UUID of participant
-- **activity_context**: Optional context data from current activity
-
-Returns computed status and current activity information.
-Should be called every 15-30 seconds by participant clients.
- * @summary Update Heartbeat
- */
-export const updateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPost = (
-    participantId: string,
-    participantHeartbeatRequest: ParticipantHeartbeatRequest, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<ParticipantHeartbeatResponse>> => {
-    
-    
-    return axios.default.post(
-      `/api/v1/participants/${participantId}/heartbeat`,
-      participantHeartbeatRequest,options
-    );
-  }
-
-
-
-export const getUpdateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPostMutationOptions = <TError = AxiosError<ErrorResponse | HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPost>>, TError,{participantId: string;data: ParticipantHeartbeatRequest}, TContext>, axios?: AxiosRequestConfig}
-): UseMutationOptions<Awaited<ReturnType<typeof updateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPost>>, TError,{participantId: string;data: ParticipantHeartbeatRequest}, TContext> => {
-
-const mutationKey = ['updateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPost'];
-const {mutation: mutationOptions, axios: axiosOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, axios: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPost>>, {participantId: string;data: ParticipantHeartbeatRequest}> = (props) => {
-          const {participantId,data} = props ?? {};
-
-          return  updateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPost(participantId,data,axiosOptions)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type UpdateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPostMutationResult = NonNullable<Awaited<ReturnType<typeof updateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPost>>>
-    export type UpdateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPostMutationBody = ParticipantHeartbeatRequest
-    export type UpdateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPostMutationError = AxiosError<ErrorResponse | HTTPValidationError>
-
-    /**
- * @summary Update Heartbeat
- */
-export const useUpdateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPost = <TError = AxiosError<ErrorResponse | HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPost>>, TError,{participantId: string;data: ParticipantHeartbeatRequest}, TContext>, axios?: AxiosRequestConfig}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof updateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPost>>,
-        TError,
-        {participantId: string;data: ParticipantHeartbeatRequest},
-        TContext
-      > => {
-
-      const mutationOptions = getUpdateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPostMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    
-/**
- * Get all participants in a session with their computed status.
-
-- **session_id**: Session ID to get participants for
-
-Returns list of participants with online/idle/disconnected status
-computed from their last heartbeat timing.
- * @summary Get Session Participants
- */
-export const getSessionParticipantsApiV1SessionsSessionIdParticipantsGet = (
-    sessionId: number, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<ParticipantListResponse>> => {
-    
-    
-    return axios.default.get(
-      `/api/v1/sessions/${sessionId}/participants`,options
-    );
-  }
-
-
-
-
-export const getGetSessionParticipantsApiV1SessionsSessionIdParticipantsGetQueryKey = (sessionId?: number,) => {
-    return [
-    `/api/v1/sessions/${sessionId}/participants`
-    ] as const;
-    }
-
-    
-export const getGetSessionParticipantsApiV1SessionsSessionIdParticipantsGetQueryOptions = <TData = Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(sessionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>, TError, TData>>, axios?: AxiosRequestConfig}
-) => {
-
-const {query: queryOptions, axios: axiosOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetSessionParticipantsApiV1SessionsSessionIdParticipantsGetQueryKey(sessionId);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>> = ({ signal }) => getSessionParticipantsApiV1SessionsSessionIdParticipantsGet(sessionId, { signal, ...axiosOptions });
-
-      
-
-      
-
-   return  { queryKey, queryFn, enabled: !!(sessionId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetSessionParticipantsApiV1SessionsSessionIdParticipantsGetQueryResult = NonNullable<Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>>
-export type GetSessionParticipantsApiV1SessionsSessionIdParticipantsGetQueryError = AxiosError<ErrorResponse | HTTPValidationError>
-
-
-export function useGetSessionParticipantsApiV1SessionsSessionIdParticipantsGet<TData = Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(
- sessionId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>,
-          TError,
-          Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>
-        > , 'initialData'
-      >, axios?: AxiosRequestConfig}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSessionParticipantsApiV1SessionsSessionIdParticipantsGet<TData = Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(
- sessionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>,
-          TError,
-          Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>
-        > , 'initialData'
-      >, axios?: AxiosRequestConfig}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSessionParticipantsApiV1SessionsSessionIdParticipantsGet<TData = Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(
- sessionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>, TError, TData>>, axios?: AxiosRequestConfig}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Get Session Participants
- */
-
-export function useGetSessionParticipantsApiV1SessionsSessionIdParticipantsGet<TData = Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>, TError = AxiosError<ErrorResponse | HTTPValidationError>>(
- sessionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSessionParticipantsApiV1SessionsSessionIdParticipantsGet>>, TError, TData>>, axios?: AxiosRequestConfig}
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getGetSessionParticipantsApiV1SessionsSessionIdParticipantsGetQueryOptions(sessionId,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-/**
- * Remove a participant from their session.
-
-- **participant_id**: UUID of participant to remove
-
-Admin operation to kick participants or clean up disconnected users.
- * @summary Remove Participant
- */
-export const removeParticipantApiV1ParticipantsParticipantIdDelete = (
-    participantId: string, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<unknown | void>> => {
-    
-    
-    return axios.default.delete(
-      `/api/v1/participants/${participantId}`,options
-    );
-  }
-
-
-
-export const getRemoveParticipantApiV1ParticipantsParticipantIdDeleteMutationOptions = <TError = AxiosError<ErrorResponse | HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeParticipantApiV1ParticipantsParticipantIdDelete>>, TError,{participantId: string}, TContext>, axios?: AxiosRequestConfig}
-): UseMutationOptions<Awaited<ReturnType<typeof removeParticipantApiV1ParticipantsParticipantIdDelete>>, TError,{participantId: string}, TContext> => {
-
-const mutationKey = ['removeParticipantApiV1ParticipantsParticipantIdDelete'];
-const {mutation: mutationOptions, axios: axiosOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, axios: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeParticipantApiV1ParticipantsParticipantIdDelete>>, {participantId: string}> = (props) => {
-          const {participantId} = props ?? {};
-
-          return  removeParticipantApiV1ParticipantsParticipantIdDelete(participantId,axiosOptions)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type RemoveParticipantApiV1ParticipantsParticipantIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof removeParticipantApiV1ParticipantsParticipantIdDelete>>>
-    
-    export type RemoveParticipantApiV1ParticipantsParticipantIdDeleteMutationError = AxiosError<ErrorResponse | HTTPValidationError>
-
-    /**
- * @summary Remove Participant
- */
-export const useRemoveParticipantApiV1ParticipantsParticipantIdDelete = <TError = AxiosError<ErrorResponse | HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeParticipantApiV1ParticipantsParticipantIdDelete>>, TError,{participantId: string}, TContext>, axios?: AxiosRequestConfig}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof removeParticipantApiV1ParticipantsParticipantIdDelete>>,
-        TError,
-        {participantId: string},
-        TContext
-      > => {
-
-      const mutationOptions = getRemoveParticipantApiV1ParticipantsParticipantIdDeleteMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    
 /**
  * Create a new user response for an activity.
  * @summary Create Response
@@ -2837,19 +2390,11 @@ export const getCreateSessionApiV1SessionsPostResponseMock = (overrideResponse: 
 
 export const getListSessionsApiV1SessionsGetResponseMock = (overrideResponse: Partial< SessionList > = {}): SessionList => ({sessions: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, title: faker.string.alpha({length: {min: 10, max: 20}}), description: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), status: faker.helpers.arrayElement(Object.values(SessionStatus)), qr_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), admin_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), max_participants: faker.number.int({min: undefined, max: undefined}), started_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), completed_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), participant_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), activity_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined])})), total: faker.number.int({min: undefined, max: undefined}), offset: faker.number.int({min: undefined, max: undefined}), limit: faker.number.int({min: undefined, max: undefined}), ...overrideResponse})
 
-export const getGetSessionApiV1SessionsSessionIdGetResponseMock = (overrideResponse: Partial< SessionDetail > = {}): SessionDetail => ({id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, title: faker.string.alpha({length: {min: 10, max: 20}}), description: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), status: faker.helpers.arrayElement(Object.values(SessionStatus)), qr_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), admin_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), max_participants: faker.number.int({min: undefined, max: undefined}), started_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), completed_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), participant_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), activity_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), activities: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, session_id: faker.number.int({min: undefined, max: undefined}), title: faker.string.alpha({length: {min: 10, max: 20}}), description: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), activity_type: faker.helpers.arrayElement(Object.values(ActivityType)), configuration: {}, is_active: faker.datatype.boolean(), order_index: faker.number.int({min: undefined, max: undefined}), started_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), completed_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), response_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined])})), undefined]), participants: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({participant_id: faker.string.alpha({length: {min: 10, max: 20}}), nickname: faker.string.alpha({length: {min: 10, max: 20}}), status: faker.string.alpha({length: {min: 10, max: 20}}), joined_at: `${faker.date.past().toISOString().split('.')[0]}Z`, last_seen: `${faker.date.past().toISOString().split('.')[0]}Z`})), undefined]), ...overrideResponse})
+export const getGetSessionApiV1SessionsSessionIdGetResponseMock = (overrideResponse: Partial< SessionDetail > = {}): SessionDetail => ({id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, title: faker.string.alpha({length: {min: 10, max: 20}}), description: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), status: faker.helpers.arrayElement(Object.values(SessionStatus)), qr_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), admin_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), max_participants: faker.number.int({min: undefined, max: undefined}), started_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), completed_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), participant_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), activity_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), activities: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, session_id: faker.number.int({min: undefined, max: undefined}), title: faker.string.alpha({length: {min: 10, max: 20}}), description: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), activity_type: faker.helpers.arrayElement(Object.values(ActivityType)), configuration: {}, is_active: faker.datatype.boolean(), order_index: faker.number.int({min: undefined, max: undefined}), started_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), completed_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), response_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined])})), undefined]), participants: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, session_id: faker.number.int({min: undefined, max: undefined}), display_name: faker.string.alpha({length: {min: 10, max: 20}}), role: faker.helpers.arrayElement(Object.values(ParticipantRole)), is_active: faker.datatype.boolean(), joined_at: `${faker.date.past().toISOString().split('.')[0]}Z`, last_seen_at: `${faker.date.past().toISOString().split('.')[0]}Z`})), undefined]), ...overrideResponse})
 
 export const getUpdateSessionApiV1SessionsSessionIdPutResponseMock = (overrideResponse: Partial< SessionResponse > = {}): SessionResponse => ({id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, title: faker.string.alpha({length: {min: 10, max: 20}}), description: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), status: faker.helpers.arrayElement(Object.values(SessionStatus)), qr_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), admin_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), max_participants: faker.number.int({min: undefined, max: undefined}), started_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), completed_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), participant_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), activity_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), ...overrideResponse})
 
 export const getGetSessionByCodeApiV1SessionsCodeCodeGetResponseMock = (overrideResponse: Partial< SessionResponse > = {}): SessionResponse => ({id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, title: faker.string.alpha({length: {min: 10, max: 20}}), description: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), status: faker.helpers.arrayElement(Object.values(SessionStatus)), qr_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), admin_code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), max_participants: faker.number.int({min: undefined, max: undefined}), started_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), completed_at: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`,null,]), participant_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), activity_count: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), ...overrideResponse})
-
-export const getJoinSessionApiV1SessionsSessionIdJoinPostResponseMock = (overrideResponse: Partial< ParticipantJoinResponse > = {}): ParticipantJoinResponse => ({participant_id: faker.string.alpha({length: {min: 10, max: 20}}), session_state: {}, ...overrideResponse})
-
-export const getValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetResponseMock = (overrideResponse: Partial< NicknameValidationResponse > = {}): NicknameValidationResponse => ({available: faker.datatype.boolean(), suggested_nickname: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), undefined]), ...overrideResponse})
-
-export const getUpdateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPostResponseMock = (overrideResponse: Partial< ParticipantHeartbeatResponse > = {}): ParticipantHeartbeatResponse => ({status: faker.string.alpha({length: {min: 10, max: 20}}), activity_context: {}, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, ...overrideResponse})
-
-export const getGetSessionParticipantsApiV1SessionsSessionIdParticipantsGetResponseMock = (overrideResponse: Partial< ParticipantListResponse > = {}): ParticipantListResponse => ({participants: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({participant_id: faker.string.alpha({length: {min: 10, max: 20}}), nickname: faker.string.alpha({length: {min: 10, max: 20}}), status: faker.string.alpha({length: {min: 10, max: 20}}), joined_at: `${faker.date.past().toISOString().split('.')[0]}Z`, last_seen: `${faker.date.past().toISOString().split('.')[0]}Z`})), total_count: faker.number.int({min: undefined, max: undefined}), ...overrideResponse})
 
 export const getCreateResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPostResponseMock = (overrideResponse: Partial< UserResponse > = {}): UserResponse => ({response_data: {}, id: faker.string.uuid(), session_id: faker.number.int({min: undefined, max: undefined}), activity_id: faker.string.uuid(), participant_id: faker.number.int({min: undefined, max: undefined}), created_at: `${faker.date.past().toISOString().split('.')[0]}Z`, updated_at: `${faker.date.past().toISOString().split('.')[0]}Z`, ...overrideResponse})
 
@@ -2976,64 +2521,6 @@ export const getGetSessionByCodeApiV1SessionsCodeCodeGetMockHandler = (overrideR
     : getGetSessionByCodeApiV1SessionsCodeCodeGetResponseMock()),
       { status: 200,
         headers: { 'Content-Type': 'application/json' }
-      })
-  }, options)
-}
-
-export const getJoinSessionApiV1SessionsSessionIdJoinPostMockHandler = (overrideResponse?: ParticipantJoinResponse | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<ParticipantJoinResponse> | ParticipantJoinResponse), options?: RequestHandlerOptions) => {
-  return http.post('*/api/v1/sessions/:sessionId/join', async (info) => {await delay(1000);
-  
-    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
-    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
-    : getJoinSessionApiV1SessionsSessionIdJoinPostResponseMock()),
-      { status: 200,
-        headers: { 'Content-Type': 'application/json' }
-      })
-  }, options)
-}
-
-export const getValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetMockHandler = (overrideResponse?: NicknameValidationResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<NicknameValidationResponse> | NicknameValidationResponse), options?: RequestHandlerOptions) => {
-  return http.get('*/api/v1/sessions/:sessionId/nicknames/validate', async (info) => {await delay(1000);
-  
-    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
-    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
-    : getValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetResponseMock()),
-      { status: 200,
-        headers: { 'Content-Type': 'application/json' }
-      })
-  }, options)
-}
-
-export const getUpdateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPostMockHandler = (overrideResponse?: ParticipantHeartbeatResponse | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<ParticipantHeartbeatResponse> | ParticipantHeartbeatResponse), options?: RequestHandlerOptions) => {
-  return http.post('*/api/v1/participants/:participantId/heartbeat', async (info) => {await delay(1000);
-  
-    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
-    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
-    : getUpdateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPostResponseMock()),
-      { status: 200,
-        headers: { 'Content-Type': 'application/json' }
-      })
-  }, options)
-}
-
-export const getGetSessionParticipantsApiV1SessionsSessionIdParticipantsGetMockHandler = (overrideResponse?: ParticipantListResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ParticipantListResponse> | ParticipantListResponse), options?: RequestHandlerOptions) => {
-  return http.get('*/api/v1/sessions/:sessionId/participants', async (info) => {await delay(1000);
-  
-    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
-    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
-    : getGetSessionParticipantsApiV1SessionsSessionIdParticipantsGetResponseMock()),
-      { status: 200,
-        headers: { 'Content-Type': 'application/json' }
-      })
-  }, options)
-}
-
-export const getRemoveParticipantApiV1ParticipantsParticipantIdDeleteMockHandler = (overrideResponse?: unknown | void | ((info: Parameters<Parameters<typeof http.delete>[1]>[0]) => Promise<unknown | void> | unknown | void), options?: RequestHandlerOptions) => {
-  return http.delete('*/api/v1/participants/:participantId', async (info) => {await delay(1000);
-  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
-    return new HttpResponse(null,
-      { status: 200,
-        
       })
   }, options)
 }
@@ -3209,11 +2696,6 @@ export const getCajaBackendMock = () => [
   getUpdateSessionApiV1SessionsSessionIdPutMockHandler(),
   getDeleteSessionApiV1SessionsSessionIdDeleteMockHandler(),
   getGetSessionByCodeApiV1SessionsCodeCodeGetMockHandler(),
-  getJoinSessionApiV1SessionsSessionIdJoinPostMockHandler(),
-  getValidateNicknameApiV1SessionsSessionIdNicknamesValidateGetMockHandler(),
-  getUpdateHeartbeatApiV1ParticipantsParticipantIdHeartbeatPostMockHandler(),
-  getGetSessionParticipantsApiV1SessionsSessionIdParticipantsGetMockHandler(),
-  getRemoveParticipantApiV1ParticipantsParticipantIdDeleteMockHandler(),
   getCreateResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesPostMockHandler(),
   getGetActivityResponsesApiV1SessionsSessionIdActivitiesActivityIdResponsesGetMockHandler(),
   getGetParticipantResponseApiV1SessionsSessionIdActivitiesActivityIdResponsesParticipantIdGetMockHandler(),

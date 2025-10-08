@@ -151,7 +151,7 @@ class TestDatabaseModels:
         assert participant.role == ParticipantRole.PARTICIPANT
         assert participant.is_active == True
         assert participant.joined_at is not None
-        assert participant.last_seen_at is not None
+        assert participant.last_seen is not None
 
     async def test_participant_role_enum(self):
         """Test ParticipantRole enum values."""
