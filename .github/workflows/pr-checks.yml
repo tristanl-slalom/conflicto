@@ -345,7 +345,7 @@ jobs:
           # Start container without --rm so we can inspect it if it fails
           echo "Starting frontend container..."
           CONTAINER_ID=$(docker run -d --name test-frontend \
-            -p 3000:3000 \
+            -p 3000:80 \
             conflicto-frontend:test)
           
           echo "Container ID: $CONTAINER_ID"
