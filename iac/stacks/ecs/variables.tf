@@ -55,6 +55,10 @@ variable "certificate_arn" {
 	type        = string
 	default     = ""
 	description = "ACM certificate ARN for the app domain (required if enable_https=true)."
+	validation {
+	  condition     = !var.enable_https || length(trim(var.certificate_arn)) > 0
+	  error_message = "enable_https is true but certificate_arn is empty. Provide ACM cert ARN or set enable_https=false."
+	}
 }
 
 variable "inject_db_secret" {
@@ -67,16 +71,10 @@ variable "db_secret_arn" {
 	type        = string
 	default     = ""
 	description = "Secrets Manager ARN containing JSON with keys username,password,host,port,db_name,url."
-}
-
-validation {
-  condition     = !(var.enable_https && var.certificate_arn == "")
-  error_message = "enable_https is true but certificate_arn is empty. Provide ACM cert ARN or set enable_https=false.";
-}
-
-validation {
-  condition     = !(var.inject_db_secret && var.db_secret_arn == "")
-  error_message = "inject_db_secret is true but db_secret_arn is empty. Provide secret ARN or disable inject_db_secret.";
+	validation {
+	  condition     = !var.inject_db_secret || length(trim(var.db_secret_arn)) > 0
+	  error_message = "inject_db_secret is true but db_secret_arn is empty. Provide secret ARN or disable inject_db_secret."
+	}
 }
 
 variable "cpu" {
