@@ -171,24 +171,16 @@ jobs:
           # Get a subnet for running the migration task
           echo "Looking for subnets..."
 
-          # Try to find private subnets first
+          # Try to find data subnets first (these have proper database access)
           SUBNET_ID=$(aws ec2 describe-subnets \
-            --filters "Name=tag:Name,Values=conflicto-${ENV}-private*" \
+            --filters "Name=tag:Name,Values=conflicto-${ENV}-data-*" \
             --query 'Subnets[0].SubnetId' \
             --output text 2>/dev/null)
 
           if [ "$SUBNET_ID" = "None" ] || [ -z "$SUBNET_ID" ]; then
-            echo "Warning: Could not find private subnet, trying public subnets..."
+            echo "Warning: Could not find data subnet, trying app subnets..."
             SUBNET_ID=$(aws ec2 describe-subnets \
-              --filters "Name=tag:Name,Values=conflicto-${ENV}-public*" \
-              --query 'Subnets[0].SubnetId' \
-              --output text 2>/dev/null)
-          fi
-
-          if [ "$SUBNET_ID" = "None" ] || [ -z "$SUBNET_ID" ]; then
-            echo "Warning: Could not find named subnets, trying any subnet in default VPC..."
-            SUBNET_ID=$(aws ec2 describe-subnets \
-              --filters "Name=default-for-az,Values=true" \
+              --filters "Name=tag:Name,Values=conflicto-${ENV}-app-*" \
               --query 'Subnets[0].SubnetId' \
               --output text 2>/dev/null)
           fi
@@ -199,6 +191,8 @@ jobs:
             aws ec2 describe-subnets --query 'Subnets[].{SubnetId:SubnetId,Name:Tags[?Key==`Name`].Value|[0],VpcId:VpcId}' --output table
             exit 1
           fi
+
+          echo "Selected subnet: $SUBNET_ID"
 
           # Get security group for the ECS service
           echo "Looking for security groups..."
