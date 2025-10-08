@@ -13,6 +13,10 @@ export const env = createEnv({
   clientPrefix: 'VITE_',
 
   client: {
+    VITE_API_BASE_URL: z
+      .string()
+      .url("API base URL must be a valid URL")
+      .default('http://localhost:8000'),
     VITE_APP_TITLE: z.string().min(1).optional(),
   },
 

@@ -15,8 +15,18 @@ COPY openapi.json ./openapi.json
 # Copy source code
 COPY frontend/ .
 
-# Build the application
+# Install all dependencies (including dev dependencies for build)
 RUN npm install
+
+# Build arguments for environment configuration
+ARG VITE_API_BASE_URL=http://localhost:8000
+ARG VITE_APP_TITLE=Conflicto
+
+# Set environment variables for build
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV VITE_APP_TITLE=$VITE_APP_TITLE
+
+# Build the application
 RUN npm run build
 
 # Production stage

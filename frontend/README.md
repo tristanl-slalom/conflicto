@@ -37,18 +37,65 @@ Add components using the latest version of [Shadcn](https://ui.shadcn.com/).
 pnpx shadcn@latest add button
 ```
 
-## T3Env
+## Environment Configuration
 
-- You can use T3Env to add type safety to your environment variables.
-- Add Environment variables to the `src/env.mjs` file.
-- Use the environment variables in your code.
+This project uses T3Env for type-safe environment variable management. Environment variables are configured in `src/env.ts` and validated at runtime using Zod schemas.
+
+### Required Environment Variables
+
+Copy `.env.example` to `.env.local` and configure for your environment:
+
+```bash
+cp .env.example .env.local
+```
+
+### Key Environment Variables
+
+- **`VITE_API_BASE_URL`**: Backend API base URL (required)
+- **`VITE_APP_TITLE`**: Application title (optional)
 
 ### Usage
 
 ```ts
 import { env } from '@/env';
 
-console.log(env.VITE_APP_TITLE);
+// Access validated environment variables
+const apiUrl = env.VITE_API_BASE_URL; // Guaranteed to be a valid URL
+const appTitle = env.VITE_APP_TITLE;  // Optional, may be undefined
+```
+
+### Environment-Specific Builds
+
+Build for different environments using the provided scripts:
+
+```bash
+# Development build (uses localhost API)
+npm run build:dev
+
+# Staging build (uses environment variables)
+npm run build:staging
+
+# Production build (uses environment variables)
+npm run build:prod
+```
+
+### Docker Builds
+
+For Docker deployments, pass environment variables as build arguments:
+
+```bash
+docker build \
+  --build-arg VITE_API_BASE_URL=https://api.conflicto.app \
+  --build-arg VITE_APP_TITLE="Conflicto Production" \
+  .
+```
+
+### Development Setup
+
+For local development, the API base URL defaults to `http://localhost:8000`. Make sure your backend server is running on this port, or override with:
+
+```bash
+VITE_API_BASE_URL=http://localhost:3001 npm run dev
 ```
 
 ## Routing
