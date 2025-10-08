@@ -156,43 +156,71 @@ jobs:
           echo "Running database migrations for ${ENV} environment..."
 
           # Create a one-time task definition for migrations
-          MIGRATION_TASK_DEF=$(cat ${{ steps.task-def.outputs.task-definition }} | jq '.containerDefinitions[0].command = ["poetry", "run", "alembic", "upgrade", "head"]')
+          cat ${{ steps.task-def.outputs.task-definition }} | \
+          jq '.containerDefinitions[0].command = ["poetry", "run", "alembic", "upgrade", "head"]' \
+          > migration-task-def.json
 
           # Register the migration task definition
           MIGRATION_TASK_DEF_ARN=$(aws ecs register-task-definition \
-            --family "conflicto-${ENV}-migration" \
-            --cli-input-json "$MIGRATION_TASK_DEF" \
+            --cli-input-json file://migration-task-def.json \
             --query 'taskDefinition.taskDefinitionArn' \
             --output text)
 
           echo "Registered migration task definition: $MIGRATION_TASK_DEF_ARN"
 
           # Get a subnet for running the migration task
+          echo "Looking for subnets..."
+
+          # Try to find private subnets first
           SUBNET_ID=$(aws ec2 describe-subnets \
             --filters "Name=tag:Name,Values=conflicto-${ENV}-private*" \
             --query 'Subnets[0].SubnetId' \
-            --output text)
+            --output text 2>/dev/null)
 
-          if [ "$SUBNET_ID" = "None" ]; then
+          if [ "$SUBNET_ID" = "None" ] || [ -z "$SUBNET_ID" ]; then
             echo "Warning: Could not find private subnet, trying public subnets..."
             SUBNET_ID=$(aws ec2 describe-subnets \
               --filters "Name=tag:Name,Values=conflicto-${ENV}-public*" \
               --query 'Subnets[0].SubnetId' \
-              --output text)
+              --output text 2>/dev/null)
+          fi
+
+          if [ "$SUBNET_ID" = "None" ] || [ -z "$SUBNET_ID" ]; then
+            echo "Warning: Could not find named subnets, trying any subnet in default VPC..."
+            SUBNET_ID=$(aws ec2 describe-subnets \
+              --filters "Name=default-for-az,Values=true" \
+              --query 'Subnets[0].SubnetId' \
+              --output text 2>/dev/null)
+          fi
+
+          if [ "$SUBNET_ID" = "None" ] || [ -z "$SUBNET_ID" ]; then
+            echo "Error: Could not find any suitable subnet"
+            echo "Available subnets:"
+            aws ec2 describe-subnets --query 'Subnets[].{SubnetId:SubnetId,Name:Tags[?Key==`Name`].Value|[0],VpcId:VpcId}' --output table
+            exit 1
           fi
 
           # Get security group for the ECS service
+          echo "Looking for security groups..."
+
           SECURITY_GROUP_ID=$(aws ec2 describe-security-groups \
             --filters "Name=group-name,Values=conflicto-${ENV}-app*" \
             --query 'SecurityGroups[0].GroupId' \
-            --output text)
+            --output text 2>/dev/null)
 
-          if [ "$SECURITY_GROUP_ID" = "None" ]; then
+          if [ "$SECURITY_GROUP_ID" = "None" ] || [ -z "$SECURITY_GROUP_ID" ]; then
             echo "Warning: Could not find app security group, using default..."
             SECURITY_GROUP_ID=$(aws ec2 describe-security-groups \
               --filters "Name=group-name,Values=default" \
               --query 'SecurityGroups[0].GroupId' \
-              --output text)
+              --output text 2>/dev/null)
+          fi
+
+          if [ "$SECURITY_GROUP_ID" = "None" ] || [ -z "$SECURITY_GROUP_ID" ]; then
+            echo "Error: Could not find any suitable security group"
+            echo "Available security groups:"
+            aws ec2 describe-security-groups --query 'SecurityGroups[].{GroupId:GroupId,GroupName:GroupName,VpcId:VpcId}' --output table
+            exit 1
           fi
 
           echo "Running migration task..."
