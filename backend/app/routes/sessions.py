@@ -272,12 +272,12 @@ async def get_session_by_code(
         title=session.title,
         description=session.description,
         status=session.status,
-        qr_code=session.qr_code
-        if code_type == "admin"
-        else None,  # Only show QR code to admins
-        admin_code=session.admin_code
-        if code_type == "admin"
-        else None,  # Only show admin code to admins
+        qr_code=(
+            session.qr_code if code_type == "admin" else None
+        ),  # Only show QR code to admins
+        admin_code=(
+            session.admin_code if code_type == "admin" else None
+        ),  # Only show admin code to admins
         max_participants=session.max_participants,
         created_at=session.created_at,
         updated_at=session.updated_at,

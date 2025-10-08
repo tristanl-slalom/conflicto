@@ -1,6 +1,7 @@
 """
 Database configuration and connection management.
 """
+
 from collections.abc import AsyncGenerator
 
 from sqlalchemy import create_engine
@@ -13,7 +14,9 @@ from app.core.settings import settings
 # Convert database URLs for async operations
 async_database_url = settings.database_url
 if async_database_url.startswith("postgresql://"):
-    async_database_url = async_database_url.replace("postgresql://", "postgresql+asyncpg://")
+    async_database_url = async_database_url.replace(
+        "postgresql://", "postgresql+asyncpg://"
+    )
 elif async_database_url.startswith("sqlite://"):
     async_database_url = async_database_url.replace("sqlite://", "sqlite+aiosqlite://")
 
