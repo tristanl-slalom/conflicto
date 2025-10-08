@@ -3,7 +3,8 @@ import {
   useCreateSessionApiV1SessionsPost,
   useListSessionsApiV1SessionsGet,
   useGetSessionApiV1SessionsSessionIdGet,
-  type SessionCreate
+  type SessionCreate,
+  type SessionDetail
 } from '../api/generated';
 import type { SessionCreateFormData, SessionFormState } from '../types/admin';
 
@@ -48,13 +49,16 @@ export const useSessionManagement = () => {
       // Refresh the sessions list
       await refetchSessions();
 
+      // Convert SessionResponse to SessionDetail (they're compatible types)
+      const sessionDetail = response.data as SessionDetail;
+
       setFormState({
         isSubmitting: false,
-        lastCreatedSession: response.data,
+        lastCreatedSession: sessionDetail,
         success: 'Session created successfully!',
       });
 
-      return response.data;
+      return sessionDetail;
     } catch (error) {
       console.error('❌ Session creation failed:', error);
       console.error('Error details:', {
@@ -107,8 +111,12 @@ export const useSessionManagement = () => {
     clearFormState,
     
     // Session list
-    sessions: sessionsData?.data?.sessions || [],
-    totalSessions: sessionsData?.data?.total || 0,
+    sessions: (sessionsData?.status === 200 && 'sessions' in sessionsData.data) 
+      ? sessionsData.data.sessions 
+      : [],
+    totalSessions: (sessionsData?.status === 200 && 'total' in sessionsData.data) 
+      ? sessionsData.data.total 
+      : 0,
     isLoadingSessions,
     sessionsError,
     refetchSessions,

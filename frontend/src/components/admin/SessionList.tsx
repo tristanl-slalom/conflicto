@@ -1,5 +1,6 @@
 import { useSessionManagement } from '../../hooks/useSessionManagement';
 import type { SessionListProps } from '../../types/admin';
+import type { SessionResponse } from '../../api/generated';
 import { formatDistanceToNow } from 'date-fns';
 
 export const SessionList = ({
@@ -59,7 +60,7 @@ export const SessionList = ({
         </div>
       ) : (
         <div className="space-y-3">
-          {displaySessions.map((session) => (
+          {displaySessions.map((session: SessionResponse) => (
             <div
               key={session.id}
               className="bg-slate-700 rounded-lg p-4 border border-slate-600 hover:border-slate-500 transition-colors"
