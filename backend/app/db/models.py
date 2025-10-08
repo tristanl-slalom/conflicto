@@ -3,18 +3,16 @@ SQLAlchemy models for the Caja application.
 """
 
 from datetime import datetime
-from enum import Enum
 from typing import Optional
 from uuid import UUID, uuid4
 
-from app.db.enums import ActivityStatus, SessionStatus, ActivityType, ParticipantRole
+from app.db.enums import ActivityStatus, SessionStatus, ActivityState
 
 from sqlalchemy import (
     JSON,
     Boolean,
     Column,
     DateTime,
-    Enum,
     ForeignKey,
     Integer,
     String,
@@ -108,7 +106,7 @@ class Session(Base):
 
 
 class Activity(Base):
-    """Activity model with JSONB configuration storage."""
+    """Activity model with JSONB configuration storage and framework support."""
 
     __tablename__ = "activities"
 
@@ -117,11 +115,27 @@ class Activity(Base):
         Integer, ForeignKey("sessions.id", ondelete="CASCADE")
     )
     type: Mapped[str] = mapped_column(String(50))
-    config: Mapped[dict] = mapped_column(JSONBType, default=dict)
+    title: Mapped[str] = mapped_column(String(500), nullable=False, default="")
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    config: Mapped[dict] = mapped_column(
+        JSONBType, default=dict
+    )  # Keep for backwards compatibility
+    configuration: Mapped[dict] = mapped_column(
+        JSONBType, default=dict
+    )  # New framework field
+    activity_metadata: Mapped[dict] = mapped_column(
+        JSONBType, default=dict
+    )  # Framework metadata
     order_index: Mapped[int] = mapped_column(Integer)
     status: Mapped[ActivityStatus] = mapped_column(
         String(20), default=ActivityStatus.DRAFT
-    )
+    )  # Keep for backwards compatibility
+    state: Mapped[ActivityState] = mapped_column(
+        String(20), default=ActivityState.DRAFT
+    )  # New framework field
+    expires_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )  # New framework field
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
