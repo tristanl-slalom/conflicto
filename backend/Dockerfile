@@ -6,6 +6,9 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
+    curl \
+    procps \
+    net-tools \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Poetry
@@ -17,11 +20,14 @@ COPY pyproject.toml poetry.lock* ./
 # Configure poetry
 RUN poetry config virtualenvs.create false
 
-# Install dependencies
-RUN poetry install --no-dev
+# Install only the dependencies (not the local package yet)
+RUN poetry install --without dev --no-root
 
 # Copy application code
 COPY . .
+
+# Install the local package only
+RUN poetry install --only-root
 
 # Expose port
 EXPOSE 8000

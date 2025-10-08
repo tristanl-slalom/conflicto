@@ -1,14 +1,14 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { Smartphone, Send, Users, CheckCircle } from 'lucide-react'
-import { useState } from 'react'
+import { createFileRoute } from '@tanstack/react-router';
+import { Smartphone, Send, Users, CheckCircle } from 'lucide-react';
+import { useState } from 'react';
 
 export const Route = createFileRoute('/participant/')({
   component: ParticipantInterface,
-})
+});
 
 function ParticipantInterface() {
-  const [selectedOption, setSelectedOption] = useState<number | null>(null)
-  const [hasVoted, setHasVoted] = useState(false)
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [hasVoted, setHasVoted] = useState(false);
 
   // Mock session data
   const sessionData = {
@@ -21,19 +21,19 @@ function ParticipantInterface() {
       'Clear requirements',
     ],
     participantCount: 12,
-  }
+  };
 
   const handleVote = () => {
     if (selectedOption !== null) {
-      setHasVoted(true)
+      setHasVoted(true);
       // Here would be the API call to submit the vote
     }
-  }
+  };
 
   const handleJoinSession = () => {
     // Mock joining session
-    console.log('Joining session...')
-  }
+    console.log('Joining session...');
+  };
 
   if (!hasVoted && sessionData.question) {
     return (
@@ -53,7 +53,9 @@ function ParticipantInterface() {
               </div>
               <div className="flex items-center gap-2 text-purple-400">
                 <Users className="w-4 h-4" />
-                <span className="text-sm font-mono">{sessionData.participantCount}</span>
+                <span className="text-sm font-mono">
+                  {sessionData.participantCount}
+                </span>
               </div>
             </div>
           </div>
@@ -113,7 +115,7 @@ function ParticipantInterface() {
           </p>
         </div>
       </div>
-    )
+    );
   }
 
   // After voting state
@@ -127,7 +129,8 @@ function ParticipantInterface() {
             </div>
             <h2 className="text-2xl font-bold mb-4">Vote Submitted!</h2>
             <p className="text-gray-300 mb-6">
-              Thank you for participating. Watch the viewer display for live results.
+              Thank you for participating. Watch the viewer display for live
+              results.
             </p>
             <div className="space-y-3">
               <button className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 px-4 rounded-lg transition-colors">
@@ -140,7 +143,7 @@ function ParticipantInterface() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   // Join session state (default)
@@ -153,9 +156,10 @@ function ParticipantInterface() {
           </div>
           <h2 className="text-2xl font-bold mb-4">Join Session</h2>
           <p className="text-gray-300 mb-6">
-            Enter your session code to participate in live polling and activities.
+            Enter your session code to participate in live polling and
+            activities.
           </p>
-          
+
           <div className="space-y-4">
             <input
               type="text"
@@ -169,12 +173,12 @@ function ParticipantInterface() {
               Join Session
             </button>
           </div>
-          
+
           <p className="text-gray-400 text-sm mt-4">
             Or scan the QR code displayed on the viewer screen
           </p>
         </div>
       </div>
     </div>
-  )
+  );
 }

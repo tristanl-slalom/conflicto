@@ -1,9 +1,10 @@
 """
 Logging configuration for the Caja backend application.
 """
+
 import logging
 import sys
-from typing import Any, Dict
+from typing import Any
 
 import structlog
 from structlog.typing import FilteringBoundLogger
@@ -22,9 +23,11 @@ def configure_logging() -> FilteringBoundLogger:
             structlog.processors.StackInfoRenderer(),
             structlog.dev.set_exc_info,
             structlog.processors.TimeStamper(fmt="iso"),
-            structlog.dev.ConsoleRenderer()
-            if settings.debug
-            else structlog.processors.JSONRenderer(),
+            (
+                structlog.dev.ConsoleRenderer()
+                if settings.debug
+                else structlog.processors.JSONRenderer()
+            ),
         ],
         wrapper_class=structlog.make_filtering_bound_logger(
             logging.DEBUG if settings.debug else logging.INFO
@@ -47,7 +50,7 @@ def configure_logging() -> FilteringBoundLogger:
     return logger
 
 
-def get_logger(name: str = None) -> FilteringBoundLogger:
+def get_logger(name: str | None = None) -> FilteringBoundLogger:
     """Get a logger instance."""
     logger = structlog.get_logger()
     if name:
@@ -77,7 +80,7 @@ def log_response(
     )
 
 
-def log_error(error: Exception, context: Dict[str, Any] = None) -> None:
+def log_error(error: Exception, context: dict[str, Any] | None = None) -> None:
     """Log an error with context."""
     logger = get_logger("error")
     logger.error(

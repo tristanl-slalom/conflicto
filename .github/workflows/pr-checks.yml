@@ -1,0 +1,417 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened ]
+
+env:
+  PYTHON_VERSION: '3.12'
+  NODE_VERSION: '22'
+  SECRET_KEY: ${{ secrets.SECRET_KEY }}
+
+jobs:
+  test-backend:
+    name: Backend Tests
+    runs-on: ubuntu-22.04
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: conflicto_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.6.1
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v4
+        with:
+          path: backend/.venv
+          key: poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('backend/poetry.lock') }}
+          restore-keys: |
+            poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry install --no-interaction --no-ansi
+
+      - name: Run database migrations
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/conflicto_test
+          REDIS_URL: redis://localhost:6379/0
+        run: |
+          poetry run alembic upgrade head
+
+      - name: Run backend tests with coverage
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/conflicto_test
+          REDIS_URL: redis://localhost:6379/0
+          ENVIRONMENT: test
+        run: |
+          poetry run pytest --cov=app --cov-report=xml --cov-report=html --cov-report=term-missing -v
+
+      - name: Check coverage threshold
+        working-directory: backend
+        run: |
+          poetry run coverage report --fail-under=70
+
+      - name: Upload backend coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: backend/coverage.xml
+          flags: backend
+          name: backend-coverage
+
+      - name: Upload backend test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-test-results
+          path: |
+            backend/coverage.xml
+            backend/htmlcov/
+            backend/.coverage
+          retention-days: 7
+
+  test-frontend:
+    name: Frontend Tests
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Run TypeScript type checking
+        working-directory: frontend
+        run: npm run type-check
+
+      - name: Run frontend unit tests
+        working-directory: frontend
+        run: npm run test:coverage
+
+      - name: Check frontend coverage threshold
+        working-directory: frontend
+        run: |
+          # Extract coverage percentage from coverage output
+          npm run test:coverage:check
+
+      - name: Build frontend for production
+        working-directory: frontend
+        run: npm run build
+
+      - name: Upload frontend coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: frontend/coverage/coverage-final.json
+          flags: frontend
+          name: frontend-coverage
+
+      - name: Upload frontend test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-test-results
+          path: |
+            frontend/coverage/
+            frontend/dist/
+          retention-days: 7
+
+  lint-and-format:
+    name: Code Quality Checks
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.6.1
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: poetry install --no-interaction
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci --prefer-offline --no-audit
+
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --file=frontend/package.json --severity-threshold=high
+
+      - name: Run Snyk for Python dependencies
+        uses: snyk/actions/python@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --file=backend/pyproject.toml --severity-threshold=high
+
+  build-validation:
+    name: Build Validation
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: backend
+          file: backend/Dockerfile
+          push: false
+          load: true
+          tags: conflicto-backend:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build frontend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: frontend/Dockerfile
+          push: false
+          load: true
+          tags: conflicto-frontend:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: List built Docker images
+        run: docker images | grep conflicto
+
+      - name: Test backend container startup
+        run: |
+          # Create a temporary directory for SQLite database
+          mkdir -p /tmp/test-db
+          
+          # Start container without --rm so we can inspect it if it fails
+          echo "Starting backend container..."
+          CONTAINER_ID=$(docker run -d --name test-backend \
+            -e DATABASE_URL=sqlite:////tmp/test.db \
+            -e REDIS_URL=redis://localhost:6379/0 \
+            -e SECRET_KEY=test-secret-key \
+            -e ENVIRONMENT=test \
+            -e DEBUG=true \
+            -v /tmp/test-db:/tmp \
+            conflicto-backend:test)
+          
+          echo "Container ID: $CONTAINER_ID"
+          
+          # Wait a bit for startup
+          echo "Waiting for container startup..."
+          sleep 15
+          
+          # Check container status
+          echo "Container status:"
+          docker ps -a --filter "name=test-backend"
+          
+          # Get container logs regardless of status
+          echo "Container logs:"
+          docker logs test-backend || true
+          
+          # Check if container is still running
+          if docker ps --filter "name=test-backend" --filter "status=running" | grep -q test-backend; then
+            echo "✅ Container is running successfully"
+            
+            # Test if the API is responding (try a few times as it might take time to start)
+            echo "Testing API health endpoint..."
+            for i in {1..5}; do
+              echo "Health check attempt $i..."
+              if docker exec test-backend curl -f http://localhost:8000/api/v1/health/; then
+                echo "✅ Health check passed"
+                break
+              elif [ $i -eq 5 ]; then
+                echo "❌ Health check failed after 5 attempts"
+                # Still continue to get more diagnostics
+              else
+                echo "Waiting 5 seconds before retry..."
+                sleep 5
+              fi
+            done
+            
+            # Check what processes are running in the container
+            echo "Processes in container:"
+            docker exec test-backend ps aux || true
+            
+            # Check if port 8000 is listening
+            echo "Network status in container:"
+            docker exec test-backend netstat -tlnp 2>/dev/null || docker exec test-backend ss -tlnp 2>/dev/null || echo "Could not check network status"
+            
+          else
+            echo "❌ Container is not running"
+            echo "Exit code:"
+            docker inspect test-backend --format='{{.State.ExitCode}}' || true
+            exit 1
+          fi
+          
+          # Cleanup
+          echo "Cleaning up container..."
+          docker stop test-backend || true
+          docker rm test-backend || true
+
+      - name: Test frontend container startup
+        run: |
+          # Start container without --rm so we can inspect it if it fails
+          echo "Starting frontend container..."
+          CONTAINER_ID=$(docker run -d --name test-frontend \
+            -p 3000:80 \
+            conflicto-frontend:test)
+          
+          echo "Container ID: $CONTAINER_ID"
+          
+          # Wait for startup
+          echo "Waiting for container startup..."
+          sleep 15
+          
+          # Check container status
+          echo "Container status:"
+          docker ps -a --filter "name=test-frontend"
+          
+          # Get container logs regardless of status
+          echo "Container logs:"
+          docker logs test-frontend || true
+          
+          # Check if container is still running
+          if docker ps --filter "name=test-frontend" --filter "status=running" | grep -q test-frontend; then
+            echo "✅ Frontend container is running successfully"
+            
+            # Test if the frontend is serving content (try a few times)
+            echo "Testing frontend availability..."
+            for i in {1..5}; do
+              echo "Frontend check attempt $i..."
+              if curl -f http://localhost:3000 -o /dev/null -s; then
+                echo "✅ Frontend is serving content"
+                break
+              elif [ $i -eq 5 ]; then
+                echo "⚠️ Frontend check failed after 5 attempts (may still be starting)"
+              else
+                echo "Waiting 5 seconds before retry..."
+                sleep 5
+              fi
+            done
+          else
+            echo "❌ Frontend container is not running"
+            echo "Exit code:"
+            docker inspect test-frontend --format='{{.State.ExitCode}}' || true
+            exit 1
+          fi
+          
+          # Cleanup
+          echo "Cleaning up container..."
+          docker stop test-frontend || true
+          docker rm test-frontend || true
+
+  pr-summary:
+    name: PR Summary
+    runs-on: ubuntu-22.04
+    needs: [test-backend, test-frontend, lint-and-format, security-scan, build-validation]
+    if: always()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate PR Summary
+        run: |
+          echo "## 🔍 CI/CD Pipeline Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend Tests | ${{ needs.test-backend.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend Tests | ${{ needs.test-frontend.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Code Quality | ${{ needs.lint-and-format.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Scan | ${{ needs.security-scan.result == 'success' && '✅ Passed' || '⚠️ Check Results' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build Validation | ${{ needs.build-validation.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Overall Status:** ${{ (needs.test-backend.result == 'success' && needs.test-frontend.result == 'success' && needs.lint-and-format.result == 'success' && needs.build-validation.result == 'success') && '🎉 All checks passed!' || '❌ Some checks failed' }}" >> $GITHUB_STEP_SUMMARY

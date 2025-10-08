@@ -2,7 +2,10 @@
 
 ## Overview
 
-The Caja frontend is a React-based interactive engagement platform built with TanStack Start, designed to support three distinct persona interfaces: Admin, Viewer, and Participant. Each interface is optimized for specific use cases and device types within the live event engagement ecosystem.
+The Caja frontend is a React-based interactive engagement platform built with TanStack Start,
+designed to support three distinct persona interfaces: Admin, Viewer, and Participant. Each
+interface is optimized for specific use cases and device types within the live event engagement
+ecosystem.
 
 ## Architecture
 
@@ -47,6 +50,7 @@ frontend/
 **Target Users**: Event organizers, facilitators, content managers
 
 **Features**:
+
 - Session configuration and creation
 - Content management (questions, options, settings)
 - Real-time participant monitoring
@@ -54,6 +58,7 @@ frontend/
 - Analytics dashboard with results export
 
 **Design Characteristics**:
+
 - Desktop-optimized layout with multi-column interface
 - Blue accent color scheme indicating control/authority
 - Rich form controls and data visualization
@@ -64,6 +69,7 @@ frontend/
 **Target Users**: Large screen displays, projectors, shared viewing
 
 **Features**:
+
 - Full-screen session display with live results
 - QR code generation for easy participant joining
 - Real-time result visualization with animations
@@ -71,6 +77,7 @@ frontend/
 - Automatic content refresh every 2-3 seconds
 
 **Design Characteristics**:
+
 - Maximized content area with minimal chrome
 - Green accent color scheme indicating "live/active"
 - High contrast design for visibility
@@ -81,6 +88,7 @@ frontend/
 **Target Users**: Event attendees on mobile devices
 
 **Features**:
+
 - Quick session joining via QR code or session ID
 - Touch-optimized voting and interaction controls
 - Real-time feedback submission
@@ -88,6 +96,7 @@ frontend/
 - Minimal bandwidth usage for mobile networks
 
 **Design Characteristics**:
+
 - Mobile-first responsive design
 - Purple accent color scheme indicating interaction/participation
 - Large touch targets (minimum 44px)
@@ -99,6 +108,7 @@ frontend/
 ### PersonaLayout Component
 
 Provides consistent layout structure across all personas with customizable:
+
 - Color schemes and branding per persona
 - Navigation and header elements
 - Responsive breakpoints and styling
@@ -106,11 +116,11 @@ Provides consistent layout structure across all personas with customizable:
 
 ```tsx
 interface PersonaLayoutProps {
-  persona: 'admin' | 'viewer' | 'participant'
-  title: string
-  subtitle?: string
-  children: React.ReactNode
-  className?: string
+  persona: 'admin' | 'viewer' | 'participant';
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+  className?: string;
 }
 ```
 
@@ -129,14 +139,14 @@ Handles all session-related state and API interactions:
 
 ```tsx
 // Session data fetching
-const { data: session, isLoading, error } = useSession(sessionId)
+const { data: session, isLoading, error } = useSession(sessionId);
 
 // Session creation and updates
-const createSession = useCreateSession()
-const updateSession = useUpdateSession()
+const createSession = useCreateSession();
+const updateSession = useUpdateSession();
 
 // Real-time response polling
-const { data: responses } = useSessionResponses(sessionId, enabled)
+const { data: responses } = useSessionResponses(sessionId, enabled);
 ```
 
 ### Participant Management Hook
@@ -144,12 +154,7 @@ const { data: responses } = useSessionResponses(sessionId, enabled)
 Manages participant state and local storage:
 
 ```tsx
-const { 
-  participantId, 
-  currentSessionId, 
-  joinSession, 
-  leaveSession 
-} = useParticipantSession()
+const { participantId, currentSessionId, joinSession, leaveSession } = useParticipantSession();
 ```
 
 ### Polling-Based Synchronization
@@ -172,16 +177,19 @@ const usePolling = (callback: () => void, interval = 3000, enabled = true)
 ### Persona-Specific Responsiveness
 
 **Admin Interface**:
+
 - Single column layout on mobile
 - Multi-column dashboard on desktop
 - Collapsible sidebars and panels
 
 **Viewer Interface**:
+
 - Scales content proportionally across all sizes
 - Maintains readability at distance
 - Adapts QR code size to screen real estate
 
 **Participant Interface**:
+
 - Optimized for one-handed mobile use
 - Large touch targets and simplified navigation
 - Progressive enhancement for larger screens
@@ -320,22 +328,24 @@ GET /api/sessions/:id/poll - Polling endpoint for updates
 
 ```typescript
 interface Session {
-  id: string
-  name: string
-  type: 'poll' | 'quiz' | 'poker' | 'wordcloud'
-  status: 'draft' | 'active' | 'completed'
-  question: string
-  options: string[]
-  participantCount: number
-  createdAt: string
-  updatedAt: string
+  id: string;
+  name: string;
+  type: 'poll' | 'quiz' | 'poker' | 'wordcloud';
+  status: 'draft' | 'active' | 'completed';
+  question: string;
+  options: string[];
+  participantCount: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface SessionResponse {
-  optionIndex: number
-  count: number
-  percentage: number
+  optionIndex: number;
+  count: number;
+  percentage: number;
 }
 ```
 
-This frontend implementation provides a solid foundation for the Caja interactive engagement platform, with scalable architecture, comprehensive testing, and clear separation of concerns across the multi-persona interface system.
+This frontend implementation provides a solid foundation for the Caja interactive engagement
+platform, with scalable architecture, comprehensive testing, and clear separation of concerns across
+the multi-persona interface system.
