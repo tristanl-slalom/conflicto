@@ -33,3 +33,9 @@ variable "aws_region" {
   description = "Primary region (also certificate region). Use us-east-1 for CloudFront compatibility."
   default     = "us-east-1"
 }
+
+variable "defer_cert_validation_records" {
+  type        = bool
+  description = "If true, skip creating DNS validation records (useful during initial zone import + first targeted certificate apply). Set to false and re-apply once the certificate exists to create records and finalize validation."
+  default     = true
+}
