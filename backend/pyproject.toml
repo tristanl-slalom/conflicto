@@ -26,6 +26,7 @@ httpx = "^0.25.2"
 structlog = "^23.2.0"
 python-dotenv = "^1.0.0"
 greenlet = "^3.2.4"
+aiosqlite = "^0.19.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.3"
@@ -35,7 +36,6 @@ pytest-xdist = "^3.4.0"
 ruff = "^0.1.7"
 pre-commit = "^3.6.0"
 httpx = "^0.25.2"
-aiosqlite = "^0.19.0"
 coverage = "^7.3.2"
 
 [tool.ruff]

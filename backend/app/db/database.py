@@ -10,10 +10,12 @@ from sqlalchemy.orm import sessionmaker
 
 from app.core.settings import settings
 
-# Convert postgresql:// to postgresql+asyncpg:// for async operations
-async_database_url = settings.database_url.replace(
-    "postgresql://", "postgresql+asyncpg://"
-)
+# Convert database URLs for async operations
+async_database_url = settings.database_url
+if async_database_url.startswith("postgresql://"):
+    async_database_url = async_database_url.replace("postgresql://", "postgresql+asyncpg://")
+elif async_database_url.startswith("sqlite://"):
+    async_database_url = async_database_url.replace("sqlite://", "sqlite+aiosqlite://")
 
 # Create async engine
 async_engine = create_async_engine(
