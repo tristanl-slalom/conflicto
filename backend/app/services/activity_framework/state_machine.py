@@ -83,8 +83,10 @@ class ActivityStateMachine:
         """
         if not force and not cls.can_transition(activity.state, target_state):
             logger.warning(
-                f"Invalid state transition attempted: {activity.state} -> {target_state} "
-                f"for activity {activity.id}"
+                "Invalid state transition attempted: %s -> %s for activity %s",
+                activity.state,
+                target_state,
+                activity.id,
             )
             return False
 
@@ -95,10 +97,21 @@ class ActivityStateMachine:
         # Handle state-specific logic
         cls._handle_state_transition(activity, old_state, target_state, reason)
 
-        logger.info(
-            f"Activity {activity.id} transitioned from {old_state} to {target_state}"
-            + (f" (reason: {reason})" if reason else "")
-        )
+        if reason:
+            logger.info(
+                "Activity %s transitioned from %s to %s (reason: %s)",
+                activity.id,
+                old_state,
+                target_state,
+                reason,
+            )
+        else:
+            logger.info(
+                "Activity %s transitioned from %s to %s",
+                activity.id,
+                old_state,
+                target_state,
+            )
 
         return True
 

@@ -301,7 +301,7 @@ class ActivityService:
         await db.commit()
         await db.refresh(db_activity)
 
-        logger.info(f"Created activity {db_activity.id} of type {activity_type}")
+        logger.info("Created activity %s of type %s", db_activity.id, activity_type)
         return Activity.model_validate(db_activity)
 
     @staticmethod
@@ -355,7 +355,7 @@ class ActivityService:
         await db.commit()
         await db.refresh(db_activity)
 
-        logger.info(f"Activity {activity_id} transitioned to {target_state}")
+        logger.info("Activity %s transitioned to %s", activity_id, target_state)
         return Activity.model_validate(db_activity)
 
     @staticmethod
@@ -465,7 +465,7 @@ class ActivityService:
                 participant_id, response_data
             )
         except Exception as e:
-            raise ValueError(f"Response processing failed: {str(e)}")
+            raise ValueError(f"Response processing failed: {str(e)}") from e
 
         # Store the response (use existing UserResponse storage)
         from app.services.user_response_service import UserResponseService
@@ -479,7 +479,9 @@ class ActivityService:
         )
 
         logger.info(
-            f"Processed response for activity {activity_id} from participant {participant_id}"
+            "Processed response for activity %s from participant %s",
+            activity_id,
+            participant_id,
         )
         return processed_response
 
@@ -603,7 +605,7 @@ class ActivityService:
             enhanced_status["results"] = results
         except Exception as e:
             logger.warning(
-                f"Could not calculate results for activity {activity_id}: {e}"
+                "Could not calculate results for activity %s: %s", activity_id, e
             )
 
         return enhanced_status
