@@ -87,6 +87,67 @@ jobs:
           container-name: app
           image: ${{ steps.vars.outputs.image_uri }}
 
+      # Inject environment variables into task definition
+      - name: Inject environment variables
+        env:
+          ENV: ${{ steps.vars.outputs.environment }}
+        run: |
+          # Generate a random secret key for this deployment
+          SECRET_KEY="production-secret-key-$(openssl rand -hex 32)"
+
+          # Try to get database URL from AWS Secrets Manager
+          DATABASE_URL=$(aws secretsmanager get-secret-value \
+            --secret-id "conflicto-${ENV}/db" \
+            --query 'SecretString' --output text 2>/dev/null | jq -r '.url' 2>/dev/null || echo "")
+
+          # If we couldn't get from secrets manager, try to construct it
+          if [ -z "$DATABASE_URL" ]; then
+            echo "Could not retrieve DATABASE_URL from secrets manager, constructing from RDS info..."
+            RDS_ENDPOINT=$(aws rds describe-db-instances \
+              --db-instance-identifier conflicto-${ENV}-db \
+              --query 'DBInstances[0].Endpoint.Address' \
+              --output text 2>/dev/null || echo "")
+
+            if [ -n "$RDS_ENDPOINT" ]; then
+              # Try to get password from secrets manager
+              DB_PASSWORD=$(aws secretsmanager get-secret-value \
+                --secret-id "conflicto-${ENV}/db" \
+                --query 'SecretString' --output text 2>/dev/null | jq -r '.password' 2>/dev/null || echo "caja_password")
+              DATABASE_URL="postgresql://caja_user:${DB_PASSWORD}@${RDS_ENDPOINT}:5432/caja_db"
+            else
+              echo "Warning: Could not retrieve RDS endpoint. Using fallback DATABASE_URL"
+              DATABASE_URL="postgresql://caja_user:caja_password@localhost:5432/caja_db"
+            fi
+          fi
+
+          echo "Setting up environment variables for ${ENV} environment"
+          echo "DATABASE_URL configured: ${DATABASE_URL:0:50}..." # Only show first 50 chars for security
+          echo "SECRET_KEY generated with length: ${#SECRET_KEY}"
+
+          # Update the task definition with environment variables
+          echo "Updating task definition with environment variables..."
+
+          jq --arg database_url "$DATABASE_URL" \
+             --arg secret_key "$SECRET_KEY" \
+             --arg environment "$ENV" \
+             '.containerDefinitions[0].environment = [
+               {"name": "DATABASE_URL", "value": $database_url},
+               {"name": "SECRET_KEY", "value": $secret_key},
+               {"name": "ENVIRONMENT", "value": $environment}
+             ]' \
+             ${{ steps.task-def.outputs.task-definition }} > updated-task-definition.json
+
+          # Verify the update was successful
+          if [ ! -f updated-task-definition.json ]; then
+            echo "Error: Failed to create updated task definition"
+            exit 1
+          fi
+
+          # Replace the task definition file
+          mv updated-task-definition.json ${{ steps.task-def.outputs.task-definition }}
+
+          echo "Task definition updated successfully"
+
       # Deploy to ECS
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1

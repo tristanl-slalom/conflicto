@@ -1,4 +1,14 @@
-########################################
+############################## Generate a random suffix for secret key
+resource "random_id" "secret_suffix" {
+  byte_length = 16
+}
+
+resource "aws_cloudwatch_log_group" "app" {
+  count             = var.create_service ? 1 : 0
+  name              = "/ecs/${local.name_prefix}-task"
+  retention_in_days = 7
+  tags              = module.shared.tags
+}#####
 # ECS Stack (Issue 52)
 # - ECS Cluster (Fargate)
 # - (Optional) ECR Repository
@@ -230,7 +240,18 @@ resource "aws_ecs_task_definition" "app" {
       image     = local.effective_image
       essential = true
       portMappings = [{ containerPort = var.container_port, hostPort = var.container_port, protocol = "tcp" }]
-      environment = []
+      environment = concat([
+        {
+          name  = "ENVIRONMENT"
+          value = var.environment
+        }
+      ], var.database_url != "" ? [{
+        name  = "DATABASE_URL"
+        value = var.database_url
+      }] : [], [{
+        name  = "SECRET_KEY"
+        value = "production-secret-key-${random_id.secret_suffix.hex}"
+      }])
       logConfiguration = {
         logDriver = "awslogs"
         options = {
