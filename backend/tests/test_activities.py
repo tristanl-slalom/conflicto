@@ -3,10 +3,10 @@ Tests for Activity API routes and services.
 """
 import pytest
 from uuid import uuid4
-from fastapi.testclient import TestClient
+from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import ActivityStatus
+from app.db.enums import ActivityStatus
 from app.models.jsonb_schemas.activity import ActivityCreate, ActivityUpdate
 from app.services.activity_service import ActivityService
 
@@ -15,19 +15,29 @@ class TestActivityAPI:
     """Test Activity API endpoints."""
     
     @pytest.fixture
-    async def sample_session(self, db_session: AsyncSession, client: TestClient):
+    async def sample_session(self, db_session: AsyncSession):
         """Create a sample session for testing."""
-        session_data = {
-            "title": "Test Session for Activities",
-            "description": "A session for testing activities",
-            "max_participants": 50
+        from app.services.session_service import SessionService
+        from app.models.schemas import SessionCreate
+        
+        session_data = SessionCreate(
+            title="Test Session for Activities",
+            description="A session for testing activities", 
+            max_participants=50
+        )
+        session = await SessionService.create_session(db_session, session_data)
+        
+        # Return as dict to match API response format
+        return {
+            "id": session.id,
+            "title": session.title,
+            "description": session.description,
+            "max_participants": session.max_participants,
+            "status": session.status.value if hasattr(session.status, 'value') else session.status
         }
-        response = client.post("/api/v1/sessions/", json=session_data)
-        assert response.status_code == 201
-        return response.json()
 
     @pytest.fixture
-    async def sample_activity_data(self):
+    def sample_activity_data(self):
         """Sample activity data for testing."""
         return {
             "type": "poll", 
@@ -37,36 +47,39 @@ class TestActivityAPI:
                 "multiple_choice": False
             },
             "order_index": 1,
-            "status": "draft"
+            "status": "draft"  # String for JSON API
         }
 
-    async def test_create_activity(self, client: TestClient, sample_session, sample_activity_data):
-        """Test creating a new activity."""
-        session_id = sample_session["id"]
+    async def test_create_activity(self, async_client: AsyncClient, sample_session, sample_activity_data):
+        """Test creating an activity."""
+        activity_data = sample_activity_data.copy()
+        activity_data["session_id"] = sample_session["id"]
         
-        response = client.post(
-            f"/api/v1/sessions/{session_id}/activities",
-            json=sample_activity_data
+        response = await async_client.post(
+            f"/api/v1/sessions/{sample_session['id']}/activities",
+            json=activity_data
         )
         
         assert response.status_code == 201
-        activity = response.json()
-        assert activity["type"] == "poll"
-        assert activity["config"]["question"] == "What's your favorite color?"
-        assert activity["order_index"] == 1
-        assert activity["status"] == "draft"
-        assert "id" in activity
-        assert activity["session_id"] == session_id
+        data = response.json()
+        assert data["type"] == activity_data["type"]
+        assert data["config"] == activity_data["config"]
+        assert data["order_index"] == activity_data["order_index"]
+        assert data["status"] == activity_data["status"]
+        assert "id" in data
+        assert "created_at" in data
+        assert "updated_at" in data
+        assert data["session_id"] == sample_session["id"]
 
-    async def test_create_activity_invalid_session(self, client: TestClient, sample_activity_data):
+    async def test_create_activity_invalid_session(self, async_client: AsyncClient, sample_activity_data):
         """Test creating activity for non-existent session."""
-        response = client.post(
+        response = await async_client.post(
             "/api/v1/sessions/99999/activities", 
             json=sample_activity_data
         )
         assert response.status_code == 400
 
-    async def test_get_session_activities(self, client: TestClient, sample_session):
+    async def test_get_session_activities(self, async_client: AsyncClient, sample_session):
         """Test getting all activities for a session."""
         session_id = sample_session["id"]
         
@@ -84,10 +97,10 @@ class TestActivityAPI:
             "status": "draft"
         }
         
-        client.post(f"/api/v1/sessions/{session_id}/activities", json=activity1_data)
-        client.post(f"/api/v1/sessions/{session_id}/activities", json=activity2_data)
+        await async_client.post(f"/api/v1/sessions/{session_id}/activities", json=activity1_data)
+        await async_client.post(f"/api/v1/sessions/{session_id}/activities", json=activity2_data)
         
-        response = client.get(f"/api/v1/sessions/{session_id}/activities")
+        response = await async_client.get(f"/api/v1/sessions/{session_id}/activities")
         assert response.status_code == 200
         
         result = response.json()
@@ -95,37 +108,42 @@ class TestActivityAPI:
         assert len(result["activities"]) == 2
         assert result["total"] == 2
 
-    async def test_get_activity_by_id(self, client: TestClient, sample_session, sample_activity_data):
-        """Test getting a specific activity by ID."""
-        session_id = sample_session["id"]
+    async def test_get_activity(self, async_client: AsyncClient, sample_session, sample_activity_data):
+        """Test getting an activity."""
+        # Create activity first
+        activity_data = sample_activity_data.copy()
+        activity_data["session_id"] = sample_session["id"]
         
-        # Create activity
-        create_response = client.post(
-            f"/api/v1/sessions/{session_id}/activities",
-            json=sample_activity_data
+        create_response = await async_client.post(
+            f"/api/v1/sessions/{sample_session['id']}/activities",
+            json=activity_data
         )
-        activity_id = create_response.json()["id"]
+        assert create_response.status_code == 201
+        created_activity = create_response.json()
         
-        # Get activity
-        response = client.get(f"/api/v1/activities/{activity_id}")
+        # Get the activity
+        response = await async_client.get(
+            f"/api/v1/activities/{created_activity['id']}"
+        )
+        
         assert response.status_code == 200
-        
-        activity = response.json()
-        assert activity["id"] == activity_id
-        assert activity["type"] == "poll"
+        data = response.json()
+        assert data["id"] == created_activity["id"]
+        assert data["type"] == activity_data["type"]
+        assert data["config"] == activity_data["config"]
 
-    async def test_get_activity_not_found(self, client: TestClient):
+    async def test_get_activity_not_found(self, async_client: AsyncClient):
         """Test getting non-existent activity."""
         fake_id = str(uuid4())
-        response = client.get(f"/api/v1/activities/{fake_id}")
+        response = await async_client.get(f"/api/v1/activities/{fake_id}")
         assert response.status_code == 404
 
-    async def test_update_activity(self, client: TestClient, sample_session, sample_activity_data):
+    async def test_update_activity(self, async_client: AsyncClient, sample_session, sample_activity_data):
         """Test updating an activity."""
         session_id = sample_session["id"]
         
         # Create activity
-        create_response = client.post(
+        create_response = await async_client.post(
             f"/api/v1/sessions/{session_id}/activities",
             json=sample_activity_data
         )
@@ -141,7 +159,7 @@ class TestActivityAPI:
             }
         }
         
-        response = client.put(f"/api/v1/activities/{activity_id}", json=update_data)
+        response = await async_client.put(f"/api/v1/activities/{activity_id}", json=update_data)
         assert response.status_code == 200
         
         updated_activity = response.json()
@@ -149,26 +167,26 @@ class TestActivityAPI:
         assert updated_activity["config"]["question"] == "Updated question?"
         assert updated_activity["config"]["multiple_choice"] == True
 
-    async def test_delete_activity(self, client: TestClient, sample_session, sample_activity_data):
+    async def test_delete_activity(self, async_client: AsyncClient, sample_session, sample_activity_data):
         """Test deleting an activity."""
         session_id = sample_session["id"]
         
         # Create activity
-        create_response = client.post(
+        create_response = await async_client.post(
             f"/api/v1/sessions/{session_id}/activities",
             json=sample_activity_data
         )
         activity_id = create_response.json()["id"]
         
         # Delete activity
-        response = client.delete(f"/api/v1/activities/{activity_id}")
+        response = await async_client.delete(f"/api/v1/activities/{activity_id}")
         assert response.status_code == 204
         
         # Verify deletion
-        get_response = client.get(f"/api/v1/activities/{activity_id}")
+        get_response = await async_client.get(f"/api/v1/activities/{activity_id}")
         assert get_response.status_code == 404
 
-    async def test_activity_ordering(self, client: TestClient, sample_session):
+    async def test_activity_ordering(self, async_client: AsyncClient, sample_session):
         """Test activities are returned in correct order."""
         session_id = sample_session["id"]
         
@@ -180,9 +198,9 @@ class TestActivityAPI:
                 "order_index": 3 - i,  # Reverse order: 3, 2, 1
                 "status": "draft"
             }
-            client.post(f"/api/v1/sessions/{session_id}/activities", json=activity_data)
+            await async_client.post(f"/api/v1/sessions/{session_id}/activities", json=activity_data)
         
-        response = client.get(f"/api/v1/sessions/{session_id}/activities")
+        response = await async_client.get(f"/api/v1/sessions/{session_id}/activities")
         activities = response.json()["activities"]
         
         # Should be sorted by order_index ascending
@@ -190,7 +208,7 @@ class TestActivityAPI:
         assert activities[1]["order_index"] == 2  
         assert activities[2]["order_index"] == 3
 
-    async def test_activity_status_filtering(self, client: TestClient, sample_session):
+    async def test_activity_status_filtering(self, async_client: AsyncClient, sample_session):
         """Test filtering activities by status."""
         session_id = sample_session["id"]
         
@@ -203,10 +221,10 @@ class TestActivityAPI:
                 "order_index": 1,
                 "status": status
             }
-            client.post(f"/api/v1/sessions/{session_id}/activities", json=activity_data)
+            await async_client.post(f"/api/v1/sessions/{session_id}/activities", json=activity_data)
         
         # Test filtering by active status
-        response = client.get(f"/api/v1/sessions/{session_id}/activities?status=active")
+        response = await async_client.get(f"/api/v1/sessions/{session_id}/activities?status=active")
         activities = response.json()["activities"]
         
         assert len(activities) == 1
@@ -234,7 +252,7 @@ class TestActivityService:
             type="poll",
             config={"question": "Test question?"},
             order_index=1,
-            status="draft"
+            status=ActivityStatus.DRAFT
         )
         
         activity = await ActivityService.create_activity(
@@ -265,7 +283,7 @@ class TestActivityService:
             type="word_cloud",
             config={"prompt": "Enter keywords"},
             order_index=1,
-            status="active"
+            status=ActivityStatus.ACTIVE
         )
         
         created_activity = await ActivityService.create_activity(
@@ -301,7 +319,7 @@ class TestActivityService:
             type="qa",
             config={"allow_anonymous": True},
             order_index=1,
-            status="draft"
+            status=ActivityStatus.DRAFT
         )
         
         activity = await ActivityService.create_activity(
@@ -312,7 +330,7 @@ class TestActivityService:
         
         # Update activity
         update_data = ActivityUpdate(
-            status="active",
+            status=ActivityStatus.ACTIVE,
             config={"allow_anonymous": False, "moderated": True}
         )
         
@@ -343,7 +361,7 @@ class TestActivityService:
             type="planning_poker",
             config={"scale": [1, 2, 3, 5, 8]},
             order_index=1,
-            status="draft"  
+            status=ActivityStatus.DRAFT  
         )
         
         activity = await ActivityService.create_activity(

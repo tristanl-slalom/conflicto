@@ -1,10 +1,10 @@
 """
 Simplified tests for session management functionality.
 """
-from fastapi.testclient import TestClient
+from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import SessionStatus
+from app.db.enums import SessionStatus
 from app.models.schemas import SessionCreate
 from app.services.session_service import SessionService
 
@@ -12,7 +12,7 @@ from app.services.session_service import SessionService
 class TestSessionAPI:
     """Test session API endpoints."""
     
-    async def test_create_session(self, client: TestClient):
+    async def test_create_session(self, async_client: AsyncClient):
         """Test creating a session via API."""
         session_data = {
             "title": "Test Session",
@@ -20,7 +20,7 @@ class TestSessionAPI:
             "max_participants": 50
         }
         
-        response = client.post("/api/v1/sessions/", json=session_data)
+        response = await async_client.post("/api/v1/sessions/", json=session_data)
         assert response.status_code == 201
         
         session = response.json()
@@ -31,7 +31,7 @@ class TestSessionAPI:
         assert session["qr_code"] is not None
         assert session["admin_code"] is not None
 
-    async def test_get_session(self, client: TestClient):
+    async def test_get_session(self, async_client: AsyncClient):
         """Test getting a session by ID."""
         # Create session first
         session_data = {
@@ -39,18 +39,18 @@ class TestSessionAPI:
             "description": "Testing get functionality",
             "max_participants": 25
         }
-        create_response = client.post("/api/v1/sessions/", json=session_data)
+        create_response = await async_client.post("/api/v1/sessions/", json=session_data)
         session_id = create_response.json()["id"]
         
         # Get the session
-        response = client.get(f"/api/v1/sessions/{session_id}")
+        response = await async_client.get(f"/api/v1/sessions/{session_id}")
         assert response.status_code == 200
         
         session = response.json()
         assert session["title"] == "Get Test Session"
         assert session["id"] == session_id
 
-    async def test_update_session(self, client: TestClient):
+    async def test_update_session(self, async_client: AsyncClient):
         """Test updating a session."""
         # Create session first
         session_data = {
@@ -58,7 +58,7 @@ class TestSessionAPI:
             "description": "Original description",
             "max_participants": 30
         }
-        create_response = client.post("/api/v1/sessions/", json=session_data)
+        create_response = await async_client.post("/api/v1/sessions/", json=session_data)
         session_id = create_response.json()["id"]
         
         # Update the session
@@ -66,14 +66,14 @@ class TestSessionAPI:
             "title": "Updated Title",
             "description": "Updated description"
         }
-        response = client.put(f"/api/v1/sessions/{session_id}", json=update_data)
+        response = await async_client.put(f"/api/v1/sessions/{session_id}", json=update_data)
         assert response.status_code == 200
         
         session = response.json()
         assert session["title"] == "Updated Title"
         assert session["description"] == "Updated description"
 
-    async def test_list_sessions(self, client: TestClient):
+    async def test_list_sessions(self, async_client: AsyncClient):
         """Test listing sessions."""
         # Create a few sessions
         for i in range(3):
@@ -82,10 +82,10 @@ class TestSessionAPI:
                 "description": f"Test session {i+1}",
                 "max_participants": 40
             }
-            client.post("/api/v1/sessions/", json=session_data)
+            await async_client.post("/api/v1/sessions/", json=session_data)
         
         # List sessions
-        response = client.get("/api/v1/sessions/")
+        response = await async_client.get("/api/v1/sessions/")
         assert response.status_code == 200
         
         session_list = response.json()

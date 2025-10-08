@@ -2,17 +2,18 @@
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_db
-from app.db.models import ActivityStatus
+from app.db.enums import ActivityStatus
 from app.models.jsonb_schemas.activity import (
     Activity,
     ActivityCreate,
-    ActivityUpdate,
     ActivityList,
+    ActivityUpdate,
 )
+from app.models.schemas import ActivityStatusResponse
 from app.services.activity_service import ActivityService
 
 router = APIRouter(prefix="/api/v1", tags=["activities"])
@@ -21,7 +22,7 @@ router = APIRouter(prefix="/api/v1", tags=["activities"])
 @router.post(
     "/sessions/{session_id}/activities",
     response_model=Activity,
-    status_code=status.HTTP_201_CREATED
+    status_code=status.HTTP_201_CREATED,
 )
 async def create_activity(
     session_id: int,
@@ -43,10 +44,7 @@ async def create_activity(
         )
 
 
-@router.get(
-    "/sessions/{session_id}/activities",
-    response_model=ActivityList
-)
+@router.get("/sessions/{session_id}/activities", response_model=ActivityList)
 async def get_session_activities(
     session_id: int,
     offset: int = Query(0, ge=0),
@@ -56,7 +54,10 @@ async def get_session_activities(
 ) -> ActivityList:
     """Get all activities for a session."""
     try:
-        activities, total_count = await ActivityService.get_session_activities_with_count(
+        (
+            activities,
+            total_count,
+        ) = await ActivityService.get_session_activities_with_count(
             db=db,
             session_id=session_id,
             offset=offset,
@@ -71,10 +72,7 @@ async def get_session_activities(
         )
 
 
-@router.get(
-    "/activities/{activity_id}",
-    response_model=Activity
-)
+@router.get("/activities/{activity_id}", response_model=Activity)
 async def get_activity(
     activity_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -100,10 +98,7 @@ async def get_activity(
         )
 
 
-@router.put(
-    "/activities/{activity_id}",
-    response_model=Activity
-)
+@router.put("/activities/{activity_id}", response_model=Activity)
 async def update_activity(
     activity_id: UUID,
     activity_data: ActivityUpdate,
@@ -131,10 +126,7 @@ async def update_activity(
         )
 
 
-@router.delete(
-    "/activities/{activity_id}",
-    status_code=status.HTTP_204_NO_CONTENT
-)
+@router.delete("/activities/{activity_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_activity(
     activity_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -159,10 +151,7 @@ async def delete_activity(
         )
 
 
-@router.patch(
-    "/activities/{activity_id}/status",
-    response_model=Activity
-)
+@router.patch("/activities/{activity_id}/status", response_model=Activity)
 async def update_activity_status(
     activity_id: UUID,
     status: ActivityStatus,
@@ -190,10 +179,7 @@ async def update_activity_status(
         )
 
 
-@router.get(
-    "/sessions/{session_id}/activities/active",
-    response_model=Activity | None
-)
+@router.get("/sessions/{session_id}/activities/active", response_model=Activity | None)
 async def get_active_activity(
     session_id: int,
     db: AsyncSession = Depends(get_db),
@@ -209,4 +195,35 @@ async def get_active_activity(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Failed to get active activity: {str(e)}",
+        )
+
+
+@router.get(
+    "/sessions/{session_id}/activities/{activity_id}/status",
+    response_model=ActivityStatusResponse,
+)
+async def get_activity_status(
+    session_id: int,
+    activity_id: UUID,
+    db: AsyncSession = Depends(get_db),
+) -> ActivityStatusResponse:
+    """Get activity status for real-time polling."""
+    try:
+        status_data = await ActivityService.get_activity_status(
+            db=db,
+            session_id=session_id,
+            activity_id=activity_id,
+        )
+        if not status_data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Activity not found",
+            )
+        return ActivityStatusResponse(**status_data)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to get activity status: {str(e)}",
         )

@@ -6,10 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import (
     Session, Activity, Participant, UserResponse,
-    SessionStatus, ActivityStatus, ActivityType, ParticipantRole,
     JSONBType, UUIDType
 )
-from app.db.enums import ActivityTypeEnum
+from app.db.enums import ActivityStatus, SessionStatus, ActivityType, ParticipantRole
 
 
 class TestDatabaseModels:
@@ -411,11 +410,11 @@ class TestDatabaseEnums:
     """Test database enum functionality."""
 
     def test_activity_type_enum_import(self):
-        """Test ActivityTypeEnum import and values."""
-        assert ActivityTypeEnum.POLL.value == "poll"
-        assert ActivityTypeEnum.WORD_CLOUD.value == "word_cloud"
-        assert ActivityTypeEnum.QA.value == "qa"
-        assert ActivityTypeEnum.PLANNING_POKER.value == "planning_poker"
+        """Test ActivityType import and values."""
+        assert ActivityType.POLL.value == "poll"
+        assert ActivityType.WORD_CLOUD.value == "word_cloud"
+        assert ActivityType.QA.value == "qa"
+        assert ActivityType.PLANNING_POKER.value == "planning_poker"
 
     def test_enum_string_representation(self):
         """Test enum string representations."""
