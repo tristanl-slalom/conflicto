@@ -1,0 +1,63 @@
+{
+  "family": "conflicto-backend-dev",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "${execution_role_arn}",
+  "taskRoleArn": "${task_role_arn}",
+  "containerDefinitions": [
+    {
+      "name": "backend",
+      "image": "${backend_image}",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "hostPort": 8000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "ENVIRONMENT",
+          "value": "dev"
+        },
+        {
+          "name": "DATABASE_URL",
+          "value": "${database_url}"
+        },
+        {
+          "name": "APP_VERSION",
+          "value": "${app_version}"
+        },
+        {
+          "name": "DEBUG_MODE",
+          "value": "true"
+        },
+        {
+          "name": "AWS_REGION",
+          "value": "us-west-2"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/conflicto-backend-dev",
+          "awslogs-region": "us-west-2",
+          "awslogs-stream-prefix": "backend"
+        }
+      },
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "curl -f http://localhost:8000/health || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      }
+    }
+  ]
+}

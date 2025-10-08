@@ -267,18 +267,30 @@ resource "aws_ecs_service" "app" {
   desired_count   = var.desired_count
   launch_type     = "FARGATE"
   enable_execute_command = var.enable_execute_command
+
   network_configuration {
-    subnets         = var.app_subnet_ids
+    subnets         = length(var.private_subnet_ids) > 0 ? var.private_subnet_ids : var.app_subnet_ids
     security_groups = [aws_security_group.app[0].id]
     assign_public_ip = false
   }
+
   load_balancer {
     target_group_arn = aws_lb_target_group.app[0].arn
     container_name   = "app"
     container_port   = var.container_port
   }
-  deployment_minimum_healthy_percent = 50
-  deployment_maximum_percent         = 200
+
+  # Enhanced deployment configuration for CI/CD
+  deployment_configuration {
+    maximum_percent         = 200
+    minimum_healthy_percent = 50
+
+    deployment_circuit_breaker {
+      enable   = true
+      rollback = true
+    }
+  }
+
   depends_on = [aws_lb_listener.http, aws_lb_listener.https]
   tags = module.shared.tags
 }

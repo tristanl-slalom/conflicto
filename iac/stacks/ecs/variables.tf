@@ -122,9 +122,55 @@ variable "enable_execute_command" {
 variable "app_domain" {
 	type        = string
 	description = "FQDN (e.g. conflicto.dbash.dev)"
+	default     = ""
 }
 
 variable "hosted_zone_id" {
 	type        = string
 	description = "Public hosted zone id"
+	default     = ""
+}
+
+# Deployment-specific variables
+variable "frontend_image_uri" {
+	type        = string
+	description = "Frontend container image URI"
+	default     = ""
+}
+
+variable "backend_cpu" {
+	type        = number
+	description = "CPU units for backend service"
+	default     = 256
+}
+
+variable "backend_memory" {
+	type        = number
+	description = "Memory MB for backend service"
+	default     = 512
+}
+
+variable "frontend_cpu" {
+	type        = number
+	description = "CPU units for frontend service"
+	default     = 256
+}
+
+variable "frontend_memory" {
+	type        = number
+	description = "Memory MB for frontend service"
+	default     = 512
+}
+
+variable "database_url" {
+	type        = string
+	description = "Database connection URL"
+	default     = ""
+	sensitive   = true
+}
+
+variable "private_subnet_ids" {
+	type        = list(string)
+	description = "Private subnets for ECS tasks"
+	default     = []
 }

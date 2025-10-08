@@ -1,0 +1,260 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Container image tag to deploy (e.g., v1.2.3 or commit SHA)'
+        required: true
+        type: string
+      confirm_deployment:
+        description: 'Type "DEPLOY" to confirm production deployment'
+        required: true
+        type: string
+
+env:
+  AWS_REGION: us-west-2
+  ENVIRONMENT: prod
+
+jobs:
+  validate-input:
+    name: Validate Deployment Input
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate Confirmation
+        if: ${{ github.event.inputs.confirm_deployment != 'DEPLOY' }}
+        run: |
+          echo "❌ Deployment not confirmed. Please type 'DEPLOY' in the confirmation field."
+          exit 1
+
+      - name: Validate Image Tag
+        run: |
+          echo "Deploying image tag: ${{ github.event.inputs.image_tag }}"
+          echo "Requested by: ${{ github.actor }}"
+
+  deploy-infrastructure:
+    name: Deploy Infrastructure
+    needs: validate-input
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://conflicto.app
+    outputs:
+      backend_service_name: ${{ steps.terraform.outputs.backend_service_name }}
+      frontend_service_name: ${{ steps.terraform.outputs.frontend_service_name }}
+      cluster_name: ${{ steps.terraform.outputs.cluster_name }}
+      application_url: ${{ steps.terraform.outputs.application_url }}
+
+    steps:
+      - name: Manual Approval Gate
+        uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ github.TOKEN }}
+          approvers: tristanl-slalom
+          issue-title: "Production Deployment Approval - ${{ github.event.inputs.image_tag }}"
+          issue-body: |
+            ## Production Deployment Request
+
+            **Image Tag**: `${{ github.event.inputs.image_tag }}`
+            **Requested by**: @${{ github.actor }}
+            **Workflow Run**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            ### Pre-Deployment Checklist
+            - [ ] Image tag has been tested in development environment
+            - [ ] Database migrations are backward compatible
+            - [ ] No breaking API changes that affect existing clients
+            - [ ] Rollback plan is ready if needed
+
+            **Please review and approve this production deployment.**
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+          terraform_version: ~1.5
+
+      - name: Terraform Init
+        working-directory: iac/environments/prod
+        run: terraform init
+
+      - name: Terraform Plan
+        working-directory: iac/environments/prod
+        run: |
+          terraform plan \
+            -var="backend_image_uri=ghcr.io/tristanl-slalom/conflicto/backend:${{ github.event.inputs.image_tag }}" \
+            -var="frontend_image_uri=ghcr.io/tristanl-slalom/conflicto/frontend:${{ github.event.inputs.image_tag }}" \
+            -out=tfplan
+
+      - name: Terraform Apply
+        id: terraform
+        working-directory: iac/environments/prod
+        run: |
+          terraform apply tfplan
+
+          # Export outputs for next jobs
+          echo "backend_service_name=$(terraform output -raw backend_service_name)" >> $GITHUB_OUTPUT
+          echo "frontend_service_name=$(terraform output -raw frontend_service_name)" >> $GITHUB_OUTPUT
+          echo "cluster_name=$(terraform output -raw cluster_name)" >> $GITHUB_OUTPUT
+          echo "application_url=$(terraform output -raw application_url)" >> $GITHUB_OUTPUT
+
+  run-migrations:
+    name: Database Migrations
+    needs: deploy-infrastructure
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install Dependencies
+        working-directory: backend
+        run: |
+          pip install poetry
+          poetry install --only=main
+
+      - name: Run Database Migrations
+        working-directory: backend
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          ENVIRONMENT: prod
+        run: |
+          poetry run python scripts/migrate.py
+
+  deploy-applications:
+    name: Deploy Applications
+    needs: [deploy-infrastructure, run-migrations]
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update ECS Services
+        run: |
+          # Update backend service with new image
+          echo "Updating backend service: ${{ needs.deploy-infrastructure.outputs.backend_service_name }}"
+          aws ecs update-service \
+            --cluster ${{ needs.deploy-infrastructure.outputs.cluster_name }} \
+            --service ${{ needs.deploy-infrastructure.outputs.backend_service_name }} \
+            --force-new-deployment
+
+          # Wait for backend deployment to stabilize
+          echo "Waiting for backend service to stabilize..."
+          aws ecs wait services-stable \
+            --cluster ${{ needs.deploy-infrastructure.outputs.cluster_name }} \
+            --services ${{ needs.deploy-infrastructure.outputs.backend_service_name }}
+
+      - name: Health Check
+        env:
+          HEALTH_CHECK_URL: ${{ needs.deploy-infrastructure.outputs.application_url }}
+          HEALTH_CHECK_MAX_ATTEMPTS: 30
+          HEALTH_CHECK_DELAY: 10
+        run: |
+          # Install dependencies for health check
+          pip install httpx
+
+          # Run health check
+          cd backend
+          python scripts/health-check.py
+
+  smoke-tests:
+    name: Production Smoke Tests
+    needs: deploy-applications
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Test Dependencies
+        run: |
+          pip install pytest pytest-asyncio httpx
+
+      - name: Run Smoke Tests
+        env:
+          TEST_BASE_URL: ${{ needs.deploy-infrastructure.outputs.application_url }}
+        run: |
+          # Create a simple smoke test for production
+          cat > smoke_test.py << 'EOF'
+          import asyncio
+          import httpx
+          import os
+          import pytest
+
+          BASE_URL = os.getenv("TEST_BASE_URL", "https://conflicto.app")
+
+          @pytest.mark.asyncio
+          async def test_health_endpoint():
+              async with httpx.AsyncClient() as client:
+                  response = await client.get(f"{BASE_URL}/api/v1/health/")
+                  assert response.status_code == 200
+                  data = response.json()
+                  assert data["status"] == "healthy"
+
+          @pytest.mark.asyncio
+          async def test_readiness_endpoint():
+              async with httpx.AsyncClient() as client:
+                  response = await client.get(f"{BASE_URL}/api/v1/health/ready")
+                  assert response.status_code == 200
+          EOF
+
+          python -m pytest smoke_test.py -v
+
+  notify-deployment:
+    name: Notify Deployment Status
+    needs: [deploy-infrastructure, run-migrations, deploy-applications, smoke-tests]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Production Deployment Success
+        if: ${{ needs.deploy-applications.result == 'success' && needs.smoke-tests.result == 'success' }}
+        run: |
+          echo "🎉 Production deployment successful!"
+          echo "Application URL: ${{ needs.deploy-infrastructure.outputs.application_url }}"
+          echo "Image Tag: ${{ github.event.inputs.image_tag }}"
+          echo "Deployed by: ${{ github.actor }}"
+
+      - name: Production Deployment Failure
+        if: ${{ failure() }}
+        run: |
+          echo "💥 Production deployment failed!"
+          echo "Image Tag: ${{ github.event.inputs.image_tag }}"
+          echo "Check the logs above for details and consider rollback if necessary."
+          exit 1

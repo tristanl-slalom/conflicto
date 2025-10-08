@@ -3,7 +3,7 @@ Pydantic models for request/response validation.
 """
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field, ConfigDict
@@ -114,7 +114,7 @@ class ParticipantJoinResponse(BaseModel):
     """Session join response model."""
 
     participant_id: str  # UUID as string
-    session_state: Dict[str, Any]  # Current activity and state info
+    session_state: dict[str, Any]  # Current activity and state info
 
     class Config:
         from_attributes = True
@@ -151,14 +151,14 @@ class ParticipantResponse(BaseResponse):
 class ParticipantHeartbeatRequest(BaseModel):
     """Participant heartbeat request model."""
 
-    activity_context: Optional[Dict[str, Any]] = None
+    activity_context: Optional[dict[str, Any]] = None
 
 
 class ParticipantHeartbeatResponse(BaseModel):
     """Participant heartbeat response model."""
 
     status: str  # "online", "idle", "disconnected"
-    activity_context: Dict[str, Any]
+    activity_context: dict[str, Any]
     updated_at: datetime
 
     class Config:
@@ -188,7 +188,7 @@ class ParticipantStatus(BaseModel):
 class ParticipantListResponse(BaseModel):
     """Participant list response model."""
 
-    participants: List[ParticipantStatus]
+    participants: list[ParticipantStatus]
     total_count: int
 
 
@@ -233,7 +233,7 @@ class ActivityList(BaseModel):
 class ParticipantList(BaseModel):
     """Participant list response model."""
 
-    participants: List[ParticipantStatus]
+    participants: list[ParticipantStatus]
     total: int
 
 
@@ -265,7 +265,7 @@ class ActivityStatusResponse(BaseModel):
 class IncrementalResponseList(BaseModel):
     """Schema for incremental response updates since timestamp."""
 
-    items: List[UserResponse] = []
+    items: list[UserResponse] = []
     since: datetime
     count: int
 
@@ -286,6 +286,8 @@ class HealthResponse(BaseModel):
     status: str = "healthy"
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     version: str = "0.1.0"
+    environment: str | None = None
+    app_version: str | None = None
 
 
 # Update forward references
