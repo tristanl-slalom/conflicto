@@ -167,7 +167,6 @@ cd backend && ./run-tests.sh
 This runs:
 - Unit tests
 - Code formatting checks (Black)
-- Import sorting (isort)
 - Linting (flake8)
 - Type checking (mypy)
 

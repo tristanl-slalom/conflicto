@@ -1,4 +1,5 @@
 """Service layer for Activity operations."""
+
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID
@@ -23,10 +24,11 @@ class ActivityService:
         """Create a new activity."""
         # First validate that the session exists
         from app.services.session_service import SessionService
+
         session = await SessionService.get_session(db, session_id)
         if not session:
             raise ValueError(f"Session with id {session_id} not found")
-        
+
         db_activity = DBActivity(
             session_id=session_id,
             type=activity_data.type,
@@ -37,7 +39,7 @@ class ActivityService:
         db.add(db_activity)
         await db.commit()
         await db.refresh(db_activity)
-        
+
         # Convert DB model to JSONB schema model
         return Activity.model_validate(db_activity)
 
@@ -84,7 +86,7 @@ class ActivityService:
         conditions = [DBActivity.session_id == session_id]
         if status:
             conditions.append(DBActivity.status == status)
-        
+
         # Get total count
         count_query = select(func.count(DBActivity.id)).where(*conditions)
         count_result = await db.execute(count_query)
@@ -100,7 +102,9 @@ class ActivityService:
         )
         result = await db.execute(query)
         db_activities = list(result.scalars().all())
-        activities = [Activity.model_validate(db_activity) for db_activity in db_activities]
+        activities = [
+            Activity.model_validate(db_activity) for db_activity in db_activities
+        ]
 
         return activities, total_count
 

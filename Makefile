@@ -376,7 +376,6 @@ format-backend:
 		exit 1; \
 	fi
 	cd $(BACKEND_DIR) && poetry run black app tests
-	cd $(BACKEND_DIR) && poetry run isort app tests
 	@echo "✅ Backend code formatted!"
 
 # Format frontend code only

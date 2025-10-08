@@ -1,4 +1,5 @@
 """Tests for real-time status polling endpoints."""
+
 from datetime import datetime, timezone
 
 import pytest

@@ -1,6 +1,7 @@
 """
 Participant routes for QR code onboarding and session management.
 """
+
 from typing import List
 from uuid import UUID
 
@@ -44,10 +45,10 @@ async def join_session(
 ):
     """
     Join a session with a nickname via QR code scan.
-    
+
     - **session_id**: Session ID from QR code URL
     - **nickname**: Desired participant nickname (1-50 characters)
-    
+
     Returns participant_id and current session state for synchronization.
     """
     try:
@@ -59,7 +60,7 @@ async def join_session(
             nickname=join_request.nickname,
         )
         return response
-        
+
     except ValueError as e:
         logger.warning(
             "Failed to join session",
@@ -81,16 +82,16 @@ async def validate_nickname(
 ):
     """
     Validate if a nickname is available in a session.
-    
+
     - **session_id**: Session ID to check nickname availability
     - **nickname**: Nickname to validate
-    
+
     Returns availability status and suggested alternatives if taken.
     """
     try:
         response = await service.validate_nickname(session_id, nickname)
         return response
-        
+
     except Exception as e:
         logger.error(
             "Failed to validate nickname",
@@ -113,17 +114,17 @@ async def update_heartbeat(
 ):
     """
     Update participant heartbeat and get current activity context.
-    
+
     - **participant_id**: UUID of participant
     - **activity_context**: Optional context data from current activity
-    
+
     Returns computed status and current activity information.
     Should be called every 15-30 seconds by participant clients.
     """
     try:
         response = await service.update_heartbeat(participant_id, heartbeat_request)
         return response
-        
+
     except ValueError as e:
         logger.warning(
             "Failed to update heartbeat",
@@ -144,19 +145,18 @@ async def get_session_participants(
 ):
     """
     Get all participants in a session with their computed status.
-    
+
     - **session_id**: Session ID to get participants for
-    
+
     Returns list of participants with online/idle/disconnected status
     computed from their last heartbeat timing.
     """
     try:
         participants = await service.get_session_participants(session_id)
         return ParticipantListResponse(
-            participants=participants,
-            total_count=len(participants)
+            participants=participants, total_count=len(participants)
         )
-        
+
     except Exception as e:
         logger.error(
             "Failed to get session participants",
@@ -179,19 +179,19 @@ async def remove_participant(
 ):
     """
     Remove a participant from their session.
-    
+
     - **participant_id**: UUID of participant to remove
-    
+
     Admin operation to kick participants or clean up disconnected users.
     """
     try:
         success = await service.remove_participant(participant_id)
         if not success:
             raise HTTPException(status_code=404, detail="Participant not found")
-        
+
         logger.info("Participant removed", participant_id=str(participant_id))
         return {"message": "Participant removed successfully"}
-        
+
     except Exception as e:
         logger.error(
             "Failed to remove participant",

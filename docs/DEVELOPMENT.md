@@ -109,7 +109,6 @@ poetry run pytest
 
 # Run code formatting
 poetry run black app tests
-poetry run isort app tests
 
 # Database operations
 poetry run alembic revision --autogenerate -m "description"

@@ -1,6 +1,7 @@
 """
 Pydantic models for request/response validation.
 """
+
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from uuid import UUID
@@ -40,7 +41,7 @@ class SessionUpdate(BaseModel):
     description: Optional[str] = None
     max_participants: Optional[int] = Field(None, ge=1, le=1000)
     status: Optional[SessionStatus] = None
-    
+
     model_config = ConfigDict(use_enum_values=True)
 
 
@@ -69,6 +70,7 @@ class SessionDetail(SessionResponse):
 # Activity models
 class ActivityCreate(BaseModel):
     """Activity creation request model."""
+
     model_config = ConfigDict(use_enum_values=True)
 
     title: str = Field(..., min_length=1, max_length=255)
@@ -106,22 +108,23 @@ class ActivityResponse(BaseResponse):
 # Participant models
 class ParticipantJoinRequest(BaseModel):
     """Session join request model."""
-    
+
     nickname: str = Field(..., min_length=1, max_length=50)
 
 
 class ParticipantJoinResponse(BaseModel):
     """Session join response model."""
-    
+
     participant_id: str  # UUID as string
     session_state: Dict[str, Any]  # Current activity and state info
-    
+
     class Config:
         from_attributes = True
 
 
 class ParticipantCreate(BaseModel):
     """Participant creation request model."""
+
     model_config = ConfigDict(use_enum_values=True)
 
     display_name: str = Field(..., min_length=1, max_length=100)
@@ -130,6 +133,7 @@ class ParticipantCreate(BaseModel):
 
 class ParticipantUpdate(BaseModel):
     """Participant update request model."""
+
     model_config = ConfigDict(use_enum_values=True)
 
     display_name: Optional[str] = Field(None, min_length=1, max_length=100)
@@ -148,14 +152,14 @@ class ParticipantResponse(BaseResponse):
 
 class ParticipantHeartbeatRequest(BaseModel):
     """Participant heartbeat request model."""
-    
+
     activity_context: Optional[Dict[str, Any]] = None
 
 
 class ParticipantHeartbeatResponse(BaseModel):
     """Participant heartbeat response model."""
-    
-    status: str  # "online", "idle", "disconnected" 
+
+    status: str  # "online", "idle", "disconnected"
     activity_context: Dict[str, Any]
     updated_at: datetime
 
@@ -165,14 +169,14 @@ class ParticipantHeartbeatResponse(BaseModel):
 
 class NicknameValidationResponse(BaseModel):
     """Nickname validation response model."""
-    
+
     available: bool
     suggested_nickname: Optional[str] = None
 
 
 class ParticipantStatus(BaseModel):
     """Computed participant status model."""
-    
+
     participant_id: str
     nickname: str
     status: str  # "online", "idle", "disconnected"
@@ -185,7 +189,7 @@ class ParticipantStatus(BaseModel):
 
 class ParticipantListResponse(BaseModel):
     """Participant list response model."""
-    
+
     participants: List[ParticipantStatus]
     total_count: int
 
@@ -244,7 +248,7 @@ class SessionStatusResponse(BaseModel):
     current_activity_id: Optional[UUID] = None
     participant_count: int
     last_updated: datetime
-    
+
     model_config = ConfigDict(use_enum_values=True)
 
 
@@ -256,7 +260,7 @@ class ActivityStatusResponse(BaseModel):
     response_count: int
     last_response_at: Optional[datetime] = None
     last_updated: datetime
-    
+
     model_config = ConfigDict(use_enum_values=True)
 
 

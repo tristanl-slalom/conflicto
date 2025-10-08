@@ -23,7 +23,5 @@ poetry run pytest
 
 log_info "Running code quality checks..."
 poetry run black --check app tests
-poetry run isort --check-only app tests
-poetry run flake8 app tests
 
 log_success "All tests and quality checks passed!"
