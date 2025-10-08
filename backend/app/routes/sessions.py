@@ -1,7 +1,6 @@
 """
 Session management API routes.
 """
-from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,6 +13,7 @@ from app.models.schemas import (
     SessionDetail,
     SessionList,
     SessionResponse,
+    SessionStatusResponse,
     SessionUpdate,
 )
 from app.services.session_service import SessionService
@@ -60,7 +60,7 @@ async def create_session(
         logger.error("Failed to create session", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to create session"
-        )
+        ) from e
 
 
 @router.get("/", response_model=SessionList, responses={400: {"model": ErrorResponse}})
@@ -107,7 +107,7 @@ async def list_sessions(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Failed to retrieve sessions",
-        )
+        ) from e
 
 
 @router.get(
@@ -285,4 +285,40 @@ async def get_session_by_code(
         completed_at=session.completed_at,
         participant_count=stats.get("participant_count", 0),
         activity_count=stats.get("activity_count", 0),
+    )
+
+
+@router.get(
+    "/{session_id}/status",
+    response_model=SessionStatusResponse,
+    responses={404: {"model": ErrorResponse}},
+)
+async def get_session_status(
+    session_id: int, db: AsyncSession = Depends(get_db)
+) -> SessionStatusResponse:
+    """
+    Get real-time session status for polling.
+
+    Returns current session status, active activity, participant count,
+    and last update timestamp for efficient polling.
+    """
+    session = await SessionService.get_session(db, session_id)
+    if not session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
+        )
+
+    stats = await SessionService.get_session_stats(db, session_id)
+
+    # Get current active activity
+    from app.services.activity_service import ActivityService
+
+    active_activity = await ActivityService.get_active_activity(db, session_id)
+
+    return SessionStatusResponse(
+        session_id=session_id,
+        status=session.status,
+        current_activity_id=active_activity.id if active_activity else None,
+        participant_count=stats.get("participant_count", 0),
+        last_updated=session.updated_at,
     )

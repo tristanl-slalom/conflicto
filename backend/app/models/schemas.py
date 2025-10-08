@@ -2,11 +2,15 @@
 Pydantic models for request/response validation.
 """
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
-from app.db.models import ActivityType, ParticipantRole, SessionStatus
+from app.db.enums import ActivityStatus, SessionStatus, ActivityType, ParticipantRole
+
+if TYPE_CHECKING:
+    from app.models.jsonb_schemas.user_response import UserResponse
 
 
 # Base models
@@ -17,8 +21,7 @@ class BaseResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
 
 # Session models
@@ -37,6 +40,8 @@ class SessionUpdate(BaseModel):
     description: Optional[str] = None
     max_participants: Optional[int] = Field(None, ge=1, le=1000)
     status: Optional[SessionStatus] = None
+    
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class SessionResponse(BaseResponse):
@@ -57,18 +62,19 @@ class SessionResponse(BaseResponse):
 class SessionDetail(SessionResponse):
     """Detailed session response with activities and participants."""
 
-    activities: List["ActivityResponse"] = []
-    participants: List["ParticipantStatus"] = []
+    activities: list["ActivityResponse"] = []
+    participants: list["ParticipantStatus"] = []
 
 
 # Activity models
 class ActivityCreate(BaseModel):
     """Activity creation request model."""
+    model_config = ConfigDict(use_enum_values=True)
 
     title: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
     activity_type: ActivityType
-    configuration: Dict[str, Any] = Field(default_factory=dict)
+    configuration: dict[str, Any] = Field(default_factory=dict)
     order_index: int = Field(default=0, ge=0)
 
 
@@ -77,7 +83,7 @@ class ActivityUpdate(BaseModel):
 
     title: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
-    configuration: Optional[Dict[str, Any]] = None
+    configuration: Optional[dict[str, Any]] = None
     order_index: Optional[int] = Field(None, ge=0)
     is_active: Optional[bool] = None
 
@@ -89,7 +95,7 @@ class ActivityResponse(BaseResponse):
     title: str
     description: Optional[str]
     activity_type: ActivityType
-    configuration: Dict[str, Any]
+    configuration: dict[str, Any]
     is_active: bool
     order_index: int
     started_at: Optional[datetime]
@@ -112,6 +118,32 @@ class ParticipantJoinResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+class ParticipantCreate(BaseModel):
+    """Participant creation request model."""
+    model_config = ConfigDict(use_enum_values=True)
+
+    display_name: str = Field(..., min_length=1, max_length=100)
+    role: ParticipantRole = ParticipantRole.PARTICIPANT
+
+
+class ParticipantUpdate(BaseModel):
+    """Participant update request model."""
+    model_config = ConfigDict(use_enum_values=True)
+
+    display_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    role: Optional[ParticipantRole] = None
+    is_active: Optional[bool] = None
+
+
+class ParticipantResponse(BaseResponse):
+    """Participant response model."""
+
+    session_id: int
+    display_name: str
+    role: ParticipantRole
+    is_active: bool
 
 
 class ParticipantHeartbeatRequest(BaseModel):
@@ -162,13 +194,13 @@ class ParticipantListResponse(BaseModel):
 class ActivityResponseCreate(BaseModel):
     """Activity response creation request model."""
 
-    response_data: Dict[str, Any]
+    response_data: dict[str, Any]
 
 
 class ActivityResponseUpdate(BaseModel):
     """Activity response update request model."""
 
-    response_data: Dict[str, Any]
+    response_data: dict[str, Any]
 
 
 class ActivityResponseResponse(BaseResponse):
@@ -176,14 +208,14 @@ class ActivityResponseResponse(BaseResponse):
 
     activity_id: int
     participant_id: int
-    response_data: Dict[str, Any]
+    response_data: dict[str, Any]
 
 
 # List response models
 class SessionList(BaseModel):
     """Session list response model."""
 
-    sessions: List[SessionResponse]
+    sessions: list[SessionResponse]
     total: int
     offset: int
     limit: int
@@ -192,7 +224,7 @@ class SessionList(BaseModel):
 class ActivityList(BaseModel):
     """Activity list response model."""
 
-    activities: List[ActivityResponse]
+    activities: list[ActivityResponse]
     total: int
 
 
@@ -201,6 +233,39 @@ class ParticipantList(BaseModel):
 
     participants: List[ParticipantStatus]
     total: int
+
+
+# Status and polling models
+class SessionStatusResponse(BaseModel):
+    """Session status for real-time polling."""
+
+    session_id: int
+    status: SessionStatus
+    current_activity_id: Optional[UUID] = None
+    participant_count: int
+    last_updated: datetime
+    
+    model_config = ConfigDict(use_enum_values=True)
+
+
+class ActivityStatusResponse(BaseModel):
+    """Activity status for real-time polling."""
+
+    activity_id: UUID
+    status: ActivityStatus
+    response_count: int
+    last_response_at: Optional[datetime] = None
+    last_updated: datetime
+    
+    model_config = ConfigDict(use_enum_values=True)
+
+
+class IncrementalResponseList(BaseModel):
+    """Schema for incremental response updates since timestamp."""
+
+    items: List["UserResponse"] = []
+    since: datetime
+    count: int
 
 
 # Error models

@@ -1,27 +1,35 @@
 """Pydantic schemas for Activity operations with JSONB support."""
-from typing import Dict, Any, Optional, List
-from uuid import UUID
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
-from app.db.models import ActivityStatus
+from app.db.enums import ActivityStatus
 
 
 class ActivityBase(BaseModel):
     """Base schema for Activity."""
+
     type: str = Field(..., description="Type of the activity")
-    config: Dict[str, Any] = Field(default_factory=dict, description="JSONB configuration data")
+    config: Dict[str, Any] = Field(
+        default_factory=dict, description="JSONB configuration data"
+    )
     order_index: int = Field(default=0, description="Order index for the activity")
+    
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class ActivityCreate(ActivityBase):
     """Schema for creating a new Activity."""
-    pass
+    
+    status: Optional[ActivityStatus] = Field(default=ActivityStatus.DRAFT, description="Status of the activity")
 
 
 class ActivityUpdate(BaseModel):
     """Schema for updating an Activity."""
+    model_config = ConfigDict(use_enum_values=True)
+
     type: Optional[str] = None
     config: Optional[Dict[str, Any]] = None
     order_index: Optional[int] = None
@@ -30,17 +38,18 @@ class ActivityUpdate(BaseModel):
 
 class Activity(ActivityBase):
     """Schema for Activity response."""
+
     id: UUID
     session_id: int
     status: ActivityStatus
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
 
 class ActivityList(BaseModel):
     """Schema for list of activities."""
+
     activities: List[Activity]
     total: int
