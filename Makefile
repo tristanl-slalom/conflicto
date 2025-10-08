@@ -196,8 +196,10 @@ start-backend:
 	fi
 	$(call check_port,$(BACKEND_PORT))
 	@cd $(BACKEND_DIR) && \
+	{ \
 		poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port $(BACKEND_PORT) & \
-		echo $$! > ../$(PROCESS_DIR)/backend.pid
+		echo $$! > ../$(PROCESS_DIR)/backend.pid; \
+	}
 	@echo "✅ Backend server started"
 	@echo "   📍 URL: http://localhost:$(BACKEND_PORT)"
 	@echo "   📍 API Docs: http://localhost:$(BACKEND_PORT)/docs"

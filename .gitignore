@@ -30,7 +30,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib64/
+backend/lib/
+backend/lib64/
 parts/
 sdist/
 var/
@@ -139,3 +140,24 @@ temp/
 ## Development Process Management
 .dev-processes/
 *.pid
+
+## Terraform
+
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+terraform.tfvars
+*.tfvars.json
+!backend.hcl
+# Track the lock file for provider reproducibility
+!.terraform.lock.hcl
+# Allow environment auto var files (committed per guidelines)
+!*.auto.tfvars
+# Optional local override (ignored):
+override.auto.tfvars

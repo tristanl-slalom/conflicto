@@ -35,8 +35,10 @@ class TestParticipantStatusComputation:
     def test_compute_status_naive_datetime(self):
         """Test status computation with naive datetime (no timezone)."""
         service = ParticipantService(None)
-        # Use UTC time to match the service method's expectation
-        naive_time = datetime.utcnow() - timedelta(seconds=15)
+        # Create a naive datetime that's 15 seconds ago in UTC terms
+        # The method will add UTC timezone to naive datetimes
+        utc_now = datetime.now(UTC)
+        naive_time = (utc_now - timedelta(seconds=15)).replace(tzinfo=None)
         status = service._compute_participant_status(naive_time)
         assert status == "online"
 

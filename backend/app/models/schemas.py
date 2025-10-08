@@ -286,6 +286,8 @@ class HealthResponse(BaseModel):
     status: str = "healthy"
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     version: str = "0.1.0"
+    environment: str | None = None
+    app_version: str | None = None
 
 
 # Framework-Enhanced Models

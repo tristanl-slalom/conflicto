@@ -27,6 +27,14 @@ class Settings(BaseSettings):
     )
     debug: bool = Field(default=False, description="Debug mode flag")
 
+    # Deployment
+    app_version: str = Field(
+        default="unknown", description="Application version (usually git commit SHA)"
+    )
+    aws_region: str = Field(
+        default="us-east-1", description="AWS region for deployment"
+    )
+
     # CORS
     allowed_origins_str: str = Field(
         default="http://localhost:3000,http://localhost:3001",

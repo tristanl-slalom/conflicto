@@ -9,6 +9,7 @@ import {
   useListSessionsApiV1SessionsGet,
   useCreateSessionApiV1SessionsPost,
   type SessionCreate,
+  type SessionResponse,
 } from '../api/generated';
 
 export function SessionsExample() {
@@ -44,7 +45,10 @@ export function SessionsExample() {
   }
 
   if (error) {
-    return <div>Error loading sessions: {error.message}</div>;
+    const errorMessage = 'error' in error && typeof error.error === 'string' 
+      ? error.error 
+      : 'Failed to load sessions';
+    return <div>Error loading sessions: {errorMessage}</div>;
   }
 
   return (
@@ -62,12 +66,17 @@ export function SessionsExample() {
       </button>
 
       <div className="space-y-2">
-        <p>Total Sessions: {sessionsData?.data.total || 0}</p>
+        <p>Total Sessions: {
+          (sessionsData?.status === 200 && 'total' in sessionsData.data) 
+            ? sessionsData.data.total 
+            : 0
+        }</p>
 
-        {sessionsData?.data.sessions.map(session => (
-          <div key={session.id} className="p-3 border rounded">
-            <h3 className="font-semibold">{session.title}</h3>
-            <p className="text-gray-600">{session.description}</p>
+        {(sessionsData?.status === 200 && 'sessions' in sessionsData.data) && 
+          sessionsData.data.sessions.map((session: SessionResponse) => (
+            <div key={session.id} className="p-3 border rounded">
+              <h3 className="font-semibold">{session.title}</h3>
+              <p className="text-gray-600">{session.description}</p>
             <div className="text-sm text-gray-500">
               Status: {session.status} | Max Participants:{' '}
               {session.max_participants}

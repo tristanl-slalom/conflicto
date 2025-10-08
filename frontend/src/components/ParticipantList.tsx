@@ -22,7 +22,9 @@ const ParticipantList: React.FC<ParticipantListProps> = ({ sessionId, className 
     }
   );
 
-  const participants = data?.data?.participants || [];
+  const participants = (data?.status === 200 && 'participants' in data.data) 
+    ? data.data.participants 
+    : [];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -66,7 +68,11 @@ const ParticipantList: React.FC<ParticipantListProps> = ({ sessionId, className 
       <div className={`${className || ''}`}>
         <div className="text-center py-8">
           <div className="text-red-400 mb-2">⚠️ Error loading participants</div>
-          <div className="text-sm text-gray-500">{error.message || 'Failed to load participants'}</div>
+          <div className="text-sm text-gray-500">
+            {'error' in error && typeof error.error === 'string' 
+              ? error.error 
+              : 'Failed to load participants'}
+          </div>
         </div>
       </div>
     );

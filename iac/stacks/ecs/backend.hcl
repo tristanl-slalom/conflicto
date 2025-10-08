@@ -1,0 +1,7 @@
+bucket         = "conflicto-tfstate"
+key            = "stacks/ecs/terraform.tfstate"
+dynamodb_table = "conflicto-terraform-locks"
+region         = "us-east-1"
+profile        = "genai-immersion-houston"
+encrypt        = true
+use_lockfile   = true

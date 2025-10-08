@@ -1,0 +1,17 @@
+  vpc_id="vpc-074237327c8b24ea9"
+  app_subnet_ids=[
+	"subnet-060f4090dde7c76a7",
+	"subnet-001e4cd203bf00d5a",
+	"subnet-00237ecd0794fe995"]
+  public_subnet_ids=[
+	"subnet-0d4e5074a219169ea",
+	"subnet-0b1d0b6f8ee5b90af",
+	"subnet-046edb33eb8d61e19"]
+  hosted_zone_id="Z09637621T67AIVRHV1NJ"
+  app_domain="conflicto.dbash.dev"
+  create_service=true
+  enable_https=true
+  certificate_arn="arn:aws:acm:us-east-1:418389084763:certificate/0ab1276e-e8bd-4da7-ab1d-3c8d391ce507"
+  inject_db_secret=true
+  db_secret_arn="arn:aws:secretsmanager:us-east-1:418389084763:secret:conflicto-dev/db-ujA3eF"
+  existing_task_execution_role_arn="arn:aws:iam::418389084763:role/conflicto-dev-ecs-exec"
