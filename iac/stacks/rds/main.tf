@@ -143,4 +143,7 @@ resource "aws_secretsmanager_secret_version" "db" {
 output "db_endpoint" { value = aws_db_instance.db.address }
 output "db_port"     { value = aws_db_instance.db.port }
 output "db_secret_arn" { value = aws_secretsmanager_secret.db.arn }
-output "db_connection_url" { value = local.connection_url sensitive = true }
+output "db_connection_url" {
+  value     = local.connection_url
+  sensitive = true
+}
