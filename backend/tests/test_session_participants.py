@@ -1,6 +1,7 @@
 """
 Simplified tests for session management functionality.
 """
+
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,18 +12,18 @@ from app.services.session_service import SessionService
 
 class TestSessionAPI:
     """Test session API endpoints."""
-    
+
     async def test_create_session(self, async_client: AsyncClient):
         """Test creating a session via API."""
         session_data = {
             "title": "Test Session",
             "description": "A test session",
-            "max_participants": 50
+            "max_participants": 50,
         }
-        
+
         response = await async_client.post("/api/v1/sessions/", json=session_data)
         assert response.status_code == 201
-        
+
         session = response.json()
         assert session["title"] == "Test Session"
         assert session["description"] == "A test session"
@@ -37,15 +38,17 @@ class TestSessionAPI:
         session_data = {
             "title": "Get Test Session",
             "description": "Testing get functionality",
-            "max_participants": 25
+            "max_participants": 25,
         }
-        create_response = await async_client.post("/api/v1/sessions/", json=session_data)
+        create_response = await async_client.post(
+            "/api/v1/sessions/", json=session_data
+        )
         session_id = create_response.json()["id"]
-        
+
         # Get the session
         response = await async_client.get(f"/api/v1/sessions/{session_id}")
         assert response.status_code == 200
-        
+
         session = response.json()
         assert session["title"] == "Get Test Session"
         assert session["id"] == session_id
@@ -56,19 +59,20 @@ class TestSessionAPI:
         session_data = {
             "title": "Original Title",
             "description": "Original description",
-            "max_participants": 30
+            "max_participants": 30,
         }
-        create_response = await async_client.post("/api/v1/sessions/", json=session_data)
+        create_response = await async_client.post(
+            "/api/v1/sessions/", json=session_data
+        )
         session_id = create_response.json()["id"]
-        
+
         # Update the session
-        update_data = {
-            "title": "Updated Title",
-            "description": "Updated description"
-        }
-        response = await async_client.put(f"/api/v1/sessions/{session_id}", json=update_data)
+        update_data = {"title": "Updated Title", "description": "Updated description"}
+        response = await async_client.put(
+            f"/api/v1/sessions/{session_id}", json=update_data
+        )
         assert response.status_code == 200
-        
+
         session = response.json()
         assert session["title"] == "Updated Title"
         assert session["description"] == "Updated description"
@@ -80,14 +84,14 @@ class TestSessionAPI:
             session_data = {
                 "title": f"List Test Session {i+1}",
                 "description": f"Test session {i+1}",
-                "max_participants": 40
+                "max_participants": 40,
             }
             await async_client.post("/api/v1/sessions/", json=session_data)
-        
+
         # List sessions
         response = await async_client.get("/api/v1/sessions/")
         assert response.status_code == 200
-        
+
         session_list = response.json()
         assert len(session_list["sessions"]) >= 3
         assert "total" in session_list
@@ -101,11 +105,11 @@ class TestSessionService:
         session_data = SessionCreate(
             title="Service Test Session",
             description="Testing service layer",
-            max_participants=60
+            max_participants=60,
         )
-        
+
         session = await SessionService.create_session(db_session, session_data)
-        
+
         assert session.title == "Service Test Session"
         assert session.description == "Testing service layer"
         assert session.max_participants == 60
@@ -119,13 +123,15 @@ class TestSessionService:
         session_data = SessionCreate(
             title="Get Service Test",
             description="Testing get via service",
-            max_participants=70
+            max_participants=70,
         )
         created_session = await SessionService.create_session(db_session, session_data)
-        
+
         # Get the session
-        retrieved_session = await SessionService.get_session(db_session, created_session.id)
-        
+        retrieved_session = await SessionService.get_session(
+            db_session, created_session.id
+        )
+
         assert retrieved_session is not None
         assert retrieved_session.title == "Get Service Test"
         assert retrieved_session.id == created_session.id
@@ -136,17 +142,17 @@ class TestSessionService:
         session_data = SessionCreate(
             title="Code Test Session",
             description="Testing get by code",
-            max_participants=80
+            max_participants=80,
         )
         created_session = await SessionService.create_session(db_session, session_data)
-        
+
         # Get by QR code
         session_by_qr = await SessionService.get_session_by_code(
             db_session, created_session.qr_code, "qr"
         )
         assert session_by_qr is not None
         assert session_by_qr.id == created_session.id
-        
+
         # Get by admin code
         session_by_admin = await SessionService.get_session_by_code(
             db_session, created_session.admin_code, "admin"
@@ -160,13 +166,13 @@ class TestSessionService:
         session_data = SessionCreate(
             title="Stats Test Session",
             description="Testing statistics",
-            max_participants=90
+            max_participants=90,
         )
         session = await SessionService.create_session(db_session, session_data)
-        
+
         # Get stats
         stats = await SessionService.get_session_stats(db_session, session.id)
-        
+
         assert "participant_count" in stats
         assert "activity_count" in stats
         assert stats["participant_count"] == 0

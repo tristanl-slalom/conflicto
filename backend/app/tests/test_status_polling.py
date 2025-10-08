@@ -1,4 +1,5 @@
 """Tests for status polling endpoints."""
+
 from datetime import datetime
 from uuid import uuid4
 

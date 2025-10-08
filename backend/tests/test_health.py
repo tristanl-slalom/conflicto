@@ -1,6 +1,7 @@
 """
 Tests for health check API endpoints.
 """
+
 from httpx import AsyncClient
 
 

@@ -1,4 +1,5 @@
 """Pydantic schemas for User Response models."""
+
 from datetime import datetime
 from typing import Any, Dict, List
 from uuid import UUID

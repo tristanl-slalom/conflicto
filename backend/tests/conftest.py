@@ -1,12 +1,14 @@
 """
 Test configuration and fixtures.
 """
+
 import asyncio
 import os
 from collections.abc import AsyncGenerator
 from typing import Generator
 
 import pytest
+
 # TestClient import removed - using only AsyncClient
 from httpx import AsyncClient
 from sqlalchemy import create_engine
@@ -92,7 +94,7 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
             await session.rollback()
             await session.close()
 
-    # Clean up tables after test  
+    # Clean up tables after test
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
@@ -104,10 +106,10 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
 async def async_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     """Create async HTTP client with shared test database session."""
     from app.main import app
-    
+
     async def get_test_db_override():
         yield db_session
-    
+
     app.dependency_overrides[get_db] = get_test_db_override
 
     async with AsyncClient(app=app, base_url="http://test") as client:

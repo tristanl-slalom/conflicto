@@ -54,7 +54,6 @@ poetry run pytest --cov=app --cov-report=html
 Format code:
 ```bash
 poetry run black .
-poetry run isort .
 ```
 
 Lint code:

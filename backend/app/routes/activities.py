@@ -1,4 +1,5 @@
 """API routes for Activity operations."""
+
 from typing import Optional
 from uuid import UUID
 
@@ -49,7 +50,9 @@ async def get_session_activities(
     session_id: int,
     offset: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    status: Optional[ActivityStatus] = Query(None, description="Filter activities by status"),
+    status: Optional[ActivityStatus] = Query(
+        None, description="Filter activities by status"
+    ),
     db: AsyncSession = Depends(get_db),
 ) -> ActivityList:
     """Get all activities for a session."""
