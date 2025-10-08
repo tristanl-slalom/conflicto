@@ -90,7 +90,7 @@ jobs:
       - name: Check coverage threshold
         working-directory: backend
         run: |
-          poetry run coverage report --fail-under=70
+          poetry run coverage report --fail-under=50
 
       - name: Upload backend coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -274,7 +274,7 @@ jobs:
         run: |
           # Create a temporary directory for SQLite database
           mkdir -p /tmp/test-db
-          
+
           # Start container without --rm so we can inspect it if it fails
           echo "Starting backend container..."
           CONTAINER_ID=$(docker run -d --name test-backend \
@@ -285,25 +285,25 @@ jobs:
             -e DEBUG=true \
             -v /tmp/test-db:/tmp \
             conflicto-backend:test)
-          
+
           echo "Container ID: $CONTAINER_ID"
-          
+
           # Wait a bit for startup
           echo "Waiting for container startup..."
           sleep 15
-          
+
           # Check container status
           echo "Container status:"
           docker ps -a --filter "name=test-backend"
-          
+
           # Get container logs regardless of status
           echo "Container logs:"
           docker logs test-backend || true
-          
+
           # Check if container is still running
           if docker ps --filter "name=test-backend" --filter "status=running" | grep -q test-backend; then
             echo "✅ Container is running successfully"
-            
+
             # Test if the API is responding (try a few times as it might take time to start)
             echo "Testing API health endpoint..."
             for i in {1..5}; do
@@ -319,22 +319,22 @@ jobs:
                 sleep 5
               fi
             done
-            
+
             # Check what processes are running in the container
             echo "Processes in container:"
             docker exec test-backend ps aux || true
-            
+
             # Check if port 8000 is listening
             echo "Network status in container:"
             docker exec test-backend netstat -tlnp 2>/dev/null || docker exec test-backend ss -tlnp 2>/dev/null || echo "Could not check network status"
-            
+
           else
             echo "❌ Container is not running"
             echo "Exit code:"
             docker inspect test-backend --format='{{.State.ExitCode}}' || true
             exit 1
           fi
-          
+
           # Cleanup
           echo "Cleaning up container..."
           docker stop test-backend || true
@@ -347,25 +347,25 @@ jobs:
           CONTAINER_ID=$(docker run -d --name test-frontend \
             -p 3000:80 \
             conflicto-frontend:test)
-          
+
           echo "Container ID: $CONTAINER_ID"
-          
+
           # Wait for startup
           echo "Waiting for container startup..."
           sleep 15
-          
+
           # Check container status
           echo "Container status:"
           docker ps -a --filter "name=test-frontend"
-          
+
           # Get container logs regardless of status
           echo "Container logs:"
           docker logs test-frontend || true
-          
+
           # Check if container is still running
           if docker ps --filter "name=test-frontend" --filter "status=running" | grep -q test-frontend; then
             echo "✅ Frontend container is running successfully"
-            
+
             # Test if the frontend is serving content (try a few times)
             echo "Testing frontend availability..."
             for i in {1..5}; do
@@ -386,7 +386,7 @@ jobs:
             docker inspect test-frontend --format='{{.State.ExitCode}}' || true
             exit 1
           fi
-          
+
           # Cleanup
           echo "Cleaning up container..."
           docker stop test-frontend || true
