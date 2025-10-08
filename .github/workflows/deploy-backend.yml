@@ -53,8 +53,8 @@ jobs:
           echo "environment=${ENV}" >> $GITHUB_OUTPUT
           echo "image_tag=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
           echo "ecr_registry=${{ steps.login-ecr.outputs.registry }}" >> $GITHUB_OUTPUT
-          echo "ecr_repository=conflicto-backend-${ENV}" >> $GITHUB_OUTPUT
-          echo "image_uri=${{ steps.login-ecr.outputs.registry }}/conflicto-backend-${ENV}:${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+          echo "ecr_repository=conflicto-${ENV}-backend" >> $GITHUB_OUTPUT
+          echo "image_uri=${{ steps.login-ecr.outputs.registry }}/conflicto-${ENV}-backend:${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
       
       # Build and push Docker image
       - name: Build, tag, and push image to Amazon ECR
@@ -76,7 +76,7 @@ jobs:
           ENV: ${{ steps.vars.outputs.environment }}
         run: |
           aws ecs describe-task-definition \
-            --task-definition conflicto-backend-${ENV} \
+            --task-definition conflicto-${ENV}-backend \
             --query taskDefinition > task-definition.json
       
       - name: Fill in the new image ID in the Amazon ECS task definition
