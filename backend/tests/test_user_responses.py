@@ -4,7 +4,6 @@ Simplified tests for User Response functionality.
 import pytest
 from uuid import uuid4
 
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.jsonb_schemas.user_response import UserResponseCreate, UserResponseUpdate
 
