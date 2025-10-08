@@ -32,7 +32,7 @@ class Settings(BaseSettings):
         default="unknown", description="Application version (usually git commit SHA)"
     )
     aws_region: str = Field(
-        default="us-west-2", description="AWS region for deployment"
+        default="us-east-1", description="AWS region for deployment"
     )
 
     # CORS
