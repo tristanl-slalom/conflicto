@@ -1,7 +1,7 @@
 {
   "family": "conflicto-backend-dev"        {
           "name": "AWS_REGION",
-          "value": "us-east-1"
+          "value": "us-west-2"
         },"networkMode": "awsvpc",
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "256",
@@ -39,14 +39,14 @@
         },
         {
           "name": "AWS_REGION",
-          "value": "us-east-1"
+          "value": "us-west-2"
         }
       ],
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "/ecs/conflicto-backend-dev",
-          "awslogs-region": "us-east-1",
+          "awslogs-region": "us-west-2",
           "awslogs-stream-prefix": "backend"
         }
       },

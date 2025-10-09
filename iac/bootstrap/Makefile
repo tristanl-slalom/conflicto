@@ -10,7 +10,7 @@
 # ============================================================================
 
 AWS_PROFILE ?= genai-immersion-houston
-AWS_REGION  ?= us-east-1
+AWS_REGION  ?= us-west-2
 BACKEND_CONFIG ?= backend.hcl
 BACKEND_FILE ?= backend.tf
 BUCKET ?= conflicto-tfstate

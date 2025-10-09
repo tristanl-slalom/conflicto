@@ -1,7 +1,7 @@
 bucket         = "conflicto-tfstate"
 key            = "stacks/network/terraform.tfstate"
 dynamodb_table = "conflicto-terraform-locks"
-region         = "us-east-1"
+region         = "us-west-2"
 profile        = "genai-immersion-houston"
 encrypt        = true
 use_lockfile   = true

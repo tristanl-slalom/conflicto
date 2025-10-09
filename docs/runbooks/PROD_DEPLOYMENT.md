@@ -114,7 +114,7 @@ curl -I https://conflicto.app/api/v1/health/
 nslookup conflicto.app
 
 # Check load balancer
-aws elbv2 describe-load-balancers --names conflicto-prod-alb --region us-east-1
+aws elbv2 describe-load-balancers --names conflicto-prod-alb --region us-west-2
 ```
 
 **Escalation Steps**:

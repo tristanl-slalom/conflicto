@@ -13,7 +13,7 @@ variable "aws_profile" {
 variable "aws_region" {
   type        = string
   description = "Region"
-  default     = "us-east-1"
+  default     = "us-west-2"
 }
 
 variable "vpc_id" {
@@ -29,7 +29,7 @@ variable "data_subnet_ids" {
 variable "db_engine_version" {
   type        = string
   description = "PostgreSQL engine version (use aws rds describe-db-engine-versions --engine postgres to list)."
-  default     = "15.4"
+  default     = "15.14"
 }
 
 variable "instance_class" {

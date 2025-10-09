@@ -112,7 +112,7 @@ Workflows will use the `aws-actions/configure-aws-credentials` action:
 - uses: aws-actions/configure-aws-credentials@v4
   with:
     role-to-assume: ${{ vars.AWS_DEPLOYER_ROLE_ARN }}
-    aws-region: us-east-1
+    aws-region: us-west-2
     role-session-name: GitHubActions-${{ github.run_id }}
 ```
 

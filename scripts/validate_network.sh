@@ -7,7 +7,7 @@ set -euo pipefail
 
 STACK_DIR="iac/stacks/network"
 AWS_PROFILE_ARG=${AWS_PROFILE:+--profile $AWS_PROFILE}
-AWS_REGION=${AWS_REGION:-us-east-1}
+AWS_REGION=${AWS_REGION:-us-west-2}
 
 if ! command -v jq >/dev/null; then
   echo "ERROR: jq not installed" >&2; exit 1

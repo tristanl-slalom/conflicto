@@ -1,7 +1,7 @@
 variable "var_region" {
   type        = string
   description = "AWS region for bootstrap resources"
-  default     = "us-east-1" # Adjust if different
+  default     = "us-west-2" # Adjust if different
 }
 
 variable "var_profile" {

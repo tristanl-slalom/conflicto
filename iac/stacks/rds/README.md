@@ -58,7 +58,7 @@ aws rds describe-db-engine-versions \
   --engine postgres \
   --query 'DBEngineVersions[].EngineVersion' \
   --profile genai-immersion-houston \
-  --region us-east-1
+  --region us-west-2
 ```
 
 Update `-var db_engine_version=...` or the `dev.auto.tfvars` accordingly and re-apply.

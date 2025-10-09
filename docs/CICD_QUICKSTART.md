@@ -25,16 +25,16 @@ Go to **Settings → Environments** in GitHub:
 
 **Create "dev" environment:**
 - Variable: `AWS_DEPLOYER_ROLE_ARN` = `arn:aws:iam::418389084763:role/conflicto-terraform-deployer-dev`
-- Variable: `AWS_REGION` = `us-east-1`
+- Variable: `AWS_REGION` = `us-west-2`
 
 **Create "staging" environment:**
 - Variable: `AWS_DEPLOYER_ROLE_ARN` = `arn:aws:iam::418389084763:role/conflicto-terraform-deployer-staging`
-- Variable: `AWS_REGION` = `us-east-1`
+- Variable: `AWS_REGION` = `us-west-2`
 - Protection rule: Require 1 approval
 
 **Create "prod" environment:**
 - Variable: `AWS_DEPLOYER_ROLE_ARN` = `arn:aws:iam::418389084763:role/conflicto-terraform-deployer-prod`
-- Variable: `AWS_REGION` = `us-east-1`
+- Variable: `AWS_REGION` = `us-west-2`
 - Protection rule: Require 2 approvals
 
 #### 2. Deploy AWS Infrastructure (Terraform)
@@ -100,7 +100,7 @@ When workflow runs successfully:
 ✅ Deployment Summary
 
 - Environment: dev
-- Image: `418389084763.dkr.ecr.us-east-1.amazonaws.com/conflicto-backend-dev:abc1234`
+- Image: `418389084763.dkr.ecr.us-west-2.amazonaws.com/conflicto-backend-dev:abc1234`
 - Cluster: conflicto-dev
 - Service: conflicto-backend-service-dev
 - Git SHA: abc1234567890
