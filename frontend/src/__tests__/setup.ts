@@ -88,5 +88,8 @@ vi.mock('lucide-react', () => {
     Send: MockIcon,
     CheckCircle: MockIcon,
     Maximize: MockIcon,
+    Clock: MockIcon,
+    Coffee: MockIcon,
+    XCircle: MockIcon,
   };
 });

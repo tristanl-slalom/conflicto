@@ -130,7 +130,7 @@ async def get_session(
         )
 
     # Convert activities and participants to response models
-    from app.models.schemas import ActivityResponse, ParticipantResponse
+    from app.models.schemas import ActivityResponse, ParticipantStatus
 
     activities = [
         ActivityResponse(
@@ -151,16 +151,14 @@ async def get_session(
     ]
 
     participants = [
-        ParticipantResponse(
-            id=participant.id,
-            session_id=participant.session_id,
-            display_name=participant.display_name,
-            role=participant.role,
-            is_active=participant.is_active,
+        ParticipantStatus(
+            participant_id=str(
+                participant.id
+            ),  # Convert to string as expected by schema
+            nickname=participant.nickname,
+            status="online",  # Simplified status for now
             joined_at=participant.joined_at,
-            last_seen_at=participant.last_seen_at,
-            created_at=participant.joined_at,  # Use joined_at as created_at
-            updated_at=participant.last_seen_at,  # Use last_seen_at as updated_at
+            last_seen=participant.last_seen,
         )
         for participant in session.participants
     ]
