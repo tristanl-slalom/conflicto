@@ -32,7 +32,7 @@ export function QRCodeDisplay({
     );
   }
 
-  const getJoinUrl = () => `${window.location.origin}/session/${session.qr_code}`;
+  const getJoinUrl = () => `${window.location.origin}/join/${session.qr_code}`;
 
   const handleCopyCode = async (text: string, type: 'qr' | 'url') => {
     try {

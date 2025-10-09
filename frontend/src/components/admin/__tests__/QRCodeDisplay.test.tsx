@@ -77,7 +77,7 @@ describe('QRCodeDisplay', () => {
     const copyUrlButtons = screen.getAllByTitle('Copy join URL');
     fireEvent.click(copyUrlButtons[0]);
 
-    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('http://localhost:3000/session/TEST123');
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('http://localhost:3000/join/TEST123');
   });
 
   it('opens large QR modal when maximize button is clicked', () => {

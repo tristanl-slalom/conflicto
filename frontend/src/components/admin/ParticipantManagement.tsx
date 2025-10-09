@@ -47,7 +47,7 @@ export function ParticipantManagement({ session, className = '' }: ParticipantMa
   const handleCopyCode = async (code: string, type: 'qr' | 'admin' | 'url') => {
     try {
       const textToCopy = type === 'url'
-        ? `${window.location.origin}/session/${code}`
+        ? `${window.location.origin}/join/${code}`
         : code;
 
       await navigator.clipboard.writeText(textToCopy);
@@ -60,7 +60,7 @@ export function ParticipantManagement({ session, className = '' }: ParticipantMa
 
   const getJoinUrl = () => {
     if (!session?.qr_code) return '';
-    return `${window.location.origin}/session/${session.qr_code}`;
+    return `${window.location.origin}/join/${session.qr_code}`;
   };
 
   const handleRemoveParticipant = async (participantId: string, participantNickname: string) => {
