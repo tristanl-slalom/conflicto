@@ -100,3 +100,16 @@ module "dns" {
 
   depends_on = [module.ecs]
 }
+
+# Security Group Rule: Allow ECS App to connect to RDS
+resource "aws_security_group_rule" "app_to_database" {
+  type                     = "ingress"
+  from_port                = 5432
+  to_port                  = 5432
+  protocol                 = "tcp"
+  security_group_id        = module.rds.db_security_group_id
+  source_security_group_id = module.ecs.app_security_group_id
+  description              = "Allow ECS app to connect to RDS database"
+
+  depends_on = [module.rds, module.ecs]
+}

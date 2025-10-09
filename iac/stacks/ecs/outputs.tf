@@ -64,6 +64,12 @@ output "target_group_arn" {
   value       = var.create_service ? aws_lb_target_group.app[0].arn : ""
 }
 
+# Security Group Information
+output "app_security_group_id" {
+  description = "ID of the app security group (for database access)"
+  value       = var.create_service ? aws_security_group.app[0].id : ""
+}
+
 # HTTPS Configuration
 output "https_enabled" {
   description = "Whether HTTPS is enabled"

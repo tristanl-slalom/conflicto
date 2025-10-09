@@ -164,6 +164,25 @@ jobs:
           echo "Migration task definition:"
           cat migration-task-def.json | jq '.'
 
+          # Check what IAM roles are being used
+          EXECUTION_ROLE_ARN=$(cat migration-task-def.json | jq -r '.executionRoleArn // "none"')
+          TASK_ROLE_ARN=$(cat migration-task-def.json | jq -r '.taskRoleArn // "none"')
+
+          echo "Execution Role ARN: $EXECUTION_ROLE_ARN"
+          echo "Task Role ARN: $TASK_ROLE_ARN"
+
+          # Verify the task role has RDS permissions by checking attached policies
+          if [ "$TASK_ROLE_ARN" != "none" ]; then
+            ROLE_NAME=$(echo $TASK_ROLE_ARN | awk -F'/' '{print $NF}')
+            echo "Checking policies for role: $ROLE_NAME"
+
+            echo "Attached managed policies:"
+            aws iam list-attached-role-policies --role-name "$ROLE_NAME" --output table || true
+
+            echo "Inline policies:"
+            aws iam list-role-policies --role-name "$ROLE_NAME" --output table || true
+          fi
+
           # Register the migration task definition
           MIGRATION_TASK_DEF_ARN=$(aws ecs register-task-definition \
             --cli-input-json file://migration-task-def.json \
@@ -171,6 +190,43 @@ jobs:
             --output text)
 
           echo "Registered migration task definition: $MIGRATION_TASK_DEF_ARN"
+
+          # If the role doesn't have RDS permissions, we need to add them
+          # Check if there's a separate database access role we should be using
+          echo "Checking for existing database access role..."
+
+          # Look for a conflicto-dev-db-access or conflicto-dev-ecs-task role with RDS permissions
+          DB_ROLE_ARN=""
+
+          # Try to find a role with database in the name
+          POTENTIAL_DB_ROLES=$(aws iam list-roles \
+            --query "Roles[?contains(RoleName, 'conflicto-${ENV}') && (contains(RoleName, 'db') || contains(RoleName, 'rds') || contains(RoleName, 'task'))].{RoleName:RoleName,Arn:Arn}" \
+            --output text 2>/dev/null || true)
+
+          if [ -n "$POTENTIAL_DB_ROLES" ]; then
+            echo "Found potential database roles:"
+            echo "$POTENTIAL_DB_ROLES"
+
+            # For now, let's use the first one that looks like a task role
+            DB_ROLE_ARN=$(echo "$POTENTIAL_DB_ROLES" | grep -E "(task|ecs)" | head -n1 | awk '{print $2}' || echo "")
+          fi
+
+          # If we found a better role, update the migration task definition
+          if [ -n "$DB_ROLE_ARN" ] && [ "$DB_ROLE_ARN" != "$TASK_ROLE_ARN" ]; then
+            echo "Updating migration task to use database-enabled role: $DB_ROLE_ARN"
+
+            cat migration-task-def.json | \
+            jq --arg role_arn "$DB_ROLE_ARN" '.taskRoleArn = $role_arn' \
+            > migration-task-def-updated.json
+
+            # Re-register with the updated role
+            MIGRATION_TASK_DEF_ARN=$(aws ecs register-task-definition \
+              --cli-input-json file://migration-task-def-updated.json \
+              --query 'taskDefinition.taskDefinitionArn' \
+              --output text)
+
+            echo "Re-registered migration task definition with DB role: $MIGRATION_TASK_DEF_ARN"
+          fi
 
           # Get a subnet for running the migration task
           echo "Looking for subnets..."
@@ -266,6 +322,26 @@ jobs:
 
           # Wait for migration to complete
           echo "Waiting for migration to complete..."
+
+          # Monitor task status for 5 minutes max
+          echo "Monitoring task progress..."
+          for i in {1..10}; do
+            TASK_STATUS=$(aws ecs describe-tasks \
+              --cluster conflicto-${ENV}-cluster \
+              --tasks $MIGRATION_TASK_ARN \
+              --query 'tasks[0].lastStatus' \
+              --output text 2>/dev/null || echo "UNKNOWN")
+
+            echo "Task status ($i/10): $TASK_STATUS"
+
+            if [ "$TASK_STATUS" = "STOPPED" ]; then
+              break
+            fi
+
+            sleep 30
+          done
+
+          # Final wait for tasks to be fully stopped
           aws ecs wait tasks-stopped \
             --cluster conflicto-${ENV}-cluster \
             --tasks $MIGRATION_TASK_ARN
@@ -292,8 +368,78 @@ jobs:
 
           echo "✅ Database migration completed successfully"
 
+      # Fix database connectivity for ECS service
+      - name: Ensure database connectivity for ECS service
+        env:
+          ENV: ${{ steps.vars.outputs.environment }}
+        run: |
+          echo "Checking database connectivity for ECS service..."
+
+          # Get the app security group that ECS service uses
+          APP_SG_ID=$(aws ec2 describe-security-groups \
+            --filters "Name=group-name,Values=conflicto-${ENV}-app-sg" \
+            --query 'SecurityGroups[0].GroupId' \
+            --output text 2>/dev/null)
+
+          # Get the database security group
+          DB_SG_ID=$(aws ec2 describe-security-groups \
+            --filters "Name=group-name,Values=conflicto-${ENV}-db*" \
+            --query 'SecurityGroups[0].GroupId' \
+            --output text 2>/dev/null)
+
+          echo "App Security Group: $APP_SG_ID"
+          echo "Database Security Group: $DB_SG_ID"
+
+          # Check if database security group allows connections from app security group
+          if [ -n "$DB_SG_ID" ] && [ "$DB_SG_ID" != "None" ] && [ -n "$APP_SG_ID" ] && [ "$APP_SG_ID" != "None" ]; then
+            echo "Checking existing database security group rules..."
+
+            EXISTING_RULE=$(aws ec2 describe-security-groups \
+              --group-ids "$DB_SG_ID" \
+              --query "SecurityGroups[0].IpPermissions[?FromPort==\`5432\` && ToPort==\`5432\` && UserIdGroupPairs[?GroupId==\`${APP_SG_ID}\`]]" \
+              --output text 2>/dev/null)
+
+            if [ -z "$EXISTING_RULE" ] || [ "$EXISTING_RULE" = "None" ]; then
+              echo "Adding security group rule to allow app -> database connectivity..."
+
+              aws ec2 authorize-security-group-ingress \
+                --group-id "$DB_SG_ID" \
+                --protocol tcp \
+                --port 5432 \
+                --source-group "$APP_SG_ID" \
+                --tag-specifications "ResourceType=security-group-rule,Tags=[{Key=Name,Value=temp-app-to-db},{Key=CreatedBy,Value=github-actions}]" \
+                2>/dev/null && echo "✅ Added database connectivity rule" || echo "⚠️  Rule may already exist or permission denied"
+            else
+              echo "✅ Database connectivity rule already exists"
+            fi
+          else
+            echo "⚠️  Could not find app or database security groups"
+            echo "Available security groups:"
+            aws ec2 describe-security-groups \
+              --filters "Name=group-name,Values=conflicto-${ENV}-*" \
+              --query 'SecurityGroups[].{GroupId:GroupId,GroupName:GroupName}' \
+              --output table
+          fi
+
       # Deploy to ECS
       - name: Deploy Amazon ECS task definition
+        env:
+          ENV: ${{ steps.vars.outputs.environment }}
+        run: |
+          echo "Starting ECS service deployment..."
+
+          # Get current service status before deployment
+          echo "Current service status:"
+          aws ecs describe-services \
+            --cluster conflicto-${ENV}-cluster \
+            --services conflicto-${ENV}-svc \
+            --query 'services[0].{Status:status,RunningCount:runningCount,PendingCount:pendingCount,DesiredCount:desiredCount}' \
+            --output table || echo "Service not found or error retrieving status"
+
+          # Deploy using the standard action but with custom monitoring
+          echo "Deploying new task definition..."
+
+      - name: Deploy with monitoring
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         env:
           ENV: ${{ steps.vars.outputs.environment }}
@@ -301,7 +447,113 @@ jobs:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           service: conflicto-${{ env.ENV }}-svc
           cluster: conflicto-${{ env.ENV }}-cluster
-          wait-for-service-stability: true
+          wait-for-service-stability: false
+
+      - name: Monitor deployment and troubleshoot
+        env:
+          ENV: ${{ steps.vars.outputs.environment }}
+        run: |
+          echo "Monitoring deployment progress..."
+
+          # Wait for up to 10 minutes, checking every 30 seconds
+          for i in {1..20}; do
+            echo "Check $i/20 - $(date)"
+
+            # Get service status
+            SERVICE_STATUS=$(aws ecs describe-services \
+              --cluster conflicto-${ENV}-cluster \
+              --services conflicto-${ENV}-svc \
+              --query 'services[0]' \
+              --output json)
+
+            RUNNING_COUNT=$(echo "$SERVICE_STATUS" | jq -r '.runningCount')
+            PENDING_COUNT=$(echo "$SERVICE_STATUS" | jq -r '.pendingCount')
+            DESIRED_COUNT=$(echo "$SERVICE_STATUS" | jq -r '.desiredCount')
+
+            echo "Service status: Running=$RUNNING_COUNT, Pending=$PENDING_COUNT, Desired=$DESIRED_COUNT"
+
+            # Check if service is stable
+            if [ "$RUNNING_COUNT" = "$DESIRED_COUNT" ] && [ "$PENDING_COUNT" = "0" ]; then
+              echo "✅ Service is stable!"
+              break
+            fi
+
+            # Get the latest tasks to see what's happening
+            LATEST_TASKS=$(aws ecs list-tasks \
+              --cluster conflicto-${ENV}-cluster \
+              --service-name conflicto-${ENV}-svc \
+              --desired-status RUNNING \
+              --query 'taskArns[0:2]' \
+              --output text)
+
+            if [ -n "$LATEST_TASKS" ] && [ "$LATEST_TASKS" != "None" ]; then
+              echo "Latest task statuses:"
+              aws ecs describe-tasks \
+                --cluster conflicto-${ENV}-cluster \
+                --tasks $LATEST_TASKS \
+                --query 'tasks[].{TaskArn:taskArn,LastStatus:lastStatus,HealthStatus:healthStatus,StoppedReason:stoppedReason}' \
+                --output table
+
+              # Check for failed tasks
+              FAILED_TASKS=$(aws ecs describe-tasks \
+                --cluster conflicto-${ENV}-cluster \
+                --tasks $LATEST_TASKS \
+                --query 'tasks[?lastStatus==`STOPPED` && containers[0].exitCode!=`0`].taskArn' \
+                --output text)
+
+              if [ -n "$FAILED_TASKS" ] && [ "$FAILED_TASKS" != "None" ]; then
+                echo "❌ Found failed tasks, checking logs..."
+
+                # Get logs for failed tasks
+                aws logs filter-log-events \
+                  --log-group-name "/ecs/conflicto-${ENV}-task" \
+                  --start-time $(date -d '10 minutes ago' +%s)000 \
+                  --query 'events[0:10].{Time:timestamp,Message:message}' \
+                  --output table || echo "No logs found or error retrieving logs"
+              fi
+            fi
+
+            sleep 30
+          done
+
+          # Final check
+          FINAL_RUNNING=$(aws ecs describe-services \
+            --cluster conflicto-${ENV}-cluster \
+            --services conflicto-${ENV}-svc \
+            --query 'services[0].runningCount' \
+            --output text)
+
+          FINAL_DESIRED=$(aws ecs describe-services \
+            --cluster conflicto-${ENV}-cluster \
+            --services conflicto-${ENV}-svc \
+            --query 'services[0].desiredCount' \
+            --output text)
+
+          if [ "$FINAL_RUNNING" != "$FINAL_DESIRED" ]; then
+            echo "❌ Deployment failed - service did not stabilize"
+            echo "Final status: $FINAL_RUNNING/$FINAL_DESIRED tasks running"
+
+            # Get comprehensive troubleshooting info
+            echo "=== TROUBLESHOOTING INFO ==="
+
+            echo "Service events (last 10):"
+            aws ecs describe-services \
+              --cluster conflicto-${ENV}-cluster \
+              --services conflicto-${ENV}-svc \
+              --query 'services[0].events[0:10].{Time:createdAt,Message:message}' \
+              --output table
+
+            echo "Security groups and subnets:"
+            aws ecs describe-services \
+              --cluster conflicto-${ENV}-cluster \
+              --services conflicto-${ENV}-svc \
+              --query 'services[0].networkConfiguration' \
+              --output json
+
+            exit 1
+          fi
+
+          echo "✅ Service deployment successful!"
 
       # Output deployment info
       - name: Deployment summary
