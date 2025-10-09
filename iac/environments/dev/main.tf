@@ -54,8 +54,6 @@ module "rds" {
   # Network dependencies
   vpc_id              = module.network.vpc_id
   private_subnet_ids  = module.network.private_subnet_ids
-
-  depends_on = [module.network]
 }
 
 # ECS Services
@@ -83,8 +81,6 @@ module "ecs" {
   vpc_id              = module.network.vpc_id
   public_subnet_ids   = module.network.public_subnet_ids
   private_subnet_ids  = module.network.private_subnet_ids
-
-  depends_on = [module.network, module.rds]
 }
 
 # DNS Configuration
@@ -96,8 +92,6 @@ module "dns" {
   domain_name = "dev.conflicto.app"
   alb_dns_name = module.ecs.alb_dns_name
   alb_zone_id  = module.ecs.alb_zone_id
-
-  depends_on = [module.ecs]
 }
 
 # Security Group Rule: Allow ECS App to connect to RDS
