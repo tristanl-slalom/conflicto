@@ -39,6 +39,12 @@ variable "create_ecr_repo" {
 	default = true
 }
 
+variable "create_frontend_ecr_repo" {
+	type        = bool
+	default     = true
+	description = "Whether to create an ECR repository for the frontend"
+}
+
 variable "create_service" {
 	type        = bool
 	default     = false
@@ -105,7 +111,7 @@ variable "container_port" {
 
 variable "health_check_path" {
 	type    = string
-	default = "/api/v1/health"
+	default = "/api/v1/health/"
 }
 
 variable "alb_idle_timeout" {

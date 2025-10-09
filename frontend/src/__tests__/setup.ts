@@ -100,5 +100,7 @@ vi.mock('lucide-react', () => {
     Download: MockIcon,
     Save: MockIcon,
     RefreshCw: MockIcon,
+    Coffee: MockIcon,
+    XCircle: MockIcon,
   };
 });

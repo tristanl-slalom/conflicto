@@ -64,10 +64,11 @@ module "ecs" {
   environment = "dev"
 
   # Development configuration
-  create_service         = true
-  create_ecr_repo       = false  # Use existing GHCR
-  container_image       = var.backend_image_uri
-  frontend_image_uri    = var.frontend_image_uri
+  create_service            = true
+  create_ecr_repo          = false  # Use existing GHCR
+  create_frontend_ecr_repo = true   # Create ECR repo for frontend
+  container_image          = var.backend_image_uri
+  frontend_image_uri       = var.frontend_image_uri
 
   # CPU/Memory for dev environment (cost optimized)
   backend_cpu           = 256
@@ -97,4 +98,17 @@ module "dns" {
   alb_zone_id  = module.ecs.alb_zone_id
 
   depends_on = [module.ecs]
+}
+
+# Security Group Rule: Allow ECS App to connect to RDS
+resource "aws_security_group_rule" "app_to_database" {
+  type                     = "ingress"
+  from_port                = 5432
+  to_port                  = 5432
+  protocol                 = "tcp"
+  security_group_id        = module.rds.db_security_group_id
+  source_security_group_id = module.ecs.app_security_group_id
+  description              = "Allow ECS app to connect to RDS database"
+
+  depends_on = [module.rds, module.ecs]
 }

@@ -18,6 +18,9 @@ const ParticipantList: React.FC<ParticipantListProps> = ({ sessionId, className 
       query: {
         refetchInterval: 10000, // Poll every 10 seconds
         refetchIntervalInBackground: true,
+        retry: 1, // Only retry once on failure
+        retryDelay: 2000, // Wait 2 seconds before retry
+        refetchOnWindowFocus: false, // Don't refetch when window gains focus
       }
     }
   );

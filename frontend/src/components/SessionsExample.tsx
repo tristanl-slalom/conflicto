@@ -18,7 +18,17 @@ export function SessionsExample() {
     data: sessionsData,
     isLoading,
     error,
-  } = useListSessionsApiV1SessionsGet();
+  } = useListSessionsApiV1SessionsGet(
+    undefined, // No params needed
+    {
+      query: {
+        retry: 1, // Only retry once on failure
+        retryDelay: 2000, // Wait 2 seconds before retry
+        refetchOnWindowFocus: false, // Don't refetch when window gains focus
+        staleTime: 30000, // Consider data stale after 30 seconds
+      }
+    }
+  );
 
   // Mutation hook - for creating new sessions
   const createSessionMutation = useCreateSessionApiV1SessionsPost();

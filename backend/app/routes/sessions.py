@@ -130,6 +130,7 @@ async def get_session(
         )
 
     # Import the required schemas
+    # Convert activities and participants to response models
     from app.models.schemas import ParticipantStatus, ActivityResponse
     from app.db.enums import ActivityStatus
 
@@ -173,11 +174,13 @@ async def get_session(
 
     participants = [
         ParticipantStatus(
-            participant_id=str(participant.id),  # Convert int id to string
+            participant_id=str(
+                participant.id
+            ),  # Convert to string as expected by schema
             nickname=participant.nickname,
-            status="online",  # TODO: Compute actual status based on last_seen
+            status="online",  # Simplified status for now
             joined_at=participant.joined_at,
-            last_seen=participant.last_seen,  # Use correct field name
+            last_seen=participant.last_seen,
         )
         for participant in session.participants
     ]

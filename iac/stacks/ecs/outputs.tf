@@ -18,8 +18,8 @@ output "backend_service_name" {
 }
 
 output "frontend_service_name" {
-  description = "Name of the frontend ECS service (placeholder for future implementation)"
-  value       = var.create_service ? "${local.name_prefix}-frontend-svc" : ""
+  description = "Name of the frontend ECS service"
+  value       = var.create_service && var.frontend_image_uri != "" ? aws_ecs_service.frontend[0].name : ""
 }
 
 output "service_name" {
@@ -64,6 +64,12 @@ output "target_group_arn" {
   value       = var.create_service ? aws_lb_target_group.app[0].arn : ""
 }
 
+# Security Group Information
+output "app_security_group_id" {
+  description = "ID of the app security group (for database access)"
+  value       = var.create_service ? aws_security_group.app[0].id : ""
+}
+
 # HTTPS Configuration
 output "https_enabled" {
   description = "Whether HTTPS is enabled"
@@ -79,4 +85,9 @@ output "https_listener_arn" {
 output "ecr_repository_url" {
   description = "URL of the ECR repository"
   value       = var.create_ecr_repo ? aws_ecr_repository.app[0].repository_url : ""
+}
+
+output "frontend_ecr_repository_url" {
+  description = "URL of the frontend ECR repository"
+  value       = var.create_frontend_ecr_repo ? aws_ecr_repository.frontend[0].repository_url : ""
 }

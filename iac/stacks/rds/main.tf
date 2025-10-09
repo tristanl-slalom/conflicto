@@ -68,6 +68,8 @@ resource "aws_security_group_rule" "db_allow_cidrs" {
   description       = "Temporary CIDR ingress"
 }
 
+
+
 # Egress all (app connections out, patching, etc.)
 resource "aws_security_group_rule" "db_egress_all" {
   type              = "egress"
@@ -143,6 +145,10 @@ resource "aws_secretsmanager_secret_version" "db" {
 output "db_endpoint" { value = aws_db_instance.db.address }
 output "db_port"     { value = aws_db_instance.db.port }
 output "db_secret_arn" { value = aws_secretsmanager_secret.db.arn }
+output "db_security_group_id" {
+  description = "Security group ID of the RDS database"
+  value = aws_security_group.db.id
+}
 output "db_connection_url" {
   value     = local.connection_url
   sensitive = true
