@@ -24,15 +24,24 @@ module "shared" {
 }
 
 locals {
-  name_prefix    = module.shared.name_prefix
-  ecr_repo_name  = "${local.name_prefix}-backend"
-  effective_image = var.create_service ? (var.container_image != "" ? var.container_image : (var.create_ecr_repo ? aws_ecr_repository.app[0].repository_url : "")) : "" # only relevant if service created
+  name_prefix           = module.shared.name_prefix
+  ecr_repo_name        = "${local.name_prefix}-backend"
+  frontend_ecr_repo_name = "${local.name_prefix}-frontend"
+  effective_image      = var.create_service ? (var.container_image != "" ? var.container_image : (var.create_ecr_repo ? aws_ecr_repository.app[0].repository_url : "")) : "" # only relevant if service created
 }
 
 # ECR Repository (optional)
 resource "aws_ecr_repository" "app" {
   count = var.create_ecr_repo ? 1 : 0
   name  = local.ecr_repo_name
+  image_scanning_configuration { scan_on_push = true }
+  tags = module.shared.tags
+}
+
+# Frontend ECR Repository (optional)
+resource "aws_ecr_repository" "frontend" {
+  count = var.create_frontend_ecr_repo ? 1 : 0
+  name  = local.frontend_ecr_repo_name
   image_scanning_configuration { scan_on_push = true }
   tags = module.shared.tags
 }

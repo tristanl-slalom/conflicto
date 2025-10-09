@@ -64,10 +64,11 @@ module "ecs" {
   environment = "dev"
 
   # Development configuration
-  create_service         = true
-  create_ecr_repo       = false  # Use existing GHCR
-  container_image       = var.backend_image_uri
-  frontend_image_uri    = var.frontend_image_uri
+  create_service            = true
+  create_ecr_repo          = false  # Use existing GHCR
+  create_frontend_ecr_repo = true   # Create ECR repo for frontend
+  container_image          = var.backend_image_uri
+  frontend_image_uri       = var.frontend_image_uri
 
   # CPU/Memory for dev environment (cost optimized)
   backend_cpu           = 256

@@ -86,3 +86,8 @@ output "ecr_repository_url" {
   description = "URL of the ECR repository"
   value       = var.create_ecr_repo ? aws_ecr_repository.app[0].repository_url : ""
 }
+
+output "frontend_ecr_repository_url" {
+  description = "URL of the frontend ECR repository"
+  value       = var.create_frontend_ecr_repo ? aws_ecr_repository.frontend[0].repository_url : ""
+}
