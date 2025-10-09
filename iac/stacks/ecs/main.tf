@@ -153,21 +153,48 @@ resource "aws_lb_target_group" "app" {
   tags = module.shared.tags
 }
 
+# Frontend target group
+resource "aws_lb_target_group" "frontend" {
+  count       = var.create_service && var.frontend_image_uri != "" ? 1 : 0
+  name        = substr(replace("${local.name_prefix}-frontend-tg", "_", "-"), 0, 32)
+  port        = 80
+  protocol    = "HTTP"
+  target_type = "ip"
+  vpc_id      = var.vpc_id
+  health_check {
+    path                = "/health"
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    timeout             = 5
+    interval            = 30
+    matcher             = "200-399"
+  }
+  tags = module.shared.tags
+}
+
 resource "aws_lb_listener" "http" {
   count             = var.create_service ? 1 : 0
   load_balancer_arn = aws_lb.app[0].arn
   port              = 80
   protocol          = "HTTP"
   default_action {
-    type            = var.enable_https && var.certificate_arn != "" ? "redirect" : "forward"
-    # target_group_arn only relevant when forwarding; null ignored when redirecting
-    target_group_arn = var.enable_https && var.certificate_arn != "" ? null : aws_lb_target_group.app[0].arn
+    type = var.enable_https && var.certificate_arn != "" ? "redirect" : "fixed-response"
+
     dynamic "redirect" {
       for_each = var.enable_https && var.certificate_arn != "" ? [1] : []
       content {
         port        = "443"
         protocol    = "HTTPS"
         status_code = "HTTP_301"
+      }
+    }
+
+    dynamic "fixed_response" {
+      for_each = var.enable_https && var.certificate_arn != "" ? [] : [1]
+      content {
+        content_type = "text/plain"
+        message_body = "Not Found"
+        status_code  = "404"
       }
     }
   }
@@ -181,8 +208,84 @@ resource "aws_lb_listener" "https" {
   ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
   certificate_arn   = var.certificate_arn
   default_action {
+    type = "fixed_response"
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "Not Found"
+      status_code  = "404"
+    }
+  }
+}
+
+# ALB Listener Rules for path-based routing
+
+# HTTP Listener Rules (if not redirecting to HTTPS)
+resource "aws_lb_listener_rule" "http_api" {
+  count        = var.create_service && !(var.enable_https && var.certificate_arn != "") ? 1 : 0
+  listener_arn = aws_lb_listener.http[0].arn
+  priority     = 100
+
+  action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.app[0].arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/api/*", "/docs", "/openapi.json"]
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "http_frontend" {
+  count        = var.create_service && var.frontend_image_uri != "" && !(var.enable_https && var.certificate_arn != "") ? 1 : 0
+  listener_arn = aws_lb_listener.http[0].arn
+  priority     = 200
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.frontend[0].arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/*"]
+    }
+  }
+}
+
+# HTTPS Listener Rules
+resource "aws_lb_listener_rule" "https_api" {
+  count        = var.create_service && var.enable_https && var.certificate_arn != "" ? 1 : 0
+  listener_arn = aws_lb_listener.https[0].arn
+  priority     = 100
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.app[0].arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/api/*", "/docs", "/openapi.json"]
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "https_frontend" {
+  count        = var.create_service && var.frontend_image_uri != "" && var.enable_https && var.certificate_arn != "" ? 1 : 0
+  listener_arn = aws_lb_listener.https[0].arn
+  priority     = 200
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.frontend[0].arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/*"]
+    }
   }
 }
 
@@ -279,7 +382,53 @@ resource "aws_ecs_task_definition" "app" {
   tags = module.shared.tags
 }
 
-# Service
+# Frontend Task definition
+resource "aws_ecs_task_definition" "frontend" {
+  count                    = var.create_service && var.frontend_image_uri != "" ? 1 : 0
+  family                   = "${local.name_prefix}-frontend-task"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = tostring(var.frontend_cpu)
+  memory                   = tostring(var.frontend_memory)
+  execution_role_arn       = var.existing_task_execution_role_arn != "" ? var.existing_task_execution_role_arn : aws_iam_role.task_exec[0].arn
+  task_role_arn            = var.existing_task_execution_role_arn != "" ? var.existing_task_execution_role_arn : aws_iam_role.task_exec[0].arn
+
+  container_definitions = jsonencode([
+    {
+      name      = "frontend"
+      image     = var.frontend_image_uri
+      essential = true
+      portMappings = [{ containerPort = 80, hostPort = 80, protocol = "tcp" }]
+
+      environment = [
+        {
+          name  = "ENVIRONMENT"
+          value = var.environment
+        }
+      ]
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = aws_cloudwatch_log_group.this.name
+          "awslogs-region"        = var.aws_region
+          "awslogs-stream-prefix" = "frontend"
+        }
+      }
+
+      healthCheck = {
+        command     = ["CMD-SHELL", "curl -f http://localhost:80/health || exit 1"]
+        interval    = 30
+        timeout     = 5
+        retries     = 3
+        startPeriod = 60
+      }
+    }
+  ])
+  tags = module.shared.tags
+}
+
+# Backend Service
 resource "aws_ecs_service" "app" {
   count           = var.create_service ? 1 : 0
   name            = "${local.name_prefix}-svc"
@@ -299,6 +448,43 @@ resource "aws_ecs_service" "app" {
     target_group_arn = aws_lb_target_group.app[0].arn
     container_name   = "app"
     container_port   = var.container_port
+  }
+
+  # Enhanced deployment configuration for CI/CD
+  deployment_configuration {
+    maximum_percent         = 200
+    minimum_healthy_percent = 50
+
+    deployment_circuit_breaker {
+      enable   = true
+      rollback = true
+    }
+  }
+
+  depends_on = [aws_lb_listener.http, aws_lb_listener.https]
+  tags = module.shared.tags
+}
+
+# Frontend Service
+resource "aws_ecs_service" "frontend" {
+  count           = var.create_service && var.frontend_image_uri != "" ? 1 : 0
+  name            = "${local.name_prefix}-frontend-svc"
+  cluster         = aws_ecs_cluster.this.id
+  task_definition = aws_ecs_task_definition.frontend[0].arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+  enable_execute_command = var.enable_execute_command
+
+  network_configuration {
+    subnets         = length(var.private_subnet_ids) > 0 ? var.private_subnet_ids : var.app_subnet_ids
+    security_groups = [aws_security_group.app[0].id]
+    assign_public_ip = false
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.frontend[0].arn
+    container_name   = "frontend"
+    container_port   = 80
   }
 
   # Enhanced deployment configuration for CI/CD

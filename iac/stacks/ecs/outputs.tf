@@ -18,8 +18,8 @@ output "backend_service_name" {
 }
 
 output "frontend_service_name" {
-  description = "Name of the frontend ECS service (placeholder for future implementation)"
-  value       = var.create_service ? "${local.name_prefix}-frontend-svc" : ""
+  description = "Name of the frontend ECS service"
+  value       = var.create_service && var.frontend_image_uri != "" ? aws_ecs_service.frontend[0].name : ""
 }
 
 output "service_name" {
