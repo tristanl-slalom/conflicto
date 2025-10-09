@@ -41,7 +41,7 @@ For each environment (dev, staging, prod), create an **Environment** and add:
   - Staging: `arn:aws:iam::418389084763:role/conflicto-terraform-deployer-staging`
   - Prod: `arn:aws:iam::418389084763:role/conflicto-terraform-deployer-prod`
 
-- **`AWS_REGION`** (optional): AWS region (defaults to `us-east-1`)
+- **`AWS_REGION`** (optional): AWS region (defaults to `us-west-2`)
 
 ### 2. AWS Infrastructure
 
@@ -76,7 +76,7 @@ The following AWS resources must exist (created via Terraform):
   uses: aws-actions/configure-aws-credentials@v4
   with:
     role-to-assume: ${{ vars.AWS_DEPLOYER_ROLE_ARN }}
-    aws-region: us-east-1
+    aws-region: us-west-2
 ```
 
 **What happens:**
@@ -132,8 +132,8 @@ The following AWS resources must exist (created via Terraform):
 
 **Result:**
 ```
-418389084763.dkr.ecr.us-east-1.amazonaws.com/conflicto-backend-dev:abc1234
-418389084763.dkr.ecr.us-east-1.amazonaws.com/conflicto-backend-dev:latest
+418389084763.dkr.ecr.us-west-2.amazonaws.com/conflicto-backend-dev:abc1234
+418389084763.dkr.ecr.us-west-2.amazonaws.com/conflicto-backend-dev:latest
 ```
 
 ### Step 4: Update Task Definition
@@ -384,7 +384,7 @@ Name: `dev`
 
 **Environment variables:**
 - `AWS_DEPLOYER_ROLE_ARN`: `arn:aws:iam::418389084763:role/conflicto-terraform-deployer-dev`
-- `AWS_REGION`: `us-east-1`
+- `AWS_REGION`: `us-west-2`
 
 ### 2. Deploy Infrastructure (Terraform)
 

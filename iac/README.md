@@ -12,7 +12,7 @@ This document captures the **manual steps** you must perform in the AWS Console 
 |------|------------------|-------|
 | AWS Account ID | (record) | Visible in the console (top-right). |
 | Account Alias | (record) | Helpful for clarity in CLI prompts. |
-| Primary Region | (decide) | e.g. `us-east-1` or `us-west-2`; choose one primary deployment region. |
+| Primary Region | (decide) | e.g. `us-west-2` or `us-west-2`; choose one primary deployment region. |
 | Additional Regions? | (list) | Only enable if required; reduces attack surface & costs. |
 | Environment Strategy | Single account with multiple workspaces OR multi-account | Multi-account (e.g. landing zone) is preferable long term. |
 
@@ -87,7 +87,7 @@ Document these and use Terraform locals or modules to enforce them.
 aws configure sso
 # Provide:
 #  - SSO start URL: <your SSO start URL>
-#  - SSO region: <e.g. us-east-1>
+#  - SSO region: <e.g. us-west-2>
 #  - Account: <target account id>
 #  - Role/Permission Set: TerraformPowerUserTemp (or similar)
 #  - Profile Name: genai-immersion-houston
@@ -170,7 +170,7 @@ provider "aws" {
 variable "var_region" {
   type        = string
   description = "AWS region for bootstrap resources"
-  default     = "us-east-1" # adjust
+  default     = "us-west-2" # adjust
 }
 
 variable "var_profile" {
@@ -239,7 +239,7 @@ Prepare this now (but you will apply only after resources exist):
 ```hcl
 bucket         = "conflicto-tfstate"
 dynamodb_table = "conflicto-terraform-locks"
-region         = "us-east-1"
+region         = "us-west-2"
 profile        = "genai-immersion-houston"
 encrypt        = true
 ```
@@ -319,7 +319,7 @@ In a second terminal, run `terraform plan` while an `apply` is in progress. You 
 | Category | Decide / Record | Why It Matters |
 |----------|-----------------|----------------|
 | Accounts model | Single vs multi-account | Affects provider aliasing & isolation. |
-| Primary region | (e.g. `us-east-1`) | Provider default & latency. |
+| Primary region | (e.g. `us-west-2`) | Provider default & latency. |
 | State bucket name | (record) | Hard-coded in backend blocks. |
 | Lock table name | (record) | Same as above. |
 | Tag schema | (finalize) | Consistency enforcement. |

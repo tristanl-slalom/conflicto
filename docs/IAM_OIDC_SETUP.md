@@ -411,7 +411,7 @@ jobs:
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::418389084763:role/conflicto-terraform-deployer-dev
-          aws-region: us-east-1
+          aws-region: us-west-2
       
       - name: Verify Identity
         run: |

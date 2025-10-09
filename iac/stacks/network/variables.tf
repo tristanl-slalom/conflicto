@@ -13,7 +13,7 @@ variable "aws_profile" {
 variable "aws_region" {
   type        = string
   description = "AWS region for networking stack"
-  default     = "us-east-1"
+  default     = "us-west-2"
 }
 
 variable "vpc_cidr" {

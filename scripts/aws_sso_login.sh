@@ -2,7 +2,7 @@
 set -euo pipefail
 
 PROFILE="${1:-genai-immersion-houston}"
-REGION="${AWS_REGION:-us-east-1}"
+REGION="${AWS_REGION:-us-west-2}"
 
 if ! command -v aws >/dev/null; then
   echo "aws CLI not installed" >&2; exit 1

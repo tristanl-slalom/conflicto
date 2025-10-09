@@ -31,7 +31,7 @@ jobs:
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ vars.AWS_DEPLOYER_ROLE_ARN_DEV }}
-          aws-region: us-east-1
+          aws-region: us-west-2
           role-session-name: GitHubActions-${{ github.run_id }}
       
       - name: Verify AWS Identity
@@ -72,7 +72,7 @@ jobs:
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ vars.AWS_DEPLOYER_ROLE_ARN_DEV }}
-          aws-region: us-east-1
+          aws-region: us-west-2
       
       - name: Terraform Apply
         working-directory: infrastructure/iam
@@ -103,7 +103,7 @@ jobs:
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ vars.AWS_DEPLOYER_ROLE_ARN_STAGING }}
-          aws-region: us-east-1
+          aws-region: us-west-2
       
       - name: Terraform Apply
         working-directory: infrastructure/iam
@@ -135,7 +135,7 @@ jobs:
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ vars.AWS_DEPLOYER_ROLE_ARN_PROD }}
-          aws-region: us-east-1
+          aws-region: us-west-2
           role-session-name: GitHubActions-Prod-${{ github.run_id }}
       
       - name: Terraform Plan
@@ -182,7 +182,7 @@ jobs:
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ vars[format('AWS_DEPLOYER_ROLE_ARN_{0}', github.event.inputs.environment)] }}
-          aws-region: us-east-1
+          aws-region: us-west-2
       
       - name: Deploy IAM Stack
         working-directory: infrastructure/iam
@@ -229,7 +229,7 @@ jobs:
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ vars.AWS_DEPLOYER_ROLE_ARN_DEV }}
-          aws-region: us-east-1
+          aws-region: us-west-2
       
       - name: Terraform Plan
         id: plan
@@ -290,7 +290,7 @@ permissions:
   with:
     role-to-assume: ${{ vars.AWS_DEPLOYER_ROLE_ARN_DEV }}
     role-session-name: GitHubActions-${{ github.workflow }}-${{ github.run_id }}
-    aws-region: us-east-1
+    aws-region: us-west-2
 ```
 
 This helps with CloudTrail auditing.
@@ -385,7 +385,7 @@ jobs:
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ vars[format('AWS_DEPLOYER_ROLE_ARN_{0}', matrix.environment)] }}
-          aws-region: us-east-1
+          aws-region: us-west-2
       
       - name: Terraform Apply
         run: |
@@ -404,7 +404,7 @@ jobs:
       github.ref == 'refs/heads/staging' && vars.AWS_DEPLOYER_ROLE_ARN_STAGING ||
       vars.AWS_DEPLOYER_ROLE_ARN_DEV
     }}
-    aws-region: us-east-1
+    aws-region: us-west-2
 ```
 
 ## Related Documentation

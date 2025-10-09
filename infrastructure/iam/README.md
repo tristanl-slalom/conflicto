@@ -41,14 +41,14 @@ terraform output deployer_role_arns
 - uses: aws-actions/configure-aws-credentials@v4
   with:
     role-to-assume: ${{ vars.AWS_DEPLOYER_ROLE_ARN_DEV }}
-    aws-region: us-east-1
+    aws-region: us-west-2
 ```
 
 ## Configuration
 
 ### Variables
 
-- `aws_region` - AWS region (default: us-east-1)
+- `aws_region` - AWS region (default: us-west-2)
 - `environments` - Environment list (default: [dev, staging, prod])
 - `github_repository` - Repository in `owner/repo` format
 - `github_oidc_thumbprint` - GitHub OIDC certificate thumbprint

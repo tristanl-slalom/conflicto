@@ -30,6 +30,6 @@ variable "aws_profile" {
 
 variable "aws_region" {
   type        = string
-  description = "Primary region (also certificate region). Use us-east-1 for CloudFront compatibility."
-  default     = "us-east-1"
+  description = "Primary region (also certificate region). Use us-west-2 for CloudFront compatibility."
+  default     = "us-west-2"
 }

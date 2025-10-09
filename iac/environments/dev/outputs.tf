@@ -19,7 +19,7 @@ output "cluster_name" {
 # Database Information
 output "database_endpoint" {
   description = "RDS instance endpoint"
-  value       = module.rds.endpoint
+  value       = module.rds.db_endpoint
   sensitive   = true
 }
 

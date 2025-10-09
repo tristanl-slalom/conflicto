@@ -12,7 +12,7 @@ This document defines the execution‑ready plan for provisioning Caja platform 
 
 ## 0. Core Principles & Conventions
 
-**Region:** `us-east-1` (override via variable)
+**Region:** `us-west-2` (override via variable)
 
 **Environments:** `dev`, `staging`, `prod` (optional `sandbox`)
 
@@ -79,7 +79,7 @@ Example `backend.hcl`:
 ```hcl
 bucket         = "caja-terraform-state"
 key            = "env/dev/terraform.tfstate"
-region         = "us-east-1"
+region         = "us-west-2"
 dynamodb_table = "caja-terraform-locks"
 encrypt        = true
 ```
@@ -102,7 +102,7 @@ Optional environment hostnames (enabled by `enable_env_subdomains = true`):
 - Dev: `app.dev.caja.dbash.dev`, `api.dev.caja.dbash.dev`
 - Staging: `app.staging.caja.dbash.dev`, `api.staging.caja.dbash.dev`
 
-Certificates (ACM, region `us-east-1`):
+Certificates (ACM, region `us-west-2`):
 
 - Frontend cert: SAN list includes all app.* variants
 - API cert: SAN list includes all api.* variants
@@ -425,7 +425,7 @@ Dashboard (Phase 2): consolidated traffic, latency, error rate, saturation.
 ```hcl
 variable "project" { type = string default = "caja" }
 variable "environment" { type = string }
-variable "region" { type = string default = "us-east-1" }
+variable "region" { type = string default = "us-west-2" }
 variable "domain_name" { type = string }
 variable "hosted_zone_id" { type = string default = null }
 variable "certificate_arn" { type = string }
@@ -570,7 +570,7 @@ Role ARNs will be consumed by GitHub Actions workflows (Issue #57):
 - uses: aws-actions/configure-aws-credentials@v4
   with:
     role-to-assume: ${{ vars.AWS_DEPLOYER_ROLE_ARN }}
-    aws-region: us-east-1
+    aws-region: us-west-2
 ```
 
 Get role ARNs:

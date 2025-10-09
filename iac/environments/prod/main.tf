@@ -15,14 +15,14 @@ terraform {
   backend "s3" {
     bucket         = "conflicto-terraform-state"
     key            = "environments/prod/terraform.tfstate"
-    region         = "us-east-1"
+    region         = "us-west-2"
     encrypt        = true
     dynamodb_table = "terraform-locks"
   }
 }
 
 provider "aws" {
-  region = "us-east-1"
+  region = "us-west-2"
 
   default_tags {
     tags = {

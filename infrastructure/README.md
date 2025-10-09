@@ -48,6 +48,6 @@ All stacks use S3 remote state backend:
 
 - **Bucket:** `conflicto-terraform-state-{account-id}`
 - **Lock Table:** `conflicto-terraform-locks`
-- **Region:** `us-east-1`
+- **Region:** `us-west-2`
 
 Provisioned via `bootstrap/` stack.
