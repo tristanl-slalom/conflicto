@@ -251,10 +251,11 @@ jobs:
             exit 1
           fi
 
-          echo "🌐 Using subnet: $SUBNET_ID"
-          echo "🔒 Using security groups: $SECURITY_GROUPS"
+          echo "Running database reset task..."
+          echo "Subnet: $SUBNET_ID"
+          echo "Security Groups: $SECURITY_GROUPS"
 
-          # Run the reset task
+          # Run the reset task with proper security groups
           RESET_TASK_ARN=$(aws ecs run-task \
             --cluster conflicto-${ENV}-cluster \
             --task-definition $RESET_TASK_DEF_ARN \
