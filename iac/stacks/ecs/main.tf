@@ -48,6 +48,13 @@ resource "aws_cloudwatch_log_group" "app" {
   tags              = module.shared.tags
 }
 
+resource "aws_cloudwatch_log_group" "frontend" {
+  count             = var.create_service && var.frontend_image_uri != "" ? 1 : 0
+  name              = "/ecs/${local.name_prefix}-frontend"
+  retention_in_days = 14
+  tags              = module.shared.tags
+}
+
 resource "aws_ecs_cluster" "this" {
   name = "${local.name_prefix}-cluster"
   configuration {
@@ -212,7 +219,7 @@ resource "aws_lb_listener" "https" {
   ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
   certificate_arn   = var.certificate_arn
   default_action {
-    type = "fixed_response"
+    type = "fixed-response"
     fixed_response {
       content_type = "text/plain"
       message_body = "Not Found"
@@ -414,7 +421,7 @@ resource "aws_ecs_task_definition" "frontend" {
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          "awslogs-group"         = aws_cloudwatch_log_group.this.name
+          "awslogs-group"         = aws_cloudwatch_log_group.frontend[0].name
           "awslogs-region"        = var.aws_region
           "awslogs-stream-prefix" = "frontend"
         }
@@ -454,19 +461,8 @@ resource "aws_ecs_service" "app" {
     container_port   = var.container_port
   }
 
-  # Enhanced deployment configuration for CI/CD
-  deployment_configuration {
-    maximum_percent         = 200
-    minimum_healthy_percent = 50
-
-    deployment_circuit_breaker {
-      enable   = true
-      rollback = true
-    }
-  }
-
   depends_on = [aws_lb_listener.http, aws_lb_listener.https]
-  tags = module.shared.tags
+  tags       = module.shared.tags
 }
 
 # Frontend Service
@@ -491,24 +487,13 @@ resource "aws_ecs_service" "frontend" {
     container_port   = 80
   }
 
-  # Enhanced deployment configuration for CI/CD
-  deployment_configuration {
-    maximum_percent         = 200
-    minimum_healthy_percent = 50
-
-    deployment_circuit_breaker {
-      enable   = true
-      rollback = true
-    }
-  }
-
   depends_on = [aws_lb_listener.http, aws_lb_listener.https]
-  tags = module.shared.tags
+  tags       = module.shared.tags
 }
 
 # DNS record
 resource "aws_route53_record" "app" {
-  count   = var.create_service ? 1 : 0
+  count   = var.create_service && var.hosted_zone_id != "" ? 1 : 0
   zone_id = var.hosted_zone_id
   name    = var.app_domain
   type    = "A"

@@ -46,14 +46,15 @@ module "rds" {
   environment = "dev"
 
   # Development-specific sizing
-  instance_class          = "db.t4g.micro"
-  allocated_storage       = 20
-  backup_retention_period = 1
-  skip_final_snapshot     = true
+  instance_class        = "db.t4g.micro"
+  allocated_storage     = 20
+  backup_retention_days = 1
+  deletion_protection   = false
+  multi_az              = false
 
   # Network dependencies
-  vpc_id              = module.network.vpc_id
-  private_subnet_ids  = module.network.private_subnet_ids
+  vpc_id            = module.network.vpc_id
+  data_subnet_ids   = module.network.data_subnet_ids
 }
 
 # ECS Services
@@ -75,24 +76,30 @@ module "ecs" {
   frontend_memory       = 512
 
   # Database connection
-  database_url          = module.rds.database_url
+  database_url          = module.rds.db_connection_url
 
   # Network dependencies
   vpc_id              = module.network.vpc_id
   public_subnet_ids   = module.network.public_subnet_ids
-  private_subnet_ids  = module.network.private_subnet_ids
+  private_subnet_ids  = module.network.app_subnet_ids
+  app_subnet_ids      = module.network.app_subnet_ids
+
+  # Disable HTTPS and DNS for basic deployment
+  enable_https      = false
+  hosted_zone_id    = ""
+  app_domain        = ""
 }
 
-# DNS Configuration
-module "dns" {
-  source      = "../../stacks/dns"
-  environment = "dev"
-
-  # Development domain
-  domain_name = "dev.conflicto.app"
-  alb_dns_name = module.ecs.alb_dns_name
-  alb_zone_id  = module.ecs.alb_zone_id
-}
+# DNS Configuration (commented out - only needed if using custom domain with ACM certificate)
+# module "dns" {
+#   source      = "../../stacks/dns"
+#   environment = "dev"
+#   
+#   # Development domain configuration
+#   root_domain          = "conflicto.app"
+#   primary_app_domain   = "dev.conflicto.app"
+#   app_subdomains       = ["api.dev.conflicto.app"]
+# }
 
 # Security Group Rule: Allow ECS App to connect to RDS
 resource "aws_security_group_rule" "app_to_database" {

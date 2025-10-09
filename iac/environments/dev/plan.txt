@@ -1,0 +1,39 @@
+[33m╷[0m[0m
+[33m│[0m [0m[1m[33mWarning: [0m[0m[1mBackend configuration ignored[0m
+[33m│[0m [0m
+[33m│[0m [0m[0m  on ../../stacks/dns/versions.tf line 9, in terraform:
+[33m│[0m [0m   9:   [4mbackend "s3"[0m {}[0m
+[33m│[0m [0m
+[33m│[0m [0mAny selected backend applies to the entire configuration, so Terraform
+[33m│[0m [0mexpects backend configurations only in the root module.
+[33m│[0m [0m
+[33m│[0m [0mThis is a warning rather than an error because it's sometimes convenient to
+[33m│[0m [0mtemporarily call a root module as a child module for testing purposes, but
+[33m│[0m [0mthis backend configuration block will have no effect.
+[33m│[0m [0m
+[33m│[0m [0m(and 3 more similar warnings elsewhere)
+[33m╵[0m[0m
+[31m╷[0m[0m
+[31m│[0m [0m[1m[31mError: [0m[0m[1mUnsupported argument[0m
+[31m│[0m [0m
+[31m│[0m [0m[0m  on main.tf line 92, in module "dns":
+[31m│[0m [0m  92:   [4mdomain_name[0m = "dev.conflicto.app"[0m
+[31m│[0m [0m
+[31m│[0m [0mAn argument named "domain_name" is not expected here.
+[31m╵[0m[0m
+[31m╷[0m[0m
+[31m│[0m [0m[1m[31mError: [0m[0m[1mUnsupported argument[0m
+[31m│[0m [0m
+[31m│[0m [0m[0m  on main.tf line 93, in module "dns":
+[31m│[0m [0m  93:   [4malb_dns_name[0m = module.ecs.alb_dns_name[0m
+[31m│[0m [0m
+[31m│[0m [0mAn argument named "alb_dns_name" is not expected here.
+[31m╵[0m[0m
+[31m╷[0m[0m
+[31m│[0m [0m[1m[31mError: [0m[0m[1mUnsupported argument[0m
+[31m│[0m [0m
+[31m│[0m [0m[0m  on main.tf line 94, in module "dns":
+[31m│[0m [0m  94:   [4malb_zone_id[0m  = module.ecs.alb_zone_id[0m
+[31m│[0m [0m
+[31m│[0m [0mAn argument named "alb_zone_id" is not expected here.
+[31m╵[0m[0m
