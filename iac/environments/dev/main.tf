@@ -14,7 +14,7 @@ terraform {
 
   backend "s3" {
     bucket         = "conflicto-terraform-state"
-    key            = "environments/dev/terraform.tfstate"
+    key            = "environments/dev-us-west-2/terraform.tfstate"
     region         = "us-east-1"
     encrypt        = true
     dynamodb_table = "terraform-locks"
@@ -22,7 +22,7 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-east-1"
+  region = "us-west-2"
 
   default_tags {
     tags = {
@@ -38,6 +38,9 @@ provider "aws" {
 module "network" {
   source      = "../../stacks/network"
   environment = "dev"
+  
+  # Disable flow logs (no IAM permission to create role)
+  enable_flow_logs = false
 }
 
 # RDS Database
@@ -77,6 +80,9 @@ module "ecs" {
 
   # Database connection
   database_url          = module.rds.db_connection_url
+
+  # Use existing IAM role (don't have permission to create new ones)
+  existing_task_execution_role_arn = "arn:aws:iam::418389084763:role/conflicto-dev-ecs-exec"
 
   # Network dependencies
   vpc_id              = module.network.vpc_id
