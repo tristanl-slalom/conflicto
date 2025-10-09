@@ -1,0 +1,386 @@
+name: Reset Database
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to reset database for'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+        default: dev
+      confirmation:
+        description: 'Type "RESET" to confirm destructive action'
+        required: true
+        type: string
+
+permissions:
+  id-token: write   # Required for OIDC authentication
+  contents: read
+
+jobs:
+  reset-database:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+
+    steps:
+      - name: Validate confirmation
+        run: |
+          if [ "${{ github.event.inputs.confirmation }}" != "RESET" ]; then
+            echo "❌ Confirmation failed. You must type 'RESET' to proceed."
+            exit 1
+          fi
+          echo "✅ Confirmation validated"
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Authenticate to AWS using OIDC
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOYER_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-west-2' }}
+          role-session-name: GitHubActions-ResetDB-${{ github.run_id }}
+
+      # Set environment variables
+      - name: Set environment variables
+        id: vars
+        env:
+          ENV: ${{ github.event.inputs.environment }}
+        run: |
+          echo "environment=${ENV}" >> $GITHUB_OUTPUT
+          echo "db_instance=conflicto-${ENV}-db" >> $GITHUB_OUTPUT
+          echo "cluster_name=conflicto-${ENV}-cluster" >> $GITHUB_OUTPUT
+
+      # Check if this is production (prevent accidental reset)
+      - name: Production safety check
+        if: github.event.inputs.environment == 'prod'
+        run: |
+          echo "❌ Database reset is not allowed for production environment"
+          echo "This workflow is restricted to dev and staging environments only"
+          exit 1
+
+      # Get database information
+      - name: Get database information
+        id: db_info
+        env:
+          ENV: ${{ steps.vars.outputs.environment }}
+        run: |
+          # Get RDS instance info
+          DB_ENDPOINT=$(aws rds describe-db-instances \
+            --db-instance-identifier conflicto-${ENV}-db \
+            --query 'DBInstances[0].Endpoint.Address' \
+            --output text 2>/dev/null || echo "")
+
+          if [ -z "$DB_ENDPOINT" ] || [ "$DB_ENDPOINT" = "None" ]; then
+            echo "❌ Database instance conflicto-${ENV}-db not found"
+            exit 1
+          fi
+
+          echo "database_endpoint=${DB_ENDPOINT}" >> $GITHUB_OUTPUT
+          echo "✅ Found database: ${DB_ENDPOINT}"
+
+      # Stop ECS service to prevent connections during reset
+      - name: Stop ECS services
+        env:
+          ENV: ${{ steps.vars.outputs.environment }}
+        run: |
+          echo "🛑 Stopping ECS services to prevent database connections..."
+
+          # Stop backend service
+          aws ecs update-service \
+            --cluster conflicto-${ENV}-cluster \
+            --service conflicto-${ENV}-svc \
+            --desired-count 0 \
+            --no-cli-pager || echo "Backend service not found or already stopped"
+
+          # Stop frontend service if it exists
+          aws ecs update-service \
+            --cluster conflicto-${ENV}-cluster \
+            --service conflicto-${ENV}-frontend-svc \
+            --desired-count 0 \
+            --no-cli-pager || echo "Frontend service not found or already stopped"
+
+          echo "⏳ Waiting for services to stop..."
+          sleep 30
+
+      # Reset database using ECS task
+      - name: Reset database
+        env:
+          ENV: ${{ steps.vars.outputs.environment }}
+        run: |
+          echo "🗄️ Resetting database..."
+
+          # Create a task definition for database reset
+          cat > reset-task-definition.json << 'EOF'
+          {
+            "family": "conflicto-DATABASE_RESET_TASK",
+            "networkMode": "awsvpc",
+            "requiresCompatibilities": ["FARGATE"],
+            "cpu": "256",
+            "memory": "512",
+            "executionRoleArn": "arn:aws:iam::418389084763:role/conflicto-ENV-ecs-exec",
+            "taskRoleArn": "arn:aws:iam::418389084763:role/conflicto-ENV-ecs-exec",
+            "containerDefinitions": [
+              {
+                "name": "database-reset",
+                "image": "postgres:15",
+                "essential": true,
+                "command": [
+                  "sh", "-c",
+                  "echo 'Starting database reset...' && PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -d postgres -c 'DROP DATABASE IF EXISTS caja_db;' && PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -d postgres -c 'CREATE DATABASE caja_db;' && echo 'Database reset complete!'"
+                ],
+                "environment": [
+                  {
+                    "name": "DB_HOST",
+                    "value": "DATABASE_ENDPOINT"
+                  },
+                  {
+                    "name": "DB_USER",
+                    "value": "caja_user"
+                  },
+                  {
+                    "name": "DB_PASSWORD",
+                    "value": "caja_password"
+                  }
+                ],
+                "logConfiguration": {
+                  "logDriver": "awslogs",
+                  "options": {
+                    "awslogs-group": "/ecs/conflicto-database-reset",
+                    "awslogs-region": "us-west-2",
+                    "awslogs-stream-prefix": "reset",
+                    "awslogs-create-group": "true"
+                  }
+                }
+              }
+            ]
+          }
+          EOF
+
+          # Replace placeholders
+          sed -i "s/ENV/${ENV}/g" reset-task-definition.json
+          sed -i "s/DATABASE_ENDPOINT/${{ steps.db_info.outputs.database_endpoint }}/g" reset-task-definition.json
+          sed -i "s/DATABASE_RESET_TASK/${ENV}-db-reset/g" reset-task-definition.json
+
+          # Register task definition
+          RESET_TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://reset-task-definition.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          echo "📝 Registered reset task definition: $RESET_TASK_DEF_ARN"
+
+          # Get subnet and security group
+          SUBNET_ID=$(aws ec2 describe-subnets \
+            --filters "Name=tag:Name,Values=conflicto-${ENV}-private-*" \
+            --query 'Subnets[0].SubnetId' \
+            --output text 2>/dev/null || \
+            aws ec2 describe-subnets \
+            --filters "Name=tag:Name,Values=conflicto-${ENV}-app-*" \
+            --query 'Subnets[0].SubnetId' \
+            --output text)
+
+          SECURITY_GROUPS=$(aws ec2 describe-security-groups \
+            --filters "Name=tag:Name,Values=conflicto-${ENV}-app" \
+            --query 'SecurityGroups[0].GroupId' \
+            --output text 2>/dev/null)
+
+          # Add database security group
+          DB_SECURITY_GROUP=$(aws ec2 describe-security-groups \
+            --filters "Name=tag:Name,Values=conflicto-${ENV}-db" \
+            --query 'SecurityGroups[0].GroupId' \
+            --output text 2>/dev/null)
+
+          if [ -n "$DB_SECURITY_GROUP" ] && [ "$DB_SECURITY_GROUP" != "None" ]; then
+            SECURITY_GROUPS="${SECURITY_GROUPS},${DB_SECURITY_GROUP}"
+          fi
+
+          echo "🌐 Using subnet: $SUBNET_ID"
+          echo "🔒 Using security groups: $SECURITY_GROUPS"
+
+          # Run the reset task
+          RESET_TASK_ARN=$(aws ecs run-task \
+            --cluster conflicto-${ENV}-cluster \
+            --task-definition $RESET_TASK_DEF_ARN \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_ID],securityGroups=[$SECURITY_GROUPS],assignPublicIp=DISABLED}" \
+            --query 'tasks[0].taskArn' \
+            --output text)
+
+          echo "🚀 Started reset task: $RESET_TASK_ARN"
+
+          # Wait for task to complete
+          echo "⏳ Waiting for database reset to complete..."
+          aws ecs wait tasks-stopped \
+            --cluster conflicto-${ENV}-cluster \
+            --tasks $RESET_TASK_ARN
+
+          # Check task exit code
+          TASK_EXIT_CODE=$(aws ecs describe-tasks \
+            --cluster conflicto-${ENV}-cluster \
+            --tasks $RESET_TASK_ARN \
+            --query 'tasks[0].containers[0].exitCode' \
+            --output text)
+
+          if [ "$TASK_EXIT_CODE" = "0" ]; then
+            echo "✅ Database reset completed successfully!"
+          else
+            echo "❌ Database reset failed with exit code: $TASK_EXIT_CODE"
+
+            # Try to get logs
+            echo "📋 Task logs:"
+            aws logs filter-log-events \
+              --log-group-name "/ecs/conflicto-database-reset" \
+              --start-time $(date -d '5 minutes ago' +%s)000 \
+              --query 'events[].message' \
+              --output text || echo "Could not retrieve logs"
+
+            exit 1
+          fi
+
+      # Run fresh migrations
+      - name: Run database migrations
+        env:
+          ENV: ${{ steps.vars.outputs.environment }}
+        run: |
+          echo "🔄 Running fresh database migrations..."
+
+          # Get the latest backend image from ECR
+          BACKEND_IMAGE=$(aws ecr describe-images \
+            --repository-name conflicto-${ENV}-frontend \
+            --image-ids imageTag=backend-latest \
+            --query 'imageDetails[0].imageTags[0]' \
+            --output text 2>/dev/null || echo "backend-latest")
+
+          if [ "$BACKEND_IMAGE" = "None" ] || [ -z "$BACKEND_IMAGE" ]; then
+            echo "❌ No backend image found. Please deploy the backend first."
+            exit 1
+          fi
+
+          IMAGE_URI="418389084763.dkr.ecr.us-west-2.amazonaws.com/conflicto-${ENV}-frontend:${BACKEND_IMAGE}"
+          echo "📦 Using image: $IMAGE_URI"
+
+          # Create migration task definition
+          cat > migration-task-definition.json << 'EOF'
+          {
+            "family": "conflicto-MIGRATION_TASK",
+            "networkMode": "awsvpc",
+            "requiresCompatibilities": ["FARGATE"],
+            "cpu": "256",
+            "memory": "512",
+            "executionRoleArn": "arn:aws:iam::418389084763:role/conflicto-ENV-ecs-exec",
+            "taskRoleArn": "arn:aws:iam::418389084763:role/conflicto-ENV-ecs-exec",
+            "containerDefinitions": [
+              {
+                "name": "migration",
+                "image": "BACKEND_IMAGE_URI",
+                "essential": true,
+                "command": ["poetry", "run", "alembic", "upgrade", "head"],
+                "environment": [
+                  {
+                    "name": "DATABASE_URL",
+                    "value": "postgresql://caja_user:caja_password@DATABASE_ENDPOINT:5432/caja_db"
+                  }
+                ],
+                "logConfiguration": {
+                  "logDriver": "awslogs",
+                  "options": {
+                    "awslogs-group": "/ecs/conflicto-database-migration",
+                    "awslogs-region": "us-west-2",
+                    "awslogs-stream-prefix": "migration",
+                    "awslogs-create-group": "true"
+                  }
+                }
+              }
+            ]
+          }
+          EOF
+
+          # Replace placeholders
+          sed -i "s/ENV/${ENV}/g" migration-task-definition.json
+          sed -i "s|BACKEND_IMAGE_URI|${IMAGE_URI}|g" migration-task-definition.json
+          sed -i "s/DATABASE_ENDPOINT/${{ steps.db_info.outputs.database_endpoint }}/g" migration-task-definition.json
+          sed -i "s/MIGRATION_TASK/${ENV}-db-migration/g" migration-task-definition.json
+
+          # Register and run migration
+          MIGRATION_TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://migration-task-definition.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          echo "📝 Registered migration task definition: $MIGRATION_TASK_DEF_ARN"
+
+          # Run migration task (reuse network config from reset)
+          MIGRATION_TASK_ARN=$(aws ecs run-task \
+            --cluster conflicto-${ENV}-cluster \
+            --task-definition $MIGRATION_TASK_DEF_ARN \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_ID],securityGroups=[$SECURITY_GROUPS],assignPublicIp=DISABLED}" \
+            --query 'tasks[0].taskArn' \
+            --output text)
+
+          echo "🚀 Started migration task: $MIGRATION_TASK_ARN"
+
+          # Wait for migration to complete
+          echo "⏳ Waiting for migrations to complete..."
+          aws ecs wait tasks-stopped \
+            --cluster conflicto-${ENV}-cluster \
+            --tasks $MIGRATION_TASK_ARN
+
+          # Check migration exit code
+          MIGRATION_EXIT_CODE=$(aws ecs describe-tasks \
+            --cluster conflicto-${ENV}-cluster \
+            --tasks $MIGRATION_TASK_ARN \
+            --query 'tasks[0].containers[0].exitCode' \
+            --output text)
+
+          if [ "$MIGRATION_EXIT_CODE" = "0" ]; then
+            echo "✅ Database migrations completed successfully!"
+          else
+            echo "❌ Database migrations failed with exit code: $MIGRATION_EXIT_CODE"
+            exit 1
+          fi
+
+      # Restart ECS services
+      - name: Restart ECS services
+        env:
+          ENV: ${{ steps.vars.outputs.environment }}
+        run: |
+          echo "🔄 Restarting ECS services..."
+
+          # Restart backend service
+          aws ecs update-service \
+            --cluster conflicto-${ENV}-cluster \
+            --service conflicto-${ENV}-svc \
+            --desired-count 1 \
+            --no-cli-pager || echo "Backend service not found"
+
+          # Restart frontend service if it exists
+          aws ecs update-service \
+            --cluster conflicto-${ENV}-cluster \
+            --service conflicto-${ENV}-frontend-svc \
+            --desired-count 1 \
+            --no-cli-pager || echo "Frontend service not found"
+
+          echo "✅ Services restarted"
+
+      # Output summary
+      - name: Reset summary
+        env:
+          ENV: ${{ steps.vars.outputs.environment }}
+        run: |
+          echo "## 🗄️ Database Reset Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** ${ENV}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Database:** ${{ steps.db_info.outputs.database_endpoint }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Action:** Database dropped and recreated" >> $GITHUB_STEP_SUMMARY
+          echo "- **Migrations:** Applied fresh migrations to new database" >> $GITHUB_STEP_SUMMARY
+          echo "- **Services:** Restarted ECS services" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⚠️ **All data in the ${ENV} database has been permanently deleted.**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Database reset successful!" >> $GITHUB_STEP_SUMMARY
