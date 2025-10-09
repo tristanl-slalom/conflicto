@@ -15,7 +15,6 @@ from app.db.models import (
     SessionStatus,
     UserResponse,
 )
-from app.main import app
 
 
 @pytest.mark.asyncio

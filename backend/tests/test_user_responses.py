@@ -2,7 +2,6 @@
 Simplified tests for User Response functionality.
 """
 
-import pytest
 from uuid import uuid4
 
 

@@ -5,7 +5,7 @@ Test configuration and fixtures.
 import asyncio
 import os
 from collections.abc import AsyncGenerator
-from typing import Generator
+from collections.abc import Generator
 
 import pytest
 

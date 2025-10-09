@@ -1,7 +1,6 @@
 """API routes for User Response operations."""
 
 from datetime import datetime
-from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -166,7 +165,7 @@ async def delete_response(
 
 @router.get(
     "/sessions/{session_id}/participants/{participant_id}/responses",
-    response_model=List[UserResponse],
+    response_model=list[UserResponse],
 )
 async def get_participant_responses(
     session_id: int,
@@ -174,7 +173,7 @@ async def get_participant_responses(
     offset: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     db: AsyncSession = Depends(get_db),
-) -> List[UserResponse]:
+) -> list[UserResponse]:
     """Get all responses by a specific participant in a session."""
     try:
         responses = await UserResponseService.get_responses_by_participant(

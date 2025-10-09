@@ -1,7 +1,7 @@
 """Service layer for User Response operations."""
 
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import desc, func, select
@@ -44,7 +44,7 @@ class UserResponseService:
         activity_id: UUID,
         offset: int = 0,
         limit: int = 100,
-    ) -> List[UserResponse]:
+    ) -> list[UserResponse]:
         """Get all responses for a specific activity."""
         query = (
             select(UserResponse)
@@ -149,7 +149,7 @@ class UserResponseService:
         participant_id: int,
         offset: int = 0,
         limit: int = 100,
-    ) -> List[UserResponse]:
+    ) -> list[UserResponse]:
         """Get all responses by a specific participant in a session."""
         query = (
             select(UserResponse)
@@ -171,7 +171,7 @@ class UserResponseService:
         activity_id: UUID,
         since: datetime,
         limit: int = 1000,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get responses created since a specific timestamp for incremental updates."""
         query = (
             select(UserResponse)

@@ -1,7 +1,7 @@
 """Pydantic schemas for User Response models."""
 
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field, ConfigDict
@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field, ConfigDict
 class UserResponseBase(BaseModel):
     """Base schema for User Response."""
 
-    response_data: Dict[str, Any] = Field(
+    response_data: dict[str, Any] = Field(
         ..., description="Activity-specific response data in JSON format"
     )
 
@@ -51,5 +51,5 @@ class UserResponseSummary(BaseModel):
 class UserResponseList(BaseModel):
     """Schema for paginated User Response list with summary."""
 
-    responses: List[UserResponse]
+    responses: list[UserResponse]
     summary: UserResponseSummary

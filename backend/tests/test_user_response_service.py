@@ -3,15 +3,14 @@ Comprehensive tests for UserResponseService to improve test coverage.
 """
 
 import pytest
-from datetime import datetime, timezone
-from uuid import uuid4, UUID
+from datetime import datetime, UTC
+from uuid import uuid4
 
 from app.services.user_response_service import UserResponseService
 from app.models.jsonb_schemas.user_response import (
     UserResponseCreate,
     UserResponseUpdate,
 )
-from app.db.models import UserResponse
 
 
 class TestUserResponseService:
@@ -25,7 +24,7 @@ class TestUserResponseService:
                 "question": "What's your favorite programming language?",
                 "answer": "Python",
                 "confidence": 0.95,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
         )
 
@@ -253,7 +252,9 @@ class TestUserResponseService:
         update_data = UserResponseUpdate(response_data={"answer": "Updated answer"})
 
         result = await UserResponseService.update_response(
-            db=db_session, response_id=uuid4(), response_data=update_data  # Random UUID
+            db=db_session,
+            response_id=uuid4(),
+            response_data=update_data,  # Random UUID
         )
 
         assert result is None
@@ -292,7 +293,8 @@ class TestUserResponseService:
     async def test_delete_response_not_found(self, db_session):
         """Test deleting a non-existent response."""
         result = await UserResponseService.delete_response(
-            db=db_session, response_id=uuid4()  # Random UUID
+            db=db_session,
+            response_id=uuid4(),  # Random UUID
         )
 
         assert result is False
@@ -478,7 +480,7 @@ class TestUserResponseService:
         )
 
         # Use a timestamp that's definitely before the response
-        since_time = datetime(2020, 1, 1, tzinfo=timezone.utc)
+        since_time = datetime(2020, 1, 1, tzinfo=UTC)
 
         # Get responses since the timestamp
         result = await UserResponseService.get_responses_since(
@@ -500,7 +502,7 @@ class TestUserResponseService:
         data = sample_session_activity_participant
 
         # Use current time - should find no responses
-        since_time = datetime.now(timezone.utc)
+        since_time = datetime.now(UTC)
 
         result = await UserResponseService.get_responses_since(
             db=db_session,
@@ -520,7 +522,7 @@ class TestUserResponseService:
         data = sample_session_activity_participant
 
         # Use a timestamp that's definitely before any responses are created
-        since_time = datetime(2020, 1, 1, tzinfo=timezone.utc)
+        since_time = datetime(2020, 1, 1, tzinfo=UTC)
 
         # Create multiple responses
         for i in range(3):

@@ -1,6 +1,6 @@
 """Tests for real-time status polling endpoints."""
 
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -157,7 +157,7 @@ class TestStatusPolling:
         await db_session.flush()
 
         # Create initial responses with different timestamps
-        base_time = datetime.now(timezone.utc)
+        base_time = datetime.now(UTC)
 
         response1 = UserResponse(
             session_id=session.id,

@@ -373,8 +373,8 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     docker-compose stop backend
 
     log_info "Dropping and recreating database..."
-    docker-compose exec postgres psql -U caja_user -d postgres -c "DROP DATABASE IF EXISTS caja_db;"
-    docker-compose exec postgres psql -U caja_user -d postgres -c "CREATE DATABASE caja_db;"
+    docker-compose exec -T postgres psql -U caja_user -d postgres -c "DROP DATABASE IF EXISTS caja_db;"
+    docker-compose exec -T postgres psql -U caja_user -d postgres -c "CREATE DATABASE caja_db;"
 
     log_info "Running migrations..."
     poetry run alembic upgrade head
