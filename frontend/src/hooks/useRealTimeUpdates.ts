@@ -31,23 +31,32 @@ export function useRealTimeUpdates({
     queryFn: async () => {
       if (!sessionId) throw new Error('No session ID provided');
 
-      const response = await getSessionStatusApiV1SessionsSessionIdStatusGet(sessionId);
+      try {
+        const response = await getSessionStatusApiV1SessionsSessionIdStatusGet(sessionId);
 
-      if ('data' in response && response.data && 'status' in response.data) {
-        const sessionData = response.data;
-        return {
-          status: sessionData.status,
-          participantCount: sessionData.participant_count,
-          currentActivityId: sessionData.current_activity_id ?? null,
-          lastUpdated: sessionData.last_updated,
-        };
+        if ('data' in response && response.data && 'status' in response.data) {
+          const sessionData = response.data;
+          return {
+            status: sessionData.status,
+            participantCount: sessionData.participant_count,
+            currentActivityId: sessionData.current_activity_id ?? null,
+            lastUpdated: sessionData.last_updated,
+          };
+        }
+
+        throw new Error('Invalid response format');
+      } catch (error) {
+        console.warn('Failed to fetch session status:', error);
+        throw error;
       }
-
-      throw new Error('Invalid response format');
     },
     enabled: enabled && !!sessionId,
     refetchInterval: pollingInterval,
     refetchIntervalInBackground: true,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff with max 30s
+    staleTime: pollingInterval / 2, // Consider data stale after half the polling interval
+    gcTime: pollingInterval * 2, // Keep in cache for 2 polling cycles
   });
 
   const data = queryResult.data as RealTimeData | undefined;

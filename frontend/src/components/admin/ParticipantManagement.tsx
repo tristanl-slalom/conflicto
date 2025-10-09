@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Copy, ExternalLink, QrCode, Users, UserMinus, AlertTriangle, CheckCircle } from 'lucide-react';
-import { SessionDetail, getSessionParticipantsApiV1SessionsSessionIdParticipantsGet } from '../../api/generated';
-import { useRealTimeUpdates } from '../../hooks/useRealTimeUpdates';
+import { SessionDetail, getSessionParticipantsApiV1SessionsSessionIdParticipantsGet, removeParticipantApiV1ParticipantsParticipantIdDelete } from '../../api/generated';
 
 interface ParticipantManagementProps {
   session?: SessionDetail;
@@ -11,32 +10,39 @@ interface ParticipantManagementProps {
 
 export function ParticipantManagement({ session, className = '' }: ParticipantManagementProps) {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  // Get participants list
-  const { data: participantsResponse, refetch: refetchParticipants } = useQuery({
+  // Get participants list with real-time polling
+  const { data: participantsResponse } = useQuery({
     queryKey: ['session-participants', session?.id],
     queryFn: () => {
       if (!session?.id) throw new Error('No session ID');
       return getSessionParticipantsApiV1SessionsSessionIdParticipantsGet(session.id);
     },
     enabled: !!session?.id,
-    refetchInterval: 5000, // Refresh every 5 seconds for participant list
-  });
-
-  // Real-time participant count updates
-  const { participantCount: liveCount } = useRealTimeUpdates({
-    sessionId: session?.id,
-    enabled: !!session?.id && (session?.status === 'active' || session?.status === 'paused'),
-    pollingInterval: 3000,
-    onParticipantCountChange: () => {
-      // Refetch full participant list when count changes
-      refetchParticipants();
-    },
+    refetchInterval: session?.status === 'active' || session?.status === 'paused' ? 3000 : 10000, // Faster polling for active sessions
+    refetchIntervalInBackground: true,
+    staleTime: 1000, // Consider data stale after 1 second
   });
 
   const participants = participantsResponse && 'data' in participantsResponse && participantsResponse.data && 'participants' in participantsResponse.data
     ? participantsResponse.data.participants || []
     : [];
+
+  // Remove participant mutation
+  const removeParticipantMutation = useMutation({
+    mutationFn: (participantId: string) => removeParticipantApiV1ParticipantsParticipantIdDelete(participantId),
+    onSuccess: () => {
+      // Refetch participants list
+      queryClient.invalidateQueries({ queryKey: ['session-participants', session?.id] });
+      // Also refresh session data to update participant count
+      queryClient.invalidateQueries({ queryKey: ['session', session?.id] });
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
+    },
+    onError: (error) => {
+      console.error('Failed to remove participant:', error);
+    },
+  });
 
   const handleCopyCode = async (code: string, type: 'qr' | 'admin' | 'url') => {
     try {
@@ -55,6 +61,17 @@ export function ParticipantManagement({ session, className = '' }: ParticipantMa
   const getJoinUrl = () => {
     if (!session?.qr_code) return '';
     return `${window.location.origin}/session/${session.qr_code}`;
+  };
+
+  const handleRemoveParticipant = async (participantId: string, participantNickname: string) => {
+    if (window.confirm(`Remove ${participantNickname} from the session? This action cannot be undone.`)) {
+      try {
+        await removeParticipantMutation.mutateAsync(participantId);
+      } catch (error) {
+        console.error('Failed to remove participant:', error);
+        alert('Failed to remove participant. Please try again.');
+      }
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -90,10 +107,10 @@ export function ParticipantManagement({ session, className = '' }: ParticipantMa
         </h2>
         <div className="flex items-center gap-2">
           <span className="text-sm text-slate-400">
-            {liveCount ?? participants.length} participants
+            {participants.length} participants
           </span>
-          {liveCount !== undefined && (
-            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" title="Live count" />
+          {(session?.status === 'active' || session?.status === 'paused') && (
+            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" title="Live updates" />
           )}
         </div>
       </div>
@@ -215,13 +232,9 @@ export function ParticipantManagement({ session, className = '' }: ParticipantMa
                   </span>
 
                   <button
-                    onClick={() => {
-                      if (window.confirm(`Remove ${participant.nickname} from the session?`)) {
-                        // TODO: Implement participant removal
-                        console.log('Remove participant:', participant.participant_id);
-                      }
-                    }}
-                    className="p-1 text-slate-400 hover:text-red-400 hover:bg-slate-600 rounded transition-colors"
+                    onClick={() => handleRemoveParticipant(participant.participant_id, participant.nickname)}
+                    disabled={removeParticipantMutation.isPending}
+                    className="p-1 text-slate-400 hover:text-red-400 hover:bg-slate-600 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Remove participant"
                   >
                     <UserMinus className="w-4 h-4" />
@@ -238,6 +251,22 @@ export function ParticipantManagement({ session, className = '' }: ParticipantMa
           </div>
         )}
       </div>
+
+      {/* Error Display */}
+      {removeParticipantMutation.error && (
+        <div className="mt-4 p-3 bg-red-900/30 border border-red-500/30 rounded-lg">
+          <div className="flex items-center text-red-400 text-sm">
+            <AlertTriangle className="w-4 h-4 mr-2 flex-shrink-0" />
+            <span>
+              Failed to remove participant: {
+                removeParticipantMutation.error instanceof Error
+                  ? removeParticipantMutation.error.message
+                  : 'Unknown error'
+              }
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Session Status Info */}
       {session.status !== 'active' && (

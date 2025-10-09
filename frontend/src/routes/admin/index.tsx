@@ -1,28 +1,32 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
-import { SessionCreateForm, SessionList, SessionStatusCard, SessionControls, ActivityManagement, ParticipantManagement } from '../../components/admin';
+import { useQuery } from '@tanstack/react-query';
+import { SessionCreateForm, SessionList, SessionStatusCard, SessionControls, ActivityManagement, ParticipantManagement, QRCodeDisplay } from '../../components/admin';
 import type { SessionDetail, SessionResponse } from '../../api/generated';
+import { getSessionApiV1SessionsSessionIdGet } from '../../api/generated';
 
 export const Route = createFileRoute('/admin/')({
   component: AdminLayout,
 });
 
 function AdminLayout() {
-  const [selectedSession, setSelectedSession] = useState<SessionDetail | undefined>();
+  const [selectedSessionId, setSelectedSessionId] = useState<number | undefined>();
+
+  // Fetch the full session details when a session is selected
+  const { data: sessionData } = useQuery({
+    queryKey: ['session', selectedSessionId],
+    queryFn: () => selectedSessionId ? getSessionApiV1SessionsSessionIdGet(selectedSessionId) : null,
+    enabled: !!selectedSessionId,
+  });
+
+  // Use sessionData directly instead of selectedSession state
 
   const handleSessionCreated = (session: SessionDetail) => {
-    setSelectedSession(session);
+    setSelectedSessionId(session.id);
   };
 
   const handleSessionSelected = (session: SessionResponse) => {
-    // Convert SessionResponse to SessionDetail for display
-    // Note: In a real app, you might fetch full details here
-    const sessionDetail: SessionDetail = {
-      ...session,
-      activities: [], // Would need to get this from API
-      participants: [], // Would need to get this from API
-    };
-    setSelectedSession(sessionDetail);
+    setSelectedSessionId(session.id);
   };
 
   return (
@@ -50,8 +54,8 @@ function AdminLayout() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Session Controls */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+          {/* Session Management */}
           <div className="lg:col-span-2 space-y-6">
             {/* Session Creation Form */}
             <SessionCreateForm
@@ -70,12 +74,11 @@ function AdminLayout() {
             />
 
             {/* Activity Management */}
-            {selectedSession && (
+            {sessionData?.data && (
               <ActivityManagement
-                session={selectedSession}
+                session={sessionData.data}
                 onActivityChange={() => {
-                  console.log('Activity changed - refreshing session data...');
-                  // Could refresh session data here
+                  // Session data will auto-refresh via TanStack Query
                 }}
               />
             )}
@@ -84,27 +87,50 @@ function AdminLayout() {
           {/* Session Status Sidebar */}
           <div className="space-y-6">
             {/* Session Controls */}
-            <SessionControls
-              session={selectedSession}
-              onStatusChange={(newStatus) => {
-                console.log('Session status changed to:', newStatus);
-                // Could refresh session data here
-              }}
-            />
+            {sessionData?.data && (
+              <SessionControls
+                session={sessionData.data}
+                onStatusChange={(newStatus) => {
+                  console.log('Session status changed to:', newStatus);
+                  // Could refresh session data here
+                }}
+              />
+            )}
+
+            {/* QR Code Display - Main Desktop Version */}
+            {sessionData?.data && sessionData.data.qr_code && (
+              <QRCodeDisplay
+                session={sessionData.data}
+                size="large"
+                showUrl={true}
+                className="hidden lg:block" // Show on desktop/large screens
+              />
+            )}
 
             {/* Current Session Status */}
-            <SessionStatusCard
-              session={selectedSession}
-              onRefresh={() => {
-                // Could refresh session data here
-                console.log('Refreshing session data...');
-              }}
-            />
+            {sessionData?.data && (
+              <SessionStatusCard
+                session={sessionData.data}
+                onRefresh={() => {
+                  // Session data will auto-refresh via TanStack Query
+                }}
+              />
+            )}
 
             {/* Participant Management */}
-            {selectedSession && (
+            {sessionData?.data && (
               <ParticipantManagement
-                session={selectedSession}
+                session={sessionData.data}
+              />
+            )}
+
+            {/* QR Code Display - Mobile/Tablet Version */}
+            {sessionData?.data && sessionData.data.qr_code && (
+              <QRCodeDisplay
+                session={sessionData.data}
+                size="medium"
+                showUrl={true}
+                className="lg:hidden" // Only show on mobile/tablet
               />
             )}
 
@@ -126,13 +152,21 @@ function AdminLayout() {
 
             {/* Help Card */}
             <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
-              <h2 className="text-lg font-medium text-white mb-4">Help</h2>
+              <h2 className="text-lg font-medium text-white mb-4">Getting Started</h2>
               <div className="space-y-2 text-sm text-gray-400">
-                <p>• Create sessions with title and optional description</p>
-                <p>• Sessions start in draft status</p>
-                <p>• Share QR codes for participant access</p>
-                <p>• Monitor real-time participation</p>
+                <p>• Create sessions with activities</p>
+                <p>• Start sessions to enable joining</p>
+                <p>• Share QR codes for easy access</p>
+                <p>• Monitor live participation</p>
+                <p>• Manage activities in real-time</p>
               </div>
+              {sessionData?.data && (
+                <div className="mt-4 pt-4 border-t border-slate-600">
+                  <p className="text-xs text-slate-500">
+                    Selected: <span className="text-white">{sessionData.data.title}</span>
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

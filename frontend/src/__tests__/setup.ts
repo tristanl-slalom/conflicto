@@ -1,7 +1,13 @@
-import { vi } from 'vitest';
+import { vi, afterEach } from 'vitest';
+import { cleanup } from '@testing-library/react';
 
 // Test setup configuration for Caja frontend
 // This file is loaded before each test to setup the testing environment
+
+// Cleanup DOM after each test to prevent cross-test pollution
+afterEach(() => {
+  cleanup();
+});
 
 // Setup localStorage mock
 const localStorageMock = {
@@ -50,28 +56,14 @@ vi.mock('@tanstack/react-router', () => ({
   useSearch: () => ({}),
 }));
 
-// Mock TanStack Query
-vi.mock('@tanstack/react-query', () => ({
-  useQuery: vi.fn(() => ({
-    data: null,
-    isLoading: false,
-    error: null,
-  })),
-  useMutation: vi.fn(() => ({
-    mutate: vi.fn(),
-    isLoading: false,
-    error: null,
-  })),
-  useQueryClient: vi.fn(() => ({
-    invalidateQueries: vi.fn(),
-    setQueryData: vi.fn(),
-  })),
-  QueryClient: vi.fn(() => ({
-    invalidateQueries: vi.fn(),
-    setQueryData: vi.fn(),
-  })),
-  QueryClientProvider: ({ children }: { children: any }) => children,
-}));
+// Mock TanStack Query - allow actual implementation to work properly in tests
+vi.mock('@tanstack/react-query', async () => {
+  const actual = await vi.importActual('@tanstack/react-query');
+  return {
+    ...actual,
+    // Don't mock the core functionality, let it work normally for tests
+  };
+});
 
 // Mock Lucide React icons
 vi.mock('lucide-react', () => {
@@ -88,5 +80,25 @@ vi.mock('lucide-react', () => {
     Send: MockIcon,
     CheckCircle: MockIcon,
     Maximize: MockIcon,
+    // Additional icons used in admin components
+    Copy: MockIcon,
+    AlertTriangle: MockIcon,
+    Maximize2: MockIcon,
+    Clock: MockIcon,
+    Play: MockIcon,
+    Pause: MockIcon,
+    Square: MockIcon,
+    UserPlus: MockIcon,
+    UserMinus: MockIcon,
+    Eye: MockIcon,
+    EyeOff: MockIcon,
+    Trash2: MockIcon,
+    Plus: MockIcon,
+    Edit: MockIcon,
+    X: MockIcon,
+    ExternalLink: MockIcon,
+    Download: MockIcon,
+    Save: MockIcon,
+    RefreshCw: MockIcon,
   };
 });

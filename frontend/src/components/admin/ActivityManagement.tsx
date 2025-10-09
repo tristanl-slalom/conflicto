@@ -7,7 +7,9 @@ import {
   getActivityTypesApiV1ActivitiesTypesGet,
   createActivityApiV1SessionsSessionIdActivitiesPost,
   deleteActivityApiV1ActivitiesActivityIdDelete,
+  updateActivityApiV1ActivitiesActivityIdPut,
   ActivityCreate,
+  ActivityUpdate,
 } from '../../api/generated';
 
 interface ActivityManagementProps {
@@ -25,6 +27,7 @@ interface ActivityFormData {
 
 export function ActivityManagement({ session, onActivityChange, className = '' }: ActivityManagementProps) {
   const [isCreating, setIsCreating] = useState(false);
+  const [editingActivity, setEditingActivity] = useState<{ id: string; data: ActivityFormData } | null>(null);
   const [formData, setFormData] = useState<ActivityFormData>({
     type: ActivityType.poll,
     title: '',
@@ -48,9 +51,11 @@ export function ActivityManagement({ session, onActivityChange, className = '' }
   const createActivityMutation = useMutation({
     mutationFn: async (activityData: ActivityCreate) => {
       if (!session?.id) throw new Error('No session selected');
+      console.log('Creating activity:', { sessionId: session.id, activityData });
       return createActivityApiV1SessionsSessionIdActivitiesPost(session.id, activityData);
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
+      console.log('Activity created successfully:', response);
       queryClient.invalidateQueries({ queryKey: ['session', session?.id] });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
       onActivityChange?.();
@@ -62,6 +67,9 @@ export function ActivityManagement({ session, onActivityChange, className = '' }
         config: {},
       });
     },
+    onError: (error) => {
+      console.error('Failed to create activity:', error);
+    },
   });
 
   // Delete activity mutation
@@ -71,6 +79,18 @@ export function ActivityManagement({ session, onActivityChange, className = '' }
       queryClient.invalidateQueries({ queryKey: ['session', session?.id] });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
       onActivityChange?.();
+    },
+  });
+
+  // Update activity mutation
+  const updateActivityMutation = useMutation({
+    mutationFn: ({ activityId, data }: { activityId: string; data: ActivityUpdate }) =>
+      updateActivityApiV1ActivitiesActivityIdPut(activityId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['session', session?.id] });
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      onActivityChange?.();
+      setEditingActivity(null);
     },
   });
 
@@ -91,10 +111,44 @@ export function ActivityManagement({ session, onActivityChange, className = '' }
     createActivityMutation.mutate(activityData);
   };
 
-  const handleDeleteActivity = (activityId: string) => {
+  const handleDeleteActivity = (activity: any) => {
     if (window.confirm('Are you sure you want to delete this activity?')) {
-      deleteActivityMutation.mutate(activityId);
+      // Use the original UUID stored in configuration, fallback to string conversion of id
+      const originalId = activity.configuration?._original_id || String(activity.id);
+      deleteActivityMutation.mutate(originalId);
     }
+  };
+
+  const handleEditActivity = (activity: any) => {
+    const config = activity.configuration || {};
+    // Use original UUID for edit operations, fallback to string conversion
+    const originalId = config._original_id || String(activity.id);
+    setEditingActivity({
+      id: originalId,
+      data: {
+        type: activity.activity_type,
+        title: config.title || activity.title || '',
+        description: config.description || '',
+        config: config,
+      },
+    });
+  };
+
+  const handleUpdateActivity = () => {
+    if (!editingActivity) return;
+
+    const updateData: ActivityUpdate = {
+      config: {
+        title: editingActivity.data.title,
+        description: editingActivity.data.description,
+        ...editingActivity.data.config,
+      },
+    };
+
+    updateActivityMutation.mutate({
+      activityId: editingActivity.id,
+      data: updateData,
+    });
   };
 
   const getDefaultConfigForType = (type: ActivityType): Record<string, any> => {
@@ -212,15 +266,16 @@ export function ActivityManagement({ session, onActivityChange, className = '' }
                 </span>
 
                 <button
-                  onClick={() => {/* TODO: Open activity editor */}}
-                  className="p-2 text-slate-400 hover:text-white hover:bg-slate-600 rounded-lg transition-colors"
+                  onClick={() => handleEditActivity(activity)}
+                  disabled={activity.is_active}
+                  className="p-2 text-slate-400 hover:text-white hover:bg-slate-600 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Edit activity"
                 >
                   <Settings className="w-4 h-4" />
                 </button>
 
                 <button
-                  onClick={() => handleDeleteActivity(String(activity.id))}
+                  onClick={() => handleDeleteActivity(activity)}
                   disabled={activity.is_active || deleteActivityMutation.isPending}
                   className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-600 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Delete activity"
@@ -332,6 +387,106 @@ export function ActivityManagement({ session, onActivityChange, className = '' }
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Edit Activity Modal */}
+      {editingActivity && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-slate-800 rounded-lg p-6 max-w-lg mx-4 border border-slate-700 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-medium text-white">Edit Activity</h3>
+              <button
+                onClick={() => setEditingActivity(null)}
+                className="text-slate-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Activity Title */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  value={editingActivity.data.title}
+                  onChange={(e) => setEditingActivity(prev =>
+                    prev ? {
+                      ...prev,
+                      data: { ...prev.data, title: e.target.value }
+                    } : null
+                  )}
+                  placeholder="Enter activity title"
+                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              {/* Activity Description */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Description (Optional)
+                </label>
+                <textarea
+                  value={editingActivity.data.description || ''}
+                  onChange={(e) => setEditingActivity(prev =>
+                    prev ? {
+                      ...prev,
+                      data: { ...prev.data, description: e.target.value }
+                    } : null
+                  )}
+                  placeholder="Enter activity description"
+                  rows={2}
+                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-blue-500 focus:outline-none resize-none"
+                />
+              </div>
+
+              {/* Activity-specific configuration could go here */}
+              <div className="p-3 bg-slate-700/30 rounded-lg border border-slate-600">
+                <div className="text-sm text-slate-400">
+                  <span className="font-medium text-slate-300">Activity Type:</span> {editingActivity.data.type}
+                </div>
+                <div className="text-xs text-slate-500 mt-1">
+                  Advanced configuration for this activity type will be available in a future update.
+                </div>
+              </div>
+
+              {/* Form Actions */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={handleUpdateActivity}
+                  disabled={!editingActivity.data.title.trim() || updateActivityMutation.isPending}
+                  className="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
+                >
+                  {updateActivityMutation.isPending ? 'Updating...' : 'Update Activity'}
+                </button>
+                <button
+                  onClick={() => setEditingActivity(null)}
+                  className="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white font-medium rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+
+              {/* Error Display */}
+              {updateActivityMutation.error && (
+                <div className="mt-4 p-3 bg-red-900/30 border border-red-500/30 rounded-lg">
+                  <div className="flex items-center text-red-400 text-sm">
+                    <AlertTriangle className="w-4 h-4 mr-2 flex-shrink-0" />
+                    <span>
+                      Failed to update activity: {
+                        updateActivityMutation.error instanceof Error
+                          ? updateActivityMutation.error.message
+                          : 'Unknown error'
+                      }
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

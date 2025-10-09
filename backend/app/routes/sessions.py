@@ -129,38 +129,55 @@ async def get_session(
             status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
         )
 
-    # Convert activities and participants to response models
-    from app.models.schemas import ActivityResponse, ParticipantResponse
+    # Import the required schemas
+    from app.models.schemas import ParticipantStatus, ActivityResponse
+    from app.db.enums import ActivityStatus
 
-    activities = [
-        ActivityResponse(
-            id=activity.id,
-            session_id=activity.session_id,
-            title=activity.title,
-            description=activity.description,
-            activity_type=activity.activity_type,
-            configuration=activity.configuration,
-            is_active=activity.is_active,
-            order_index=activity.order_index,
-            created_at=activity.created_at,
-            updated_at=activity.updated_at,
-            started_at=activity.started_at,
-            completed_at=activity.completed_at,
-        )
-        for activity in session.activities
-    ]
+    # Convert activities to ActivityResponse format with proper field mapping
+    activities = []
+    for activity in session.activities:
+        try:
+            # Convert activity data to match ActivityResponse schema
+            # Extract title from config if not in title field
+            # Note: Check both 'config' and 'configuration' fields for backward compatibility
+            config = activity.config or activity.configuration or {}
+            title = activity.title or config.get("title") or "Untitled Activity"
+            description = activity.description or config.get("description")
+
+            activity_response = {
+                "id": hash(str(activity.id))
+                % 2147483647,  # Convert UUID to int for compatibility
+                "session_id": activity.session_id,
+                "title": title,
+                "description": description,
+                "activity_type": activity.type,  # Map type to activity_type
+                "configuration": {
+                    **config,
+                    "_original_id": str(
+                        activity.id
+                    ),  # Store original UUID for operations
+                },
+                "is_active": activity.status != ActivityStatus.DRAFT,
+                "order_index": activity.order_index or 0,
+                "started_at": None,  # Not available in current model
+                "completed_at": None,  # Not available in current model
+                "created_at": activity.created_at,
+                "updated_at": activity.updated_at,
+                "response_count": 0,  # TODO: Calculate actual count
+            }
+            activities.append(ActivityResponse(**activity_response))
+        except Exception as e:
+            # Log error but continue with other activities
+            print(f"Error converting activity {activity.id}: {e}")
+            continue
 
     participants = [
-        ParticipantResponse(
-            id=participant.id,
-            session_id=participant.session_id,
-            display_name=participant.display_name,
-            role=participant.role,
-            is_active=participant.is_active,
+        ParticipantStatus(
+            participant_id=str(participant.id),  # Convert int id to string
+            nickname=participant.nickname,
+            status="online",  # TODO: Compute actual status based on last_seen
             joined_at=participant.joined_at,
-            last_seen_at=participant.last_seen_at,
-            created_at=participant.joined_at,  # Use joined_at as created_at
-            updated_at=participant.last_seen_at,  # Use last_seen_at as updated_at
+            last_seen=participant.last_seen,  # Use correct field name
         )
         for participant in session.participants
     ]
