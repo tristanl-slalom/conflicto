@@ -8,7 +8,12 @@ export default defineConfig({
       client: 'react-query',
       mock: true,
       httpClient: 'fetch',
-      baseUrl: 'http://localhost:8000'
+      override: {
+        mutator: {
+          path: './src/api/mutator.ts',
+          name: 'customFetcher'
+        }
+      }
     },
   }
 });

@@ -12,6 +12,8 @@ const config = defineConfig({
     tailwindcss(),
     viteReact(),
   ],
+  // Ensure environment variables are properly replaced at build time
+  envPrefix: 'VITE_',
   build: {
     // SPA configuration
     rollupOptions: {
