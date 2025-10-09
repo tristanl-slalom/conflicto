@@ -1,4 +1,4 @@
-import { useSessionManagement } from '../../hooks/useSessionManagement';
+import { useListSessionsApiV1SessionsGet } from '../../api/generated';
 import type { SessionListProps } from '../../types/admin';
 import type { SessionResponse } from '../../api/generated';
 import { formatDistanceToNow } from 'date-fns';
@@ -9,7 +9,16 @@ export const SessionList = ({
   maxItems,
   className = ''
 }: SessionListProps) => {
-  const { sessions, isLoadingSessions, sessionsError, refetchSessions } = useSessionManagement();
+  const {
+    data: sessionsData,
+    refetch: refetchSessions,
+    isLoading: isLoadingSessions,
+    error: sessionsError
+  } = useListSessionsApiV1SessionsGet();
+
+  const sessions = (sessionsData?.status === 200)
+    ? sessionsData.data.sessions
+    : [];
 
   const displaySessions = maxItems ? sessions.slice(0, maxItems) : sessions;
 
@@ -109,7 +118,7 @@ export const SessionList = ({
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
                       </button>
-                      
+
                       {session.status === 'draft' && (
                         <button
                           className="p-1.5 text-gray-400 hover:text-green-400 hover:bg-slate-600 rounded transition-colors"

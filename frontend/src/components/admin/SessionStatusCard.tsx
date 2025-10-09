@@ -1,5 +1,7 @@
 import type { SessionStatusCardProps } from '../../types/admin';
 import { formatDistanceToNow } from 'date-fns';
+import { useRealTimeUpdates } from '../../hooks/useRealTimeUpdates';
+import { RefreshCw, Wifi, WifiOff } from 'lucide-react';
 
 export const SessionStatusCard = ({
   session,
@@ -7,6 +9,20 @@ export const SessionStatusCard = ({
   onRefresh,
   className = ''
 }: SessionStatusCardProps) => {
+  // Use real-time updates for live session data
+  const {
+    participantCount: liveParticipantCount,
+    status: liveStatus,
+  } = useRealTimeUpdates({
+    sessionId: session?.id,
+    enabled: !!session?.id && (session?.status === 'active' || session?.status === 'paused'),
+    pollingInterval: 3000, // 3 seconds
+  });
+
+  // Use live data if available, otherwise fallback to session data
+  const displayParticipantCount = liveParticipantCount ?? session?.participant_count;
+  const displayStatus = liveStatus ?? session?.status;
+  const hasRealTimeData = !!liveParticipantCount;
   if (isLoading) {
     return (
       <div className={`bg-slate-800 rounded-lg p-6 border border-slate-700 ${className}`}>
@@ -77,19 +93,31 @@ export const SessionStatusCard = ({
 
   return (
     <div className={`bg-slate-800 rounded-lg p-6 border border-slate-700 ${className}`}>
-      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-medium text-white">Session Status</h2>
-        {onRefresh && (
-          <button
-            onClick={onRefresh}
-            className="text-sm text-gray-400 hover:text-gray-300 transition-colors"
-          >
-            Refresh
-          </button>
-        )}
-      </div>
+        <div className="flex items-center gap-2">
+          {/* Real-time connection indicator */}
+          {hasRealTimeData ? (
+            <div title="Live updates active">
+              <Wifi className="w-4 h-4 text-green-400" />
+            </div>
+          ) : session?.status === 'active' || session?.status === 'paused' ? (
+            <div title="Live updates unavailable">
+              <WifiOff className="w-4 h-4 text-yellow-400" />
+            </div>
+          ) : null}
 
-      <div className="space-y-4">
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              className="text-sm text-gray-400 hover:text-gray-300 transition-colors p-1"
+              title="Manual refresh"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>      <div className="space-y-4">
         {/* Session Title */}
         <div>
           <h3 className="text-white font-medium text-lg mb-1 line-clamp-2">
@@ -106,8 +134,8 @@ export const SessionStatusCard = ({
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-gray-300">Status</span>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(session.status)}`}>
-              {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(displayStatus || session.status)}`}>
+              {(displayStatus || session.status).charAt(0).toUpperCase() + (displayStatus || session.status).slice(1)}
             </span>
           </div>
 
@@ -116,10 +144,13 @@ export const SessionStatusCard = ({
             <span className="text-white font-mono text-sm">{session.id}</span>
           </div>
 
-          {session.participant_count !== undefined && (
+          {(displayParticipantCount !== undefined || session.participant_count !== undefined) && (
             <div className="flex items-center justify-between">
               <span className="text-gray-300">Participants</span>
-              <span className="text-white font-mono">{session.participant_count}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-white font-mono">{displayParticipantCount ?? session.participant_count}</span>
+                {hasRealTimeData && <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" title="Live count" />}
+              </div>
             </div>
           )}
 

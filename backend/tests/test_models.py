@@ -48,12 +48,14 @@ class TestDatabaseModels:
         """Test SessionStatus enum values."""
         assert SessionStatus.DRAFT == "draft"
         assert SessionStatus.ACTIVE == "active"
+        assert SessionStatus.PAUSED == "paused"
         assert SessionStatus.COMPLETED == "completed"
 
         # Test all enum values
         all_statuses = [status.value for status in SessionStatus]
         assert "draft" in all_statuses
         assert "active" in all_statuses
+        assert "paused" in all_statuses
         assert "completed" in all_statuses
 
     async def test_activity_model_creation(self, db_session: AsyncSession):
@@ -92,7 +94,7 @@ class TestDatabaseModels:
         assert activity.type == "poll"
         assert activity.config["question"] == "What is your favorite color?"
         assert len(activity.config["options"]) == 3
-        assert activity.config["multiple_choice"] == False
+        assert activity.config["multiple_choice"] is False
         assert activity.order_index == 1
         assert activity.status == ActivityStatus.DRAFT
         assert activity.created_at is not None
@@ -154,7 +156,7 @@ class TestDatabaseModels:
         assert participant.session_id == session.id
         assert participant.display_name == "John Doe"
         assert participant.role == ParticipantRole.PARTICIPANT
-        assert participant.is_active == True
+        assert participant.is_active is True
         assert participant.joined_at is not None
         assert participant.last_seen is not None
 
@@ -441,7 +443,7 @@ class TestDatabaseEnums:
 
     def test_enum_membership(self):
         """Test enum membership checks."""
-        valid_session_statuses = ["draft", "active", "completed"]
+        valid_session_statuses = ["draft", "active", "paused", "completed"]
         for status in list(SessionStatus):
             assert status.value in valid_session_statuses
 
@@ -452,7 +454,7 @@ class TestDatabaseEnums:
     def test_enum_iteration(self):
         """Test iterating through enum values."""
         session_statuses = list(SessionStatus)
-        assert len(session_statuses) == 3
+        assert len(session_statuses) == 4
 
         activity_statuses = list(ActivityStatus)
         assert len(activity_statuses) == 4
