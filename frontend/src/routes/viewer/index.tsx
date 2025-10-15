@@ -22,7 +22,7 @@ function ViewerDisplay() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
       {/* Header */}
-      <div className="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700">
+      <div className="bg-card/80 backdrop-blur-sm border-b border-border">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-4">
@@ -31,7 +31,7 @@ function ViewerDisplay() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold">{sessionData.name}</h1>
-                <p className="text-gray-400">Live Session Display</p>
+                <p className="text-muted-foreground">Live Session Display</p>
               </div>
             </div>
             <div className="flex items-center gap-6">
@@ -40,9 +40,9 @@ function ViewerDisplay() {
                 <span className="font-mono text-xl">
                   {sessionData.participantCount}
                 </span>
-                <span className="text-gray-400">participants</span>
+                <span className="text-muted-foreground">participants</span>
               </div>
-              <button className="p-2 hover:bg-slate-700 rounded-lg transition-colors">
+              <button className="p-2 hover:bg-accent/20 rounded-lg transition-colors">
                 <Maximize className="w-5 h-5" />
               </button>
             </div>
@@ -54,7 +54,7 @@ function ViewerDisplay() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[calc(100vh-200px)]">
           {/* QR Code Section */}
           <div className="lg:col-span-1 flex flex-col">
-            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-8 flex-1 flex flex-col items-center justify-center">
+            <div className="bg-card/80 backdrop-blur-sm border border-border rounded-xl p-8 flex-1 flex flex-col items-center justify-center">
               <h2 className="text-2xl font-bold mb-6 text-center">
                 Join the Session
               </h2>
@@ -67,11 +67,11 @@ function ViewerDisplay() {
               </div>
 
               <div className="text-center">
-                <p className="text-gray-300 mb-2">Scan QR code or visit:</p>
+                <p className="text-foreground mb-2">Scan QR code or visit:</p>
                 <p className="text-2xl font-mono font-bold text-cyan-400 mb-4">
                   caja.app/join
                 </p>
-                <p className="text-gray-400">Session Code:</p>
+                <p className="text-muted-foreground">Session Code:</p>
                 <p className="text-3xl font-mono font-bold text-green-400">
                   {sessionData.qrCode}
                 </p>
@@ -81,7 +81,7 @@ function ViewerDisplay() {
 
           {/* Results Section */}
           <div className="lg:col-span-2 flex flex-col">
-            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-8 flex-1">
+            <div className="bg-card/80 backdrop-blur-sm border border-border rounded-xl p-8 flex-1">
               <div className="flex items-center gap-3 mb-8">
                 <BarChart3 className="w-8 h-8 text-cyan-400" />
                 <h2 className="text-3xl font-bold">Live Results</h2>
@@ -95,7 +95,7 @@ function ViewerDisplay() {
 
               <div className="space-y-6">
                 {sessionData.responses.map((response, index) => (
-                  <div key={index} className="bg-slate-700/50 rounded-lg p-6">
+                  <div key={index} className="bg-muted/50 rounded-lg p-6">
                     <div className="flex justify-between items-center mb-3">
                       <span className="text-lg font-medium">
                         {response.option}
@@ -104,12 +104,12 @@ function ViewerDisplay() {
                         <span className="text-2xl font-bold text-cyan-400">
                           {response.count}
                         </span>
-                        <span className="text-lg text-gray-400">
+                        <span className="text-lg text-muted-foreground">
                           ({response.percentage}%)
                         </span>
                       </div>
                     </div>
-                    <div className="w-full bg-slate-600 rounded-full h-3">
+                    <div className="w-full bg-muted rounded-full h-3">
                       <div
                         className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-1000 ease-out"
                         style={{ width: `${response.percentage}%` }}
@@ -120,7 +120,7 @@ function ViewerDisplay() {
               </div>
 
               <div className="mt-8 text-center">
-                <p className="text-gray-400 text-lg">
+                <p className="text-muted-foreground text-lg">
                   Results update in real-time as participants vote
                 </p>
               </div>

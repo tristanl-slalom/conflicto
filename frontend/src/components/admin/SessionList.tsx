@@ -15,11 +15,11 @@ export const SessionList = ({
 
   if (isLoadingSessions) {
     return (
-      <div className={`bg-slate-800 rounded-lg p-6 border border-slate-700 ${className}`}>
-        <h2 className="text-lg font-medium text-white mb-4">Recent Sessions</h2>
+      <div className={`bg-card rounded-lg p-6 border border-border ${className}`}>
+        <h2 className="text-lg font-medium text-foreground mb-4">Recent Sessions</h2>
         <div className="flex items-center justify-center py-8">
           <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          <span className="ml-2 text-gray-400">Loading sessions...</span>
+          <span className="ml-2 text-muted-foreground">Loading sessions...</span>
         </div>
       </div>
     );
@@ -27,13 +27,13 @@ export const SessionList = ({
 
   if (sessionsError) {
     return (
-      <div className={`bg-slate-800 rounded-lg p-6 border border-slate-700 ${className}`}>
-        <h2 className="text-lg font-medium text-white mb-4">Recent Sessions</h2>
+      <div className={`bg-card rounded-lg p-6 border border-border ${className}`}>
+        <h2 className="text-lg font-medium text-foreground mb-4">Recent Sessions</h2>
         <div className="text-center py-8">
           <p className="text-red-400 mb-4">Failed to load sessions</p>
           <button
             onClick={() => refetchSessions()}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+            className="px-4 py-2 bg-primary hover:bg-primary/90 text-foreground rounded-md transition-colors"
           >
             Retry
           </button>
@@ -43,12 +43,12 @@ export const SessionList = ({
   }
 
   return (
-    <div className={`bg-slate-800 rounded-lg p-6 border border-slate-700 ${className}`}>
+    <div className={`bg-card rounded-lg p-6 border border-border ${className}`}>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-medium text-white">Recent Sessions</h2>
+        <h2 className="text-lg font-medium text-foreground">Recent Sessions</h2>
         <button
           onClick={() => refetchSessions()}
-          className="text-sm text-gray-400 hover:text-gray-300 transition-colors"
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           Refresh
         </button>
@@ -56,22 +56,22 @@ export const SessionList = ({
 
       {displaySessions.length === 0 ? (
         <div className="text-center py-8">
-          <p className="text-gray-400">No sessions created yet</p>
+          <p className="text-muted-foreground">No sessions created yet</p>
         </div>
       ) : (
         <div className="space-y-3">
           {displaySessions.map((session: SessionResponse) => (
             <div
               key={session.id}
-              className="bg-slate-700 rounded-lg p-4 border border-slate-600 hover:border-slate-500 transition-colors"
+              className="bg-muted rounded-lg p-4 border border-border hover:border-accent transition-colors"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-white font-medium truncate">
+                  <h3 className="text-foreground font-medium truncate">
                     {session.title}
                   </h3>
                   {session.description && (
-                    <p className="text-gray-400 text-sm mt-1 line-clamp-2">
+                    <p className="text-muted-foreground text-sm mt-1 line-clamp-2">
                       {session.description}
                     </p>
                   )}
@@ -101,7 +101,7 @@ export const SessionList = ({
                     <div className="flex gap-1">
                       <button
                         onClick={() => onSessionSelect?.(session)}
-                        className="p-1.5 text-gray-400 hover:text-white hover:bg-slate-600 rounded transition-colors"
+                        className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-slate-600 rounded transition-colors"
                         title="View session"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -109,10 +109,10 @@ export const SessionList = ({
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
                       </button>
-                      
+
                       {session.status === 'draft' && (
                         <button
-                          className="p-1.5 text-gray-400 hover:text-green-400 hover:bg-slate-600 rounded transition-colors"
+                          className="p-1.5 text-muted-foreground hover:text-green-400 hover:bg-slate-600 rounded transition-colors"
                           title="Start session"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

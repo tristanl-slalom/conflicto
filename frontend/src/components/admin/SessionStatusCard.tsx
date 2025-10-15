@@ -9,8 +9,8 @@ export const SessionStatusCard = ({
 }: SessionStatusCardProps) => {
   if (isLoading) {
     return (
-      <div className={`bg-slate-800 rounded-lg p-6 border border-slate-700 ${className}`}>
-        <h2 className="text-lg font-medium text-white mb-4">Session Status</h2>
+      <div className={`bg-card rounded-lg p-6 border border-border ${className}`}>
+        <h2 className="text-lg font-medium text-foreground mb-4">Session Status</h2>
         <div className="space-y-4">
           <div className="animate-pulse">
             <div className="h-4 bg-slate-600 rounded w-3/4 mb-2"></div>
@@ -23,10 +23,10 @@ export const SessionStatusCard = ({
 
   if (!session) {
     return (
-      <div className={`bg-slate-800 rounded-lg p-6 border border-slate-700 ${className}`}>
-        <h2 className="text-lg font-medium text-white mb-4">Session Status</h2>
+      <div className={`bg-card rounded-lg p-6 border border-border ${className}`}>
+        <h2 className="text-lg font-medium text-foreground mb-4">Session Status</h2>
         <div className="text-center py-8">
-          <p className="text-gray-400">No active session</p>
+          <p className="text-muted-foreground">No active session</p>
           <p className="text-sm text-gray-500 mt-1">Create a session to get started</p>
         </div>
       </div>
@@ -49,24 +49,24 @@ export const SessionStatusCard = ({
     switch (status) {
       case 'draft':
         return (
-          <button className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md transition-colors">
+          <button className="w-full bg-green-600 hover:bg-green-700 text-foreground py-2 px-4 rounded-md transition-colors">
             Start Session
           </button>
         );
       case 'active':
         return (
           <div className="space-y-2">
-            <button className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md transition-colors">
+            <button className="w-full bg-red-600 hover:bg-red-700 text-foreground py-2 px-4 rounded-md transition-colors">
               End Session
             </button>
-            <button className="w-full bg-slate-600 hover:bg-slate-500 text-white py-2 px-4 rounded-md transition-colors">
+            <button className="w-full bg-secondary hover:bg-secondary/90 text-foreground py-2 px-4 rounded-md transition-colors">
               Pause Session
             </button>
           </div>
         );
       case 'completed':
         return (
-          <button className="w-full bg-slate-600 hover:bg-slate-500 text-white py-2 px-4 rounded-md transition-colors">
+          <button className="w-full bg-secondary hover:bg-secondary/90 text-foreground py-2 px-4 rounded-md transition-colors">
             View Results
           </button>
         );
@@ -76,13 +76,13 @@ export const SessionStatusCard = ({
   };
 
   return (
-    <div className={`bg-slate-800 rounded-lg p-6 border border-slate-700 ${className}`}>
+    <div className={`bg-card rounded-lg p-6 border border-border ${className}`}>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-medium text-white">Session Status</h2>
+        <h2 className="text-lg font-medium text-foreground">Session Status</h2>
         {onRefresh && (
           <button
             onClick={onRefresh}
-            className="text-sm text-gray-400 hover:text-gray-300 transition-colors"
+            className="text-sm text-muted-foreground hover:text-gray-300 transition-colors"
           >
             Refresh
           </button>
@@ -92,11 +92,11 @@ export const SessionStatusCard = ({
       <div className="space-y-4">
         {/* Session Title */}
         <div>
-          <h3 className="text-white font-medium text-lg mb-1 line-clamp-2">
+          <h3 className="text-foreground font-medium text-lg mb-1 line-clamp-2">
             {session.title}
           </h3>
           {session.description && (
-            <p className="text-gray-400 text-sm line-clamp-3">
+            <p className="text-muted-foreground text-sm line-clamp-3">
               {session.description}
             </p>
           )}
@@ -113,33 +113,33 @@ export const SessionStatusCard = ({
 
           <div className="flex items-center justify-between">
             <span className="text-gray-300">Session ID</span>
-            <span className="text-white font-mono text-sm">{session.id}</span>
+            <span className="text-foreground font-mono text-sm">{session.id}</span>
           </div>
 
           {session.participant_count !== undefined && (
             <div className="flex items-center justify-between">
               <span className="text-gray-300">Participants</span>
-              <span className="text-white font-mono">{session.participant_count}</span>
+              <span className="text-foreground font-mono">{session.participant_count}</span>
             </div>
           )}
 
           {session.activity_count !== undefined && (
             <div className="flex items-center justify-between">
               <span className="text-gray-300">Activities</span>
-              <span className="text-white font-mono">{session.activity_count}</span>
+              <span className="text-foreground font-mono">{session.activity_count}</span>
             </div>
           )}
 
           {session.max_participants && (
             <div className="flex items-center justify-between">
               <span className="text-gray-300">Max Participants</span>
-              <span className="text-white font-mono">{session.max_participants}</span>
+              <span className="text-foreground font-mono">{session.max_participants}</span>
             </div>
           )}
 
           <div className="flex items-center justify-between">
             <span className="text-gray-300">Created</span>
-            <span className="text-white text-sm">
+            <span className="text-foreground text-sm">
               {formatDistanceToNow(new Date(session.created_at), { addSuffix: true })}
             </span>
           </div>
@@ -147,7 +147,7 @@ export const SessionStatusCard = ({
           {session.started_at && (
             <div className="flex items-center justify-between">
               <span className="text-gray-300">Started</span>
-              <span className="text-white text-sm">
+              <span className="text-foreground text-sm">
                 {formatDistanceToNow(new Date(session.started_at), { addSuffix: true })}
               </span>
             </div>
@@ -156,7 +156,7 @@ export const SessionStatusCard = ({
           {session.completed_at && (
             <div className="flex items-center justify-between">
               <span className="text-gray-300">Completed</span>
-              <span className="text-white text-sm">
+              <span className="text-foreground text-sm">
                 {formatDistanceToNow(new Date(session.completed_at), { addSuffix: true })}
               </span>
             </div>
@@ -167,8 +167,8 @@ export const SessionStatusCard = ({
         {session.qr_code && session.status === 'active' && (
           <div className="pt-4 border-t border-slate-600">
             <p className="text-sm text-gray-300 mb-2">Join Code:</p>
-            <div className="bg-slate-700 p-3 rounded-md">
-              <code className="text-white font-mono text-sm break-all">
+            <div className="bg-muted p-3 rounded-md">
+              <code className="text-foreground font-mono text-sm break-all">
                 {session.qr_code}
               </code>
             </div>
