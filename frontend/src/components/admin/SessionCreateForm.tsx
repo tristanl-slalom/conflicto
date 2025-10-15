@@ -10,18 +10,18 @@ interface FormErrors {
   description?: string;
 }
 
-export const SessionCreateForm = ({ 
-  onSuccess, 
-  onError, 
-  className = '' 
+export const SessionCreateForm = ({
+  onSuccess,
+  onError,
+  className = ''
 }: SessionCreateFormProps) => {
   const { createSession, isCreating, creationError, creationSuccess } = useSessionManagement();
-  
+
   const [formData, setFormData] = useState<SessionCreateFormData>({
     title: '',
     description: '',
   });
-  
+
   const [errors, setErrors] = useState<FormErrors>({});
 
   const validateForm = (): boolean => {
@@ -51,18 +51,18 @@ export const SessionCreateForm = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     try {
       const session = await createSession(formData);
-      
+
       // Reset form
       setFormData({ title: '', description: '' });
       setErrors({});
-      
+
       // Call success callback
       onSuccess?.(session);
     } catch (error) {
@@ -77,7 +77,7 @@ export const SessionCreateForm = ({
       updated[field] = value;
       return updated;
     });
-    
+
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev: FormErrors) => {
@@ -113,8 +113,8 @@ export const SessionCreateForm = ({
   const canSubmit = formData.title.trim().length > 0 && !errors.title;
 
   return (
-    <div className={`bg-slate-800 rounded-lg p-6 border border-slate-700 ${className}`}>
-      <h2 className="text-lg font-medium text-white mb-4">
+    <div className={`bg-card rounded-lg p-6 border border-border ${className}`}>
+      <h2 className="text-lg font-medium text-foreground mb-4">
         Create New Session
       </h2>
 
@@ -138,7 +138,7 @@ export const SessionCreateForm = ({
       >
         {/* Session Title Field */}
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-muted-foreground mb-2">
             Session Title *
           </label>
           <input
@@ -148,10 +148,10 @@ export const SessionCreateForm = ({
             onBlur={() => handleFieldBlur('title')}
             placeholder="Enter session title..."
             disabled={isCreating}
-            className={`w-full px-3 py-2 bg-slate-700 border rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+            className={`w-full px-3 py-2 bg-input border rounded-md text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors ${
               errors.title
-                ? 'border-red-600'
-                : 'border-slate-600'
+                ? 'border-destructive'
+                : 'border-border'
             } ${isCreating ? 'opacity-50 cursor-not-allowed' : ''}`}
           />
           {errors.title && (
@@ -163,7 +163,7 @@ export const SessionCreateForm = ({
 
         {/* Session Description Field */}
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-muted-foreground mb-2">
             Description
           </label>
           <textarea
@@ -173,10 +173,10 @@ export const SessionCreateForm = ({
             onBlur={() => handleFieldBlur('description')}
             placeholder="Enter session description (optional)..."
             disabled={isCreating}
-            className={`w-full px-3 py-2 bg-slate-700 border rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+            className={`w-full px-3 py-2 bg-input border rounded-md text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors ${
               errors.description
-                ? 'border-red-600'
-                : 'border-slate-600'
+                ? 'border-destructive'
+                : 'border-border'
             } ${isCreating ? 'opacity-50 cursor-not-allowed' : ''}`}
           />
           {errors.description && (
@@ -193,8 +193,8 @@ export const SessionCreateForm = ({
             disabled={!canSubmit || isCreating}
             className={`flex-1 py-2 px-4 rounded-md font-medium transition-colors ${
               canSubmit && !isCreating
-                ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                : 'bg-slate-600 text-gray-400 cursor-not-allowed'
+                ? 'bg-primary hover:bg-primary/90 text-primary-foreground'
+                : 'bg-muted text-muted-foreground cursor-not-allowed'
             }`}
           >
             {isCreating ? (
@@ -216,8 +216,8 @@ export const SessionCreateForm = ({
             disabled={isCreating}
             className={`px-4 py-2 rounded-md transition-colors ${
               isCreating
-                ? 'bg-slate-600 text-gray-400 cursor-not-allowed'
-                : 'bg-slate-600 hover:bg-slate-500 text-white'
+                ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                : 'bg-secondary hover:bg-secondary/90 text-secondary-foreground'
             }`}
           >
             Clear
